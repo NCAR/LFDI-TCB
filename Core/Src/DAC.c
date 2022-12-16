@@ -1,5 +1,5 @@
 #include "DAC.h"
-#include "utils.h"
+#include "funcs.h"
 
 //Read/Write Should be OR-ed with the Register address
 uint8_t WRITE = 0x00;
@@ -55,20 +55,24 @@ uint8_t W2 = 0x10;
 //Used when recieving data from the DAC
 uint8_t NOP_Send[3] = {0x00, 0x00, NOP};
 //Max Voltage peak to peak
-float MAX_PEAK2PEAK = 22.4;
+float REFERENCE_VOLTAGE = 3;
 
+
+//
+void DAC_Initialize(struct sDAC* s){
+	Set_Config(s);
+
+}
 //@brief: This function will set a configuration value to the configuration register
-//@param: spi: The spi handle to use
+//@param s: The DAC struct to use
 //@return: None
-void Set_Config(SPI_HandleTypeDef* spi){
-	uint8_t Data[3] = {0x00,0x00, 0x00};
+void Set_Config(struct sDAC* s){
+	uint8_t Data[3] = {0x00, 0x00, 0x00};
 	uint8_t read_command[3] = {READ|CONFIG, 0x00, 0x00};
-	Set_nRST_high(false);
-	HAL_Delay(10);
-	Set_nRST_high(true);
 	
-	Send_Command(spi, read_command);
-	Recieve_Data(spi, Data);
+	Hardware_Reset(s);
+	
+	
 	//Set the DAC to use a gain of 1 for both a and b registers meaning.
 	//Make sure SCE is 0. This will make it so that the DAC will use the Values direclty written to it
 	//rather than trying to use the individual offset and gain of each register to re-adjust
@@ -76,29 +80,40 @@ void Set_Config(SPI_HandleTypeDef* spi){
 	//Gain_A = 1 -> gain is set to 4xVref GAIN_A = 0 -> gain is set to 6xVref
 	
 	uint8_t tx_data[3] = {WRITE|CONFIG, AB, 0x00};
-	Send_Command(spi, tx_data);
-	Send_Command(spi, read_command);
-	Recieve_Data(spi, Data);
-
-	return;
+	Send_Command(s, tx_data);
+	Send_Command(s, read_command);
+	Recieve_Data(s, Data);
+	
+	//if Data is the same as tx_data then the command was successful
+	if(Data[1] == tx_data[1] && Data[2] == tx_data[2]){
+		s->config = (Data[1] << 8) | Data[2];
+		s->Configured = true;
+		s->State = DAC_STATE_OK;
+		s->Ready = true;
+	}else{
+		s->State = DAC_STATE_INITFAILED;
+		s->Ready = false;
+		s->Errors++;
+	}
+			
 
 }
 
 //@brief: This function will get the Value of the configuration register
 //@param: spi: The spi handle to use
 //@return: The value of the configuration register
-uint16_t Get_Config(SPI_HandleTypeDef* spi){
+uint16_t Get_Config(struct sDAC* s){
 	uint8_t Data[3] = {0x00,0x00, 0x00};
 	uint8_t read_command[3] = {READ|CONFIG, 0x00, 0x00};
-	Send_Command(spi, read_command);
-	Recieve_Data(spi, Data);
+	Send_Command(s, read_command);
+	Recieve_Data(s, Data);
 	return (Data[1] << 8) | Data[2];
 }
 
 //@brief: This function will ramp all the DACs from 0 to FFFF
-void Ramp_DACs(SPI_HandleTypeDef* spi, uint8_t DAC_NUM , uint16_t increment, uint16_t lower_bound, uint16_t upper_bound){
+void Ramp_DACs(struct sDAC *s, uint8_t DAC_NUM , uint16_t increment, uint16_t lower_bound, uint16_t upper_bound){
 	for(uint16_t Value = lower_bound; Value <= upper_bound; Value = Value+increment){
-		Set_DAC_Value(spi, DAC_NUM, Value);
+		Set_DAC_Value(s, DAC_NUM, Value);
 		Set_nLDAC_high(true);
 		Set_nLDAC_high(false);
 		Set_nLDAC_high(true);
@@ -113,11 +128,11 @@ void Ramp_DACs(SPI_HandleTypeDef* spi, uint8_t DAC_NUM , uint16_t increment, uin
 //@param: spi: The spi handle to use
 //@param: command: The command to send
 //@return: none
-void Send_Command(SPI_HandleTypeDef* spi, uint8_t* Command){
+void Send_Command(struct sDAC* s, uint8_t* Command){
 	HAL_StatusTypeDef hal_status;
 	Set_nCS_high(false);
-	hal_status = HAL_SPI_Transmit(spi, Command, 3, 1);
-	while (!(spi->Instance->SR & SPI_SR_TXE));
+	hal_status = HAL_SPI_Transmit(s->spi, Command, 3, 1);
+	while (!(s->spi->Instance->SR & SPI_SR_TXE));
 	Set_nCS_high(true);
 	Delay_us(10);
 }
@@ -126,11 +141,11 @@ void Send_Command(SPI_HandleTypeDef* spi, uint8_t* Command){
 //@param: spi: The spi handle
 //@param: Data: buffer to store the data in
 //@return: None
-void Recieve_Data(SPI_HandleTypeDef* spi, uint8_t* Data){
+void Recieve_Data(struct sDAC* s, uint8_t* Data){
 	HAL_StatusTypeDef hal_status;
 	Set_nCS_high(false);
-	hal_status = HAL_SPI_TransmitReceive(spi,NOP_Send, Data, 3, 100);
-	while ((spi->Instance->SR & SPI_SR_RXNE));
+	hal_status = HAL_SPI_TransmitReceive(s->spi,NOP_Send, Data, 3, 100);
+	while ((s->spi->Instance->SR & SPI_SR_RXNE));
 	Set_nCS_high(true);
 	Delay_us(10);
 
@@ -141,17 +156,15 @@ void Recieve_Data(SPI_HandleTypeDef* spi, uint8_t* Data){
 //@param: val: The value to set the dac to
 //@param spi: The spi handle to use
 //@return: None
-void Set_DAC_Value(SPI_HandleTypeDef* spi, uint8_t DAC_Num, uint16_t val){
+void Set_DAC_Value(struct sDAC* s, uint8_t DAC_Num, uint16_t val){
 	//Make sure DAC is between 0 and 7
 	if(DAC_Num > 7){
 		return;
 	}
 	uint8_t DAC_REG = Set_DAC0+DAC_Num;
-
 	//Set the DAC to the correct value by adding the DAC number to the Set_DAC0 command
 	uint8_t tx_data[3] = {WRITE|DAC_REG, (val >> 8), (val & 0xFF)};
-	
-	Send_Command(spi, tx_data);
+	Send_Command(s, tx_data);
 	
 }
 
@@ -159,17 +172,17 @@ void Set_DAC_Value(SPI_HandleTypeDef* spi, uint8_t DAC_Num, uint16_t val){
 //@param: DAC_Num: The DAC number to set the offset of
 //@param spi: The spi handle to use
 //@return: None
-void Set_DAC_Max(SPI_HandleTypeDef* spi, uint8_t DAC_Num){
+void Set_DAC_Max(struct sDAC* s, uint8_t DAC_Num){
 	uint8_t DAC_REG = Set_DAC0+DAC_Num;
 	//Set the DAC to the correct value by adding the DAC number to the Set_DAC0 command
 	uint8_t tx_data[3] = {WRITE|DAC_REG, 0xFF, 0xFF};
-	Send_Command(spi, tx_data);
+	Send_Command(s, tx_data);
 }
-void Set_DAC_Min(SPI_HandleTypeDef* spi, uint8_t DAC_Num){
+void Set_DAC_Min(struct sDAC* s, uint8_t DAC_Num){
 	uint8_t DAC_REG = Set_DAC0+DAC_Num;
 	//Set the DAC to the correct value by adding the DAC number to the Set_DAC0 command
 	uint8_t tx_data[3] = {WRITE|DAC_REG, 0x00, 0x00};
-	Send_Command(spi, tx_data);
+	Send_Command(s, tx_data);
 }
 
 //@brief: This function sets the value of the offset of the given dac
@@ -177,7 +190,7 @@ void Set_DAC_Min(SPI_HandleTypeDef* spi, uint8_t DAC_Num){
 //@param: val: The value to set the offset to
 //@param spi: The spi handle to use
 //@return: None
-void Set_DAC_Zero(SPI_HandleTypeDef* spi, uint8_t DAC_Num, uint16_t val){
+void Set_DAC_Zero(struct sDAC* s, uint8_t DAC_Num, uint16_t val){
 	//Make sure DAC is between 0 and 7
 	if(DAC_Num > 7){
 		return;
@@ -185,7 +198,7 @@ void Set_DAC_Zero(SPI_HandleTypeDef* spi, uint8_t DAC_Num, uint16_t val){
 	uint8_t DAC_REG = ZERO_0+(DAC_Num*2);
 	//Set the DAC to the correct value by adding the DAC number to the Set_DAC0 command
 	uint8_t tx_data[3] = {WRITE|DAC_REG, (val>>8)&0xFF, val&0xFF};
-	Send_Command(spi, tx_data);
+	Send_Command(s, tx_data);
 	
 }
 
@@ -194,7 +207,7 @@ void Set_DAC_Zero(SPI_HandleTypeDef* spi, uint8_t DAC_Num, uint16_t val){
 //@param: val: The value to set the gain to
 //@param spi: The spi handle to use
 //@return: None
-void Set_DAC_Gain(SPI_HandleTypeDef* spi, uint8_t DAC_Num, uint16_t val){
+void Set_DAC_Gain(struct sDAC* s, uint8_t DAC_Num, uint16_t val){
 	//Make sure DAC is between 0 and 7
 	if(DAC_Num > 7){
 		return;
@@ -202,18 +215,18 @@ void Set_DAC_Gain(SPI_HandleTypeDef* spi, uint8_t DAC_Num, uint16_t val){
 	uint8_t DAC_REG = GAIN_0+(DAC_Num*2);
 	//Set the DAC to the correct value by adding the DAC number to the Set_DAC0 command
 	uint8_t tx_data[3] = {WRITE|DAC_REG, (val>>8)&0xFF, val&0xFF};
-	Send_Command(spi, tx_data);
+	Send_Command(s, tx_data);
 	
 }
 
 //@brief: This function sets the value of all the DACs to 0x0000
 //@param spi: The spi handle to use
 //@return: None
-void Set_All_DACs_to_Zero(SPI_HandleTypeDef* spi){
+void Set_All_DACs_to_Zero(struct sDAC *s){
 	
 	for (int i = Set_DAC0; i <= Set_DAC7; i++){
 		uint8_t tx_data[3] = {WRITE|i, 0x7f, 0xff};
-		Send_Command(spi, tx_data);	
+		Send_Command(s, tx_data);
 	}
 				  Set_nLDAC_high(true);
 				  Set_nLDAC_high(false);
@@ -225,7 +238,7 @@ void Set_All_DACs_to_Zero(SPI_HandleTypeDef* spi){
 //@param: val: The value of the Dac Output
 //@param spi: The spi handle to use
 //@return: None
-void Get_DAC_Value(SPI_HandleTypeDef* spi, uint8_t DAC_Num, uint16_t* val){
+void Get_DAC_Value(struct sDAC* s, uint8_t DAC_Num, uint16_t* val){
 	//Make sure DAC is between 0 and 7
 	if(DAC_Num > 7){
 		return;
@@ -233,9 +246,9 @@ void Get_DAC_Value(SPI_HandleTypeDef* spi, uint8_t DAC_Num, uint16_t* val){
 	uint8_t DAC_REG = Set_DAC0+DAC_Num;
 	//Set the DAC to the correct value by adding the DAC number to the Set_DAC0 command
 	uint8_t tx_data[3] = {READ|DAC_REG, 0, 0};
-	Send_Command(spi, tx_data);
+	Send_Command(s, tx_data);
 	uint8_t rx_data[3] = {0,0,0};
-	Recieve_Data(spi, rx_data);
+	Recieve_Data(s, rx_data);
 	//Convert the last 2 bytes to a 16 bit value
 	*val = (rx_data[1]<<8)|rx_data[2];
 	
@@ -247,10 +260,9 @@ void Get_DAC_Value(SPI_HandleTypeDef* spi, uint8_t DAC_Num, uint16_t* val){
 //@return: None
 //@Note: The offset register is 16 bits wide and is in two's compliment format
 //@Note: The offset registers have a default value of 0x999A in Dual Supply mode but can be tactory trimmed +/- 10 LSB
-void Set_OffsetA_Reg(SPI_HandleTypeDef* spi, uint16_t val){
+void Set_OffsetA_Reg(struct sDAC* s, uint16_t val){
 	uint8_t tx_data[3] = {WRITE|OFFSET_A, (val>>8)&0xFF, val&0xFF};
-	Send_Command(spi, tx_data);
-	
+	Send_Command(s, tx_data);
 }
 
 
@@ -260,22 +272,21 @@ void Set_OffsetA_Reg(SPI_HandleTypeDef* spi, uint16_t val){
 //@return: None
 //@Note: The offset register is 16 bits wide and is in two's compliment format
 //@Note: The offset registers have a default value of 0x999A in Dual Supply mode but can be tactory trimmed +/- 10 LSB
-void Set_OffsetB_Reg(SPI_HandleTypeDef* spi, uint16_t val){
+void Set_OffsetB_Reg(struct sDAC* s, uint16_t val){
 	uint8_t tx_data[3] = {WRITE|OFFSET_B, (val>>8)&0xFF, val&0xFF};
-	Send_Command(spi, tx_data);
-	
+	Send_Command(s, tx_data);
 }
 
 //@brief: This Function will get the offset register of the the DACs 0-3
 //@param: val: Where the Value is returned to
 //@param spi: The spi handle to use
 //@return: None
-void Get_OffsetA_Reg(SPI_HandleTypeDef* spi, uint16_t* val){
+void Get_OffsetA_Reg(struct sDAC* s, uint16_t* val){
 	
 	uint8_t tx_data[3] = {READ|OFFSET_A, 0, 0};
-	Send_Command(spi, tx_data);
+	Send_Command(s, tx_data);
 	uint8_t rx_data[3] = {0,0,0};
-	Recieve_Data(spi, rx_data);
+	Recieve_Data(s, rx_data);
 	//Convert the last 2 bytes to a signed 16 bit value
 	*val = (rx_data[1]<<8)|rx_data[2];
 	
@@ -285,11 +296,11 @@ void Get_OffsetA_Reg(SPI_HandleTypeDef* spi, uint16_t* val){
 //@param: val: Where the Value is returned to
 //@param spi: The spi handle to use
 //@return: None
-void Get_OffsetB_Reg(SPI_HandleTypeDef* spi, uint16_t* val){	
+void Get_OffsetB_Reg(struct sDAC* s, uint16_t* val){	
 	uint8_t tx_data[3] = {READ|OFFSET_B, 0, 0};
-	Send_Command(spi, tx_data);
+	Send_Command(s, tx_data);
 	uint8_t rx_data[3] = {0,0,0};
-	Recieve_Data(spi, rx_data);
+	Recieve_Data(s, rx_data);
 	//Convert the last 2 bytes to a 16 bit value
 	*val = (rx_data[1]<<8)|rx_data[2];
 	
@@ -300,7 +311,7 @@ void Get_OffsetB_Reg(SPI_HandleTypeDef* spi, uint16_t* val){
 //@param: val: the buffer to store the of the offset
 //@param spi: The spi handle to use
 //@return: None
-void Get_DAC_Zero(SPI_HandleTypeDef* spi, uint8_t DAC_Num, uint16_t* val){
+void Get_DAC_Zero(struct sDAC* s, uint8_t DAC_Num, uint16_t* val){
 	//Make sure DAC is between 0 and 7
 	if(DAC_Num > 7){
 		return;
@@ -308,9 +319,9 @@ void Get_DAC_Zero(SPI_HandleTypeDef* spi, uint8_t DAC_Num, uint16_t* val){
 	uint8_t DAC_REG = ZERO_0+(DAC_Num*2);
 	//Set the DAC to the correct value by adding the DAC number to the Set_DAC0 command
 	uint8_t tx_data[3] = {READ|DAC_REG, 0x00, 0x00};
-	Send_Command(spi, tx_data);
+	Send_Command(s, tx_data);
 	uint8_t rx_data[3] = {0,0,0};
-	Recieve_Data(spi, rx_data);
+	Recieve_Data(s, rx_data);
 	//Convert the last 2 bytes to a 16 bit value
 	*val = (rx_data[1]<<8)|rx_data[2];
 	
@@ -321,7 +332,7 @@ void Get_DAC_Zero(SPI_HandleTypeDef* spi, uint8_t DAC_Num, uint16_t* val){
 //@param: val: buffer to store the Value of the Gain
 //@param spi: The spi handle to use
 //@return: None
-void Get_DAC_Gain(SPI_HandleTypeDef* spi, uint8_t DAC_Num, uint16_t* val){
+void Get_DAC_Gain(struct sDAC* s, uint8_t DAC_Num, uint16_t* val){
 	//Make sure DAC is between 0 and 7
 	if(DAC_Num > 7){
 		return;
@@ -329,38 +340,38 @@ void Get_DAC_Gain(SPI_HandleTypeDef* spi, uint8_t DAC_Num, uint16_t* val){
 	uint8_t DAC_REG = GAIN_0+(DAC_Num*2);
 	//Set the DAC to the correct value by adding the DAC number to the Set_DAC0 command
 	uint8_t tx_data[3] = {READ|DAC_REG, 0x00, 0x00};
-	Send_Command(spi, tx_data);
+	Send_Command(s, tx_data);
 	uint8_t rx_data[3] = {0,0,0};
-	Recieve_Data(spi, rx_data);
+	Recieve_Data(s, rx_data);
 	//Convert the last 2 bytes to a 16 bit value
 	*val = (rx_data[1]<<8)|rx_data[2];
 }
 
-//@brief: Initializes the DAC
-//@param: None
-//@return: None
-void Setup_DAC(void){
-	Set_nWakeUp_high(true);
-	Set_nRST_high(true);
-	Set_nCLR_high(true);
-	Set_nCS_high(true);//As per documentation Should be Pulled high As soon as its powered on
-}
+////@brief: Initializes the DAC
+////@param: None
+////@return: None
+//void Setup_DAC(void){
+//	Set_nWakeUp_high(true);
+//	Set_nRST_high(true);
+//	Set_nCLR_high(true);
+//	Set_nCS_high(true);//As per documentation Should be Pulled high As soon as its powered on
+//}
 
 //@brief: This function sets the value of the offset of the offset register
 //@param: spi: The spi pointer
 //@return: None
-void Set_Offset(SPI_HandleTypeDef* spi){
+void Set_Offset(struct sDAC* s){
 	uint8_t tx_data[3] = {WRITE|OFFSET_A, 0x15, 0xF7};
-	Send_Command(spi, tx_data);
+	Send_Command(s, tx_data);
 	tx_data[0]=WRITE|OFFSET_B;
-	Send_Command(spi, tx_data);
+	Send_Command(s, tx_data);
 
 }
 
 //@brief: This function Reads all of the registers in the DAC
 //@param: spi: The spi handle to use
 //@return: None
-void Read_All_Registers(SPI_HandleTypeDef* spi){
+void Read_All_Registers(struct sDAC* s){
 
 	//Request a read from the Configuration register default value is 8000h
 	uint8_t Read_Command[3] = {READ|CONFIG, 0x00, 0x00};
@@ -372,8 +383,8 @@ void Read_All_Registers(SPI_HandleTypeDef* spi){
 	{
 		Read_Command[0] = READ|i;
 		//Send the Read Command
-		Send_Command(spi, Read_Command);
-		Recieve_Data(spi, rx_data);
+		Send_Command(s, Read_Command);
+		Recieve_Data(s, rx_data);
 		printf("Register %02x: %02x %02x %02x\n",i, rx_data[0],rx_data[1],rx_data[2]);
 	}
 }
@@ -478,11 +489,14 @@ bool Get_nCS(){
 
 
 //Reset the DAC Values using the nRST Pin
-void Hardware_Reset(void){
+void Hardware_Reset(struct sDAC* s){
 	Set_nRST_high(false);
 	Delay_us(10);
 	Set_nRST_high(true);
 	Delay_us(10);
+	s->State = DAC_STATE_UNKNOWN;
+	s->Ready= false;
+	s->Errors = 0;
 }
 
 
@@ -494,20 +508,29 @@ void Syncronous_Update(void){
 	Delay_us(10);
 }
 
-void Set_Voltage_Peak_to_Peak(float* voltage, uint16_t* values){
+
+//@brief: This function calculates the max peak to peak voltage that can be achieved
+void Set_Max_Peak_To_Peak_Voltage(struct sDAC* s, bool Gain){
+	//The max Voltage is 11.2V so we need to scale the voltage to fit in 16 bits
+	//Divide the voltage by the max voltage to get a percentage and cast to a 16 bit int
+	if(Gain){
+		s->max_peak2peak = REFERENCE_VOLTAGE*4;
+	}else
+		s->max_peak2peak = REFERENCE_VOLTAGE*6;
+	return;
+}
+
+//@brief: This function sets the upper and lower bounds of a DAC Channel
+//@param: s: The DAC Channel to set the bounds of
+//@param: voltage: The voltage to set the bounds to
+void Set_Voltage_Peak_to_Peak(struct sDAC* sDAC, struct sDAC_Channel* sChan, float* voltage){
 	//The max Voltage Peak to Peak is 22.4V so we need to scale the voltage to fit in 16 bits
 	//Find the upper and lower bounds of the voltage with Zero Bias
 	//Divide the voltage by the max voltage to get a percentage and cast to a 16 bit int
-	float percentage = (*voltage/(float)MAX_PEAK2PEAK)/2;
-	uint16_t upper_bound = 0xFFFF/2 + percentage*0xFFFF;
-	uint16_t lower_bound = 0xFFFF/2 - percentage*0xFFFF;
-
-
-
-	// uint16_t upper_bound = (uint16_t((voltage/MAX_PEAK2PEAK))*0xFFFF)+(0xFFFF/2);
-	// uint16_t lower_bound = (0xFFFF/2)-((voltage/MAX_PEAK2PEAK)*0xFFFF);
-	values[0] = upper_bound;
-	values[1] = lower_bound;
+	float percentage = (*voltage/(float)sDAC->max_peak2peak)/2;
+	sChan->upper_bound = 0xFFFF/2 + percentage*0xFFFF;
+	sChan->lower_bound = 0xFFFF/2 - percentage*0xFFFF;
+	return;
 
 }
 

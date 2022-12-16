@@ -35,7 +35,8 @@ Core/Src/DAC.o: ../Core/Src/DAC.c ../Core/Inc/DAC.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pcd.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_usb.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pcd_ex.h \
- ../Core/Inc/utils.h ../Core/Inc/utils.h
+ ../Core/Inc/funcs.h ../Core/Inc/defs.h ../Core/Inc/TMP117.h \
+ ../Core/Inc/funcs.h
 ../Core/Inc/DAC.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h:
 ../Core/Inc/stm32f4xx_hal_conf.h:
@@ -73,5 +74,7 @@ Core/Src/DAC.o: ../Core/Src/DAC.c ../Core/Inc/DAC.h \
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pcd.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_usb.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pcd_ex.h:
-../Core/Inc/utils.h:
-../Core/Inc/utils.h:
+../Core/Inc/funcs.h:
+../Core/Inc/defs.h:
+../Core/Inc/TMP117.h:
+../Core/Inc/funcs.h:

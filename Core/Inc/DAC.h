@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 #include "stm32f4xx_hal.h"
-#include "utils.h"
+#include "funcs.h"
 
 //Read/Write Should be OR-ed with the Register address
 extern uint8_t WRITE;
@@ -40,14 +40,44 @@ extern uint8_t ZERO_6;
 extern uint8_t GAIN_6;
 extern uint8_t ZERO_7;
 extern uint8_t GAIN_7;
-extern float MAX_PEAK2PEAK;
-struct DAC_Channel{
+
+
+//Reference Voltage is 3V
+extern float REFERENCE_VOLTAGE;
+
+
+
+//DAC States
+#define DAC_STATE_UNKNOWN (0)
+#define DAC_STATE_INITFAILED (1)
+#define DAC_STATE_REQUESTNOACK (2)
+#define DAC_STATE_RECEIVEFAIL (3)
+#define DAC_STATE_OK (4)
+
+//Struct to hold the DAC Channels Information
+struct sDAC_Channel{
 	uint16_t upper_bound;
 	uint16_t lower_bound;
 	uint8_t DAC_number;
     bool state_high;
+	bool enabled;
 };
 
+
+//Struct to hold the DAC Information
+struct sDAC{
+	SPI_HandleTypeDef* spi;
+	uint16_t config;
+	uint16_t offset_a;
+	uint16_t offset_b;
+	bool Configured;
+	uint8_t State;
+	bool Ready;
+	uint16_t Errors;
+	float max_peak2peak;
+	struct sDAC_Channel DAC_Channels[8];
+
+};
 
 
 //Config Register Bits For the MSB REGISTER
@@ -64,64 +94,47 @@ extern uint8_t GAIN_B;
 extern uint8_t DSDO;
 extern const uint8_t NOP;
 extern uint8_t W2;
-//NOP Command
-/*
- *
- */
-//Setter and Getters for the GPIO Pin State associated with each pin
-void Set_nLDAC_high(bool HIGH);
-bool Get_nLDAC_high();
-void Set_nCLR_high(bool HIGH);
-bool Get_nCLR_high();
-void Set_nRST_high(bool HIGH);
-bool Get_nRST_high();
-void Set_nCS_high(bool HIGH);
-bool Get_nCS_high();
-void Set_nWakeUp_high(bool HIGH);
-bool Get_nWakeUp_high();
-void Set_DAC_Max(SPI_HandleTypeDef* spi, uint8_t DAC_Num);
-void Set_DAC_Min(SPI_HandleTypeDef* spi, uint8_t DAC_Num);
-void Send_Command(SPI_HandleTypeDef* spi, uint8_t* Command);
-void Recieve_Data(SPI_HandleTypeDef* spi, uint8_t* Data);
-void Set_Voltage(SPI_HandleTypeDef* spi, uint8_t DAC_Num, uint16_t val);
-void Set_Voltage_Peak_to_Peak(float* voltage, uint16_t* values);
-//Test the Initial Boot of the DAC by reading from the config register at 0x00
-void Test_Config_Register(SPI_HandleTypeDef* spi);
-void Get_Register(uint8_t address, uint8_t *Value);
-void Set_Register(SPI_HandleTypeDef* spi);
-
-//@Brief: This function Will
-void Test_Config_Register(SPI_HandleTypeDef* spi);
-void Send_Command(SPI_HandleTypeDef* spi, uint8_t* Command);
-void Recieve_Data(SPI_HandleTypeDef* spi, uint8_t* Data);
-
-//Set the DAC Values for Zero, gain and value
-void Set_DAC_Value(SPI_HandleTypeDef* spi, uint8_t DAC_Num, uint16_t val);
-void Set_DAC_Zero(SPI_HandleTypeDef* spi, uint8_t DAC_Num, uint16_t val);
-void Set_DAC_Gain(SPI_HandleTypeDef* spi, uint8_t DAC_Num, uint16_t val);
-void Get_DAC_Value(SPI_HandleTypeDef* spi, uint8_t DAC_Num, uint16_t* val);
-void Get_DAC_Zero(SPI_HandleTypeDef* spi, uint8_t DAC_Num, uint16_t* val);
-void Get_DAC_Gain(SPI_HandleTypeDef* spi, uint8_t DAC_Num, uint16_t* val);
 
 
-//Set all the Pull up/pull down pins
-void Set_nWakeUp_high(bool HIGH);
-bool Get_nWakeUp();
-void Set_nLDAC_high(bool HIGH);
-bool Get_nLDAC();
-void Set_nCLR_high(bool HIGH);
-bool Get_nCLR();
-void Set_nRST_high(bool HIGH);
-bool Get_nRST();
-void Set_nCS_high(bool HIGH);
-bool Get_nCS();
-
-//Top level Functions for the DAC
-void Hardware_Reset(void);
-void Syncronous_Update(void);
-void Setup_DAC(void);
-void Read_All_Registers(SPI_HandleTypeDef* spi);
+//public:
+	void DAC_Initialize(struct sDAC* s);
+	void DAC_Reset(struct sDAC* s);
+	void Set_DAC_Max(struct sDAC* s , uint8_t DAC_Num);
+	void Set_DAC_Min(struct sDAC* s, uint8_t DAC_Num);
+	void Set_DAC_Value(struct sDAC* s, uint8_t DAC_Num, uint16_t val);
+	void Set_DAC_Zero(struct sDAC* s, uint8_t DAC_Num, uint16_t val);
+	void Set_DAC_Gain(struct sDAC* s, uint8_t DAC_Num, uint16_t val);
+	void Get_DAC_Value(struct sDAC* s, uint8_t DAC_Num, uint16_t* val);
+	void Get_DAC_Zero(struct sDAC* s, uint8_t DAC_Num, uint16_t* val);
+	void Get_DAC_Gain(struct sDAC* s, uint8_t DAC_Num, uint16_t* val);	
+	void Set_Voltage_Peak_to_Peak(struct sDAC* sDAC, struct sDAC_Channel* sChan, float* voltage);
+	
 
 
-//Test_Config_Register(uint8_t *Value);
+//private:
+	void Set_Config(struct sDAC* s);
+	void Get_Offset_A(struct sDAC* s);
+	void Get_Offset_B(struct sDAC* s);
+	void Get_Register(uint8_t address, uint8_t *Value);
+	void Set_Register(struct sDAC* s);
+	void Send_Command(struct sDAC* s, uint8_t* Command);
+	void Recieve_Data(struct sDAC* s, uint8_t* Data);
+	void Test_Config_Register(struct sDAC* s);
+	void Set_nWakeUp_high(bool HIGH);
+	bool Get_nWakeUp();
+	void Set_nLDAC_high(bool HIGH);
+	bool Get_nLDAC();
+	void Set_nCLR_high(bool HIGH);
+	bool Get_nCLR();
+	void Set_nRST_high(bool HIGH);
+	bool Get_nRST();
+	void Set_nCS_high(bool HIGH);
+	bool Get_nCS();
+	void Hardware_Reset(struct sDAC* s);
+	void Syncronous_Update();
+	void Setup_DAC(struct sDAC* s);
+	void Read_All_Registers(struct sDAC* s);
+
+
+
 #endif

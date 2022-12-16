@@ -24,9 +24,9 @@
 /* USER CODE BEGIN Includes */
 
 #include "Heater_Controller.h"
-#include "Temp_Sensor.h"
+#include "TMP117.h"
 #include "DAC.h"
-#include "utils.h"
+#include "funcs.h"
 #include "DAC_Unit_Test.h"
 
 
@@ -39,7 +39,7 @@
   //Create Structs for Channels 0-7
 
   //Create an array of structs for the channels
-  struct DAC_Channel DAC_Channels[8];
+  struct sDAC DAC8718;
   //initalize the DAC_Numbers for each struct
 
    
@@ -88,16 +88,18 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   if (htim == &htim2 )
   {
     for (int i = 0; i < 6; i++){
-      if(DAC_Channels[i].state_high == true){
-        Set_DAC_Value(&hspi4, DAC_Channels[i].DAC_number, DAC_Channels[i].lower_bound);
-        DAC_Channels[i].state_high = false;
-      }else{
-        Set_DAC_Value(&hspi4, DAC_Channels[i].DAC_number, DAC_Channels[i].upper_bound);
-        DAC_Channels[i].state_high = true;
+      if(DAC8718.DAC_Channels[i].enabled){
+        if(DAC8718.DAC_Channels[i].state_high){
+          Set_DAC_Value(&DAC8718, DAC8718.DAC_Channels[i].DAC_number, DAC8718.DAC_Channels[i].lower_bound);
+          DAC8718.DAC_Channels[i].state_high = false;
+        }else{
+          Set_DAC_Value(&DAC8718, DAC8718.DAC_Channels[i].DAC_number, DAC8718.DAC_Channels[i].upper_bound);
+          DAC8718.DAC_Channels[i].state_high = true;
+        }
       }
+    
+    Syncronous_Update();
     }
-    Set_nLDAC_high(false);
-    Set_nLDAC_high(true);
 
   }
 
@@ -113,7 +115,8 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 	for (int i = 0; i < 6; i++){
-		DAC_Channels[i].DAC_number = i;
+		DAC8718.DAC_Channels[i].DAC_number = i;
+		DAC8718.DAC_Channels[i].enabled = true;
 	}
   /* USER CODE END 1 */
 
@@ -145,43 +148,27 @@ int main(void)
   MX_TIM2_Init();
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
-
+  DAC_Initialize(&DAC8718);
   HAL_TIM_Base_Start_IT(&htim2);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  float voltage = 10.2;
-  uint16_t values[2] = {0, 0};
-  Set_Voltage_Peak_to_Peak(&voltage, values);
-
-  
-float voltage2 = 0;
+  float voltage = 0;
+  float voltage2 = 0;
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  for (voltage = 0; voltage < MAX_PEAK2PEAK; voltage += 0.1){  
-      Set_Voltage_Peak_to_Peak(&voltage, values);
-      DAC_Channels[0].upper_bound = values[0];
-      DAC_Channels[0].lower_bound = values[1];
-      DAC_Channels[1].upper_bound = values[0];
-      DAC_Channels[1].lower_bound = values[1];
-      DAC_Channels[2].upper_bound = values[0];
-      DAC_Channels[2].lower_bound = values[1];
-
-      
-      voltage2 = MAX_PEAK2PEAK - voltage;
-      Set_Voltage_Peak_to_Peak(&voltage2, values);
-      DAC_Channels[3].upper_bound = values[0];
-      DAC_Channels[3].lower_bound = values[1];
-      DAC_Channels[4].upper_bound = values[0];
-      DAC_Channels[4].lower_bound = values[1];
-      DAC_Channels[5].upper_bound = values[0];
-      DAC_Channels[5].lower_bound = values[1];
-      DAC_Channels[6].upper_bound = values[0];
-      DAC_Channels[6].lower_bound = values[1];
+	  for (voltage = 0; voltage < DAC8718.max_peak2peak; voltage += 0.1){
+      for(int j = 0; j < 3; j++){
+        Set_Voltage_Peak_to_Peak(&DAC8718, &DAC8718.DAC_Channels[j], &voltage);
+      }
+      voltage2 = DAC8718.max_peak2peak - voltage;
+      for(int j = 3; j < 6; j++){
+        Set_Voltage_Peak_to_Peak(&DAC8718, &DAC8718.DAC_Channels[j], &voltage2);
+      }
       HAL_Delay(100);
     }
     //Set the heater to the opposite state its currently in

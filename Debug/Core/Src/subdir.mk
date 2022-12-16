@@ -8,40 +8,46 @@ C_SRCS += \
 ../Core/Src/DAC.c \
 ../Core/Src/DAC_Unit_Test.c \
 ../Core/Src/Heater_Controller.c \
-../Core/Src/Temp_Sensor.c \
+../Core/Src/PID.c \
+../Core/Src/TMP117.c \
+../Core/Src/UI.c \
+../Core/Src/funcs.c \
 ../Core/Src/main.c \
 ../Core/Src/stm32f4xx_hal_msp.c \
 ../Core/Src/stm32f4xx_it.c \
 ../Core/Src/syscalls.c \
 ../Core/Src/sysmem.c \
-../Core/Src/system_stm32f4xx.c \
-../Core/Src/utils.c 
+../Core/Src/system_stm32f4xx.c 
 
 C_DEPS += \
 ./Core/Src/DAC.d \
 ./Core/Src/DAC_Unit_Test.d \
 ./Core/Src/Heater_Controller.d \
-./Core/Src/Temp_Sensor.d \
+./Core/Src/PID.d \
+./Core/Src/TMP117.d \
+./Core/Src/UI.d \
+./Core/Src/funcs.d \
 ./Core/Src/main.d \
 ./Core/Src/stm32f4xx_hal_msp.d \
 ./Core/Src/stm32f4xx_it.d \
 ./Core/Src/syscalls.d \
 ./Core/Src/sysmem.d \
-./Core/Src/system_stm32f4xx.d \
-./Core/Src/utils.d 
+./Core/Src/system_stm32f4xx.d 
 
 OBJS += \
 ./Core/Src/DAC.o \
 ./Core/Src/DAC_Unit_Test.o \
 ./Core/Src/Heater_Controller.o \
-./Core/Src/Temp_Sensor.o \
+./Core/Src/PID.o \
+./Core/Src/TMP117.o \
+./Core/Src/UI.o \
+./Core/Src/funcs.o \
 ./Core/Src/main.o \
 ./Core/Src/stm32f4xx_hal_msp.o \
 ./Core/Src/stm32f4xx_it.o \
 ./Core/Src/syscalls.o \
 ./Core/Src/sysmem.o \
-./Core/Src/system_stm32f4xx.o \
-./Core/Src/utils.o 
+./Core/Src/system_stm32f4xx.o 
 
 
 # Each subdirectory must supply rules for building sources it contributes
@@ -51,7 +57,7 @@ Core/Src/%.o Core/Src/%.su: ../Core/Src/%.c Core/Src/subdir.mk
 clean: clean-Core-2f-Src
 
 clean-Core-2f-Src:
-	-$(RM) ./Core/Src/DAC.d ./Core/Src/DAC.o ./Core/Src/DAC.su ./Core/Src/DAC_Unit_Test.d ./Core/Src/DAC_Unit_Test.o ./Core/Src/DAC_Unit_Test.su ./Core/Src/Heater_Controller.d ./Core/Src/Heater_Controller.o ./Core/Src/Heater_Controller.su ./Core/Src/Temp_Sensor.d ./Core/Src/Temp_Sensor.o ./Core/Src/Temp_Sensor.su ./Core/Src/main.d ./Core/Src/main.o ./Core/Src/main.su ./Core/Src/stm32f4xx_hal_msp.d ./Core/Src/stm32f4xx_hal_msp.o ./Core/Src/stm32f4xx_hal_msp.su ./Core/Src/stm32f4xx_it.d ./Core/Src/stm32f4xx_it.o ./Core/Src/stm32f4xx_it.su ./Core/Src/syscalls.d ./Core/Src/syscalls.o ./Core/Src/syscalls.su ./Core/Src/sysmem.d ./Core/Src/sysmem.o ./Core/Src/sysmem.su ./Core/Src/system_stm32f4xx.d ./Core/Src/system_stm32f4xx.o ./Core/Src/system_stm32f4xx.su ./Core/Src/utils.d ./Core/Src/utils.o ./Core/Src/utils.su
+	-$(RM) ./Core/Src/DAC.d ./Core/Src/DAC.o ./Core/Src/DAC.su ./Core/Src/DAC_Unit_Test.d ./Core/Src/DAC_Unit_Test.o ./Core/Src/DAC_Unit_Test.su ./Core/Src/Heater_Controller.d ./Core/Src/Heater_Controller.o ./Core/Src/Heater_Controller.su ./Core/Src/PID.d ./Core/Src/PID.o ./Core/Src/PID.su ./Core/Src/TMP117.d ./Core/Src/TMP117.o ./Core/Src/TMP117.su ./Core/Src/UI.d ./Core/Src/UI.o ./Core/Src/UI.su ./Core/Src/funcs.d ./Core/Src/funcs.o ./Core/Src/funcs.su ./Core/Src/main.d ./Core/Src/main.o ./Core/Src/main.su ./Core/Src/stm32f4xx_hal_msp.d ./Core/Src/stm32f4xx_hal_msp.o ./Core/Src/stm32f4xx_hal_msp.su ./Core/Src/stm32f4xx_it.d ./Core/Src/stm32f4xx_it.o ./Core/Src/stm32f4xx_it.su ./Core/Src/syscalls.d ./Core/Src/syscalls.o ./Core/Src/syscalls.su ./Core/Src/sysmem.d ./Core/Src/sysmem.o ./Core/Src/sysmem.su ./Core/Src/system_stm32f4xx.d ./Core/Src/system_stm32f4xx.o ./Core/Src/system_stm32f4xx.su
 
 .PHONY: clean-Core-2f-Src
 

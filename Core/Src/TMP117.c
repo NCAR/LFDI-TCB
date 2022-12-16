@@ -113,16 +113,6 @@ void TMP117_GetTemperature(struct sTMP117* s)
   s->LastTemperature = s->Temperature[s->Index];
   s->Index++;
   //If we finally have enough Temperatures to average, set the Ready flag
-  TMP117_GetAverageTemperature(s);
-
-}
-
-
-//@brief Get the average temperature from the TMP117
-//@param s Pointer to the structure to get the average temperature from
-//@return The average temperature
-void TMP117_GetAverageTemperature(struct sTMP117* s)
-{
   //if we have engough samples, set the flags
   if (s->Index >= s->SamplesInAverage)
   {
@@ -133,10 +123,14 @@ void TMP117_GetAverageTemperature(struct sTMP117* s)
   //average the Temperatures
   if (s->Ready)
   {
-    for (i=0;i<(s->SamplesInAverage); i++)
+    for (int i=0;i<(s->SamplesInAverage); i++)
     {
       t += s->Temperature[i];
     }
     s->Average = t / s->SamplesInAverage;
   }
+
+
 }
+
+

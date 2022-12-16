@@ -10,6 +10,10 @@
 #include "usbd_cdc_if.h"
 #include "defs.h"
 #include <math.h>
+#include "stm32f4xx_hal.h"
+#include <stdint.h>
+#include <stdio.h>
+#include "core_cm4.h"
 
 // found this online
 int parse_comma_delimited_str(char *string, char **fields, int max_fields)
