@@ -81,6 +81,7 @@ static void MX_TIM2_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+//This Intterupot is called every .25ms
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   // Check which version of the timer triggered this callback and toggle LED
@@ -111,7 +112,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-	for (int i = 0; i < 8; i++){
+	for (int i = 0; i < 6; i++){
 		DAC_Channels[i].DAC_number = i;
 	}
   /* USER CODE END 1 */
