@@ -107,8 +107,8 @@ extern uint8_t W2;
 	void Get_DAC_Value(struct sDAC* s, uint8_t DAC_Num, uint16_t* val);
 	void Get_DAC_Zero(struct sDAC* s, uint8_t DAC_Num, uint16_t* val);
 	void Get_DAC_Gain(struct sDAC* s, uint8_t DAC_Num, uint16_t* val);	
-	void Set_Voltage_Peak_to_Peak(struct sDAC* sDAC, struct sDAC_Channel* sChan, float* voltage);
-	
+	void Set_Voltage_Peak_to_Peak(struct sDAC* sDAC, uint8_t Channel_Number, float* voltage);
+
 
 
 //private:
@@ -120,16 +120,16 @@ extern uint8_t W2;
 	void Send_Command(struct sDAC* s, uint8_t* Command);
 	void Recieve_Data(struct sDAC* s, uint8_t* Data);
 	void Test_Config_Register(struct sDAC* s);
-	void Set_nWakeUp_high(bool HIGH);
-	bool Get_nWakeUp();
-	void Set_nLDAC_high(bool HIGH);
-	bool Get_nLDAC();
-	void Set_nCLR_high(bool HIGH);
-	bool Get_nCLR();
-	void Set_nRST_high(bool HIGH);
-	bool Get_nRST();
-	void Set_nCS_high(bool HIGH);
-	bool Get_nCS();
+void Set_nWakeUp_high(bool HIGH);
+bool Get_nWakeUp();
+void Set_nLDAC_high(bool HIGH);
+bool Get_nLDAC();
+void Set_nCLR_high(bool HIGH);
+bool Get_nCLR();
+void Set_nRST_high(bool HIGH);
+bool Get_nRST();
+void Set_nCS_high(bool HIGH);
+bool Get_nCS();
 	void Hardware_Reset(struct sDAC* s);
 	void Syncronous_Update();
 	void Setup_DAC(struct sDAC* s);

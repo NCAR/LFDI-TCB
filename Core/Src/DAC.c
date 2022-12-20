@@ -61,6 +61,7 @@ float REFERENCE_VOLTAGE = 3;
 //
 void DAC_Initialize(struct sDAC* s){
 	Set_Config(s);
+	Set_Max_Peak_To_Peak_Voltage(s, 0);
 
 }
 //@brief: This function will set a configuration value to the configuration register
@@ -523,13 +524,13 @@ void Set_Max_Peak_To_Peak_Voltage(struct sDAC* s, bool Gain){
 //@brief: This function sets the upper and lower bounds of a DAC Channel
 //@param: s: The DAC Channel to set the bounds of
 //@param: voltage: The voltage to set the bounds to
-void Set_Voltage_Peak_to_Peak(struct sDAC* sDAC, struct sDAC_Channel* sChan, float* voltage){
+void Set_Voltage_Peak_to_Peak(struct sDAC* sDAC, uint8_t Channel_Number, float* voltage){
 	//The max Voltage Peak to Peak is 22.4V so we need to scale the voltage to fit in 16 bits
 	//Find the upper and lower bounds of the voltage with Zero Bias
 	//Divide the voltage by the max voltage to get a percentage and cast to a 16 bit int
 	float percentage = (*voltage/(float)sDAC->max_peak2peak)/2;
-	sChan->upper_bound = 0xFFFF/2 + percentage*0xFFFF;
-	sChan->lower_bound = 0xFFFF/2 - percentage*0xFFFF;
+	sDAC->DAC_Channels[Channel_Number].upper_bound = 0xFFFF/2 + percentage*0xFFFF;
+	sDAC->DAC_Channels[Channel_Number].lower_bound = 0xFFFF/2 - percentage*0xFFFF;
 	return;
 
 }

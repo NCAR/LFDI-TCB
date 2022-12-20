@@ -12,6 +12,10 @@
 
 uint8_t UI_Controller = 9;
 
+
+//Get the User Input and process it
+//@param Controller: pointer to the controller struct
+//@param buffer: pointer to the buffer
 void ProcessUserInput(struct sController* Controller, uint8_t* buffer)
 {
   uint16_t i = 0;
@@ -96,21 +100,21 @@ void ProcessUserInput(struct sController* Controller, uint8_t* buffer)
     return;
   }
 
-
+  //Print the Status all the Controllers
   if ((strcmp((char*) buffer, "u") == 0) || (strcmp((char*) buffer, "/") == 0))
   {
     for (i=0; i<4; i++)
       ShowAll(&Controller[i], true);
     return;
   }
-
+  //Print the Status all the Controllers in non readable format
   if (strcmp((char*) buffer, "r") == 0)
   {
     for (i=0; i<4; i++)
       ShowAll(&Controller[i], false);
     return;
   }
-
+  //Save the Configuration of a controller
   if (strcmp((char*) buffer, "s") == 0)
   {
     Controller_SaveConfig(Controller);
@@ -319,6 +323,7 @@ void ProcessUserInput(struct sController* Controller, uint8_t* buffer)
   return;
 }
 
+//Show the Configuration of a Controller
 void ShowControllerConfig(struct sController* Controller)
 {
   char s1[12];
@@ -350,6 +355,8 @@ void ShowControllerConfig(struct sController* Controller)
     USBSendString("  DISABLED\n");
 }
 
+
+//Show an individual sensor
 void ShowSensor(struct sController* Controller)
 {
   char buffer[250];
@@ -383,6 +390,8 @@ void ShowSensor(struct sController* Controller)
   }
 }
 
+
+//Show the Effort of a Controller
 void ShowEffort(struct sController* Controller)
 {
   char buffer[250];
@@ -398,6 +407,10 @@ void ShowEffort(struct sController* Controller)
 
 }
 
+//Show the Status of a Controller
+//@brief Show the Status of a Controller
+//@param Controller The Controller to show
+//@param readable If true, show the status in human readable form
 void ShowAll(struct sController* Controller, bool readable)
 {
     uint32_t ADCVal = 0;
@@ -465,6 +478,8 @@ void ShowAll(struct sController* Controller, bool readable)
     }
 }
 
+
+//Prints the header for the raw data
 void ShowRawHeader(void)
 {
   static char buffer[250];
@@ -473,6 +488,8 @@ void ShowRawHeader(void)
 //  HAL_Delay(1); // don't butcher our buffer before we're done with it
 }
 
+
+//Formats the Float to fit into the Temperature Display
 void FormatTemperature(char* buffer, double temp)
 {
   if (temp > -100)
