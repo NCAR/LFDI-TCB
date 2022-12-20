@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "dac_unit_test.h": "c"
+        "dac_unit_test.h": "c",
+        "tuningcontrolboard.h": "c"
     }
 }

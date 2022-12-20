@@ -41,13 +41,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-  //Create Structs for Channels 0-7
 
-  //Create an array of structs for the channels
-  struct sDAC DAC8718;
-  //initalize the DAC_Numbers for each struct
-
-   
   
 /* USER CODE END PTD */
 
@@ -80,10 +74,10 @@ volatile bool DoCalculatePWM = false;
 
 // we keep our own local copy of these
 // we put this here for quick interrupt access
-volatile uint16_t HeaterTick[4] = {0};
-volatile uint16_t HeaterSubtick[4] = {0};
-volatile uint16_t HeaterFrequency[4] = {200,200,200,200};
-volatile uint8_t HeaterDwell[4] = {100, 100, 100, 100};
+volatile uint16_t HeaterTick = 0;
+volatile uint16_t HeaterSubtick = 0;
+volatile uint16_t HeaterFrequency = 200;
+volatile uint8_t HeaterDwell = 100;
 
 volatile uint8_t Ticks_TMP117 = 0;
 volatile uint8_t Ticks_CalculatePWM = 0;
@@ -94,6 +88,7 @@ volatile uint8_t ADCSampleNumber = 0;
 volatile uint32_t ADCChannelSamples[4][8] = {0};
 volatile uint16_t ADCTick = 0;
 //End Damons Code-----------------------------------
+struct sTuningControlBoard TCB;
 
 struct sStringFIFO USBFIFO;
 /* USER CODE END PV */
@@ -113,20 +108,21 @@ static void MX_SDIO_SD_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 //This Intterupot is called every .25ms Will Toggle the State of the Dac Channels
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
-{
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
   // Check which version of the timer triggered this callback and toggle LED
   if (htim == &htim2 )
   {
     //Syncronous Update of the DACs
     for (int i = 0; i < 6; i++){
-      if(DAC8718.DAC_Channels[i].enabled){
-        if(DAC8718.DAC_Channels[i].state_high){
-          Set_DAC_Value(&DAC8718, DAC8718.DAC_Channels[i].DAC_number, DAC8718.DAC_Channels[i].lower_bound);
-          DAC8718.DAC_Channels[i].state_high = false;
+      if(TCB.DAC8718.DAC_Channels[i].enabled){
+        if(TCB.DAC8718.DAC_Channels[i].state_high){
+
+          Set_DAC_Value(&TCB.DAC8718, TCB.DAC8718.DAC_Channels[i].DAC_number, TCB.DAC8718.DAC_Channels[i].lower_bound);
+          TCB.DAC8718.DAC_Channels[i].state_high = false;
         }else{
-          Set_DAC_Value(&DAC8718, DAC8718.DAC_Channels[i].DAC_number, DAC8718.DAC_Channels[i].upper_bound);
-          DAC8718.DAC_Channels[i].state_high = true;
+          Set_DAC_Value(&TCB.DAC8718, TCB.DAC8718.DAC_Channels[i].DAC_number, TCB.DAC8718.DAC_Channels[i].upper_bound);
+          TCB.DAC8718.DAC_Channels[i].state_high = true;
+
         }
       }
     
@@ -138,72 +134,24 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 //--------------------This is from Damons Code-----------------------
   uint8_t i;
-  if (htim->Instance == htim2.Instance)
+  if (htim->Instance == htim3.Instance)
   {
-    for (i=0; i<4; i++)
-    {
-      HeaterSubtick[i] += HeaterFrequency[i];
-      if (HeaterSubtick[i] > 1000)
-      {
-        HeaterTick[i] = (HeaterTick[i] + 1) % 200;
-        HeaterSubtick[i] = 0;
-      }
-    }
-
-    for (i=0; i<4; i++)
-      if ((HeaterTick[i] > HeaterDwell[i])
-        && (HeaterTick[i] < (200 - HeaterDwell[i])))
-        Controller_SetHeater(i, true);
-      else
-        Controller_SetHeater(i, false);
-
-    ADCTick++;
-    if (ADCTick >= 2000)
-    {
-      ADCTick = 0;
-      ADC_ChannelConfTypeDef sConfig = {0};
-      ADCChannel = (ADCChannel + 1);
-      if (ADCChannel >= 4)
-      {
-        ADCChannel = 0;
-        ADCSampleNumber = (ADCSampleNumber + 1) % 8;
-      }
-
-      switch (ADCChannel)
-      {
-        case 0:
-          sConfig.Channel = ADC_CHANNEL_1; // not 4  this changes C2, what is going on??
-          break;
-        case 1:
-          sConfig.Channel = ADC_CHANNEL_3;
-          break;
-        case 2:
-          sConfig.Channel = ADC_CHANNEL_5;
-          break;
-        case 3:
-          sConfig.Channel = ADC_CHANNEL_7;
-          break;
-        default:
-          sConfig.Channel = ADC_CHANNEL_1;
-          break;
-      }
-      sConfig.Rank = ADC_REGULAR_RANK_1;
-      sConfig.SamplingTime = ADC_SAMPLETIME_4CYCLES;
-      if (HAL_ADC_ConfigChannel(&hadc, &sConfig) != HAL_OK)
-      {
-        Error_Handler();
-      }
-    }
-    // do an ADC conversion in the middle
-    if (ADCTick == 1000)
-    {
-      HAL_ADC_Start(&hadc);
-      HAL_ADC_PollForConversion(&hadc, 1); // this might take a microsecond
-      ADCChannelSamples[ADCChannel][ADCSampleNumber] = HAL_ADC_GetValue(&hadc);
+    HeaterSubtick += HeaterFrequency;
+    if (HeaterSubtick > 1000){
+        HeaterTick = (HeaterTick + 1) % 200;
+        HeaterSubtick = 0;
     }
   }
 
-  if (htim->Instance == htim3.Instance)
+  if ((HeaterTick > HeaterDwell)&& (HeaterTick < (200 - HeaterDwell))){
+        Controller_SetHeater(i, true);
+  }else{
+        Controller_SetHeater(i, false);
+  }
+
+  //Removed ADC stuff
+
+  if (htim->Instance == htim4.Instance)
   {
     ClockTick = (ClockTick + 1) % 100;
     // this should be after the ClockTick increment
@@ -236,16 +184,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-	for (int i = 0; i < 6; i++){
-		DAC8718.DAC_Channels[i].DAC_number = i;
-		DAC8718.DAC_Channels[i].upper_bound = 0xFFFF;
-		DAC8718.DAC_Channels[i].lower_bound = 0x0000;
-		DAC8718.DAC_Channels[i].enabled = true;
-	}
+
 
   //This is from Damons Code will probably need to be the TCB that is being initalized here --------------------------------------
-  struct sController Controller[4];
-  uint8_t i;
+
   uint8_t buffer[50];
   //------------------------------------------------------------------------------------------------
   /* USER CODE END 1 */
@@ -257,15 +199,11 @@ int main(void)
 
   /* USER CODE BEGIN Init */
   
-  //----------Damon's Code----------------------
-  Controller_InitStruct(&Controller[0], 1);
-  Controller_InitStruct(&Controller[1], 2);
-  Controller_InitStruct(&Controller[2], 3);
-  Controller_InitStruct(&Controller[3], 4);
-
+  //This Should Initialize the TCB 7 TMP117s and the DAC8718
+  //New Code
+  TCB_Init(&TCB);
   StringFIFOInit(&USBFIFO);
 
-  //----------End Damon's Code----------------------
 
 
 
@@ -292,53 +230,28 @@ int main(void)
   //MX_SDIO_SD_Init();
   /* USER CODE BEGIN 2 */
 
-  //-----initalize the The uS timer
-   InitDWTTimer(); // system clock timer for creating us delays for onewire
-
   HAL_Delay(500);
   printf("-- REBOOT --\n");
 
-  //---------------------------------------------
-  
-  DAC8718.spi = &hspi4;
-  DAC_Initialize(&DAC8718);
-
-  //Initialize the Structure of the TCB
-  struct sTuningControlBoard TCB;
  // HAL_TIM_Base_Start_IT(&htim2);
-  struct sTMP117 Temp1;
-  struct sTMP117 Temp2;
-  TMP117_InitStruct(&Temp1, &hi2c1, 0x00);
-  TMP117_Configure(&Temp1);
-  TMP117_GetTemperature(&Temp1);
-  //USB not working
-  printf("Hello");
-  //Print The Temperature
-  char temp[12];
-  //Format Not working
-  FormatTemperature(temp, Temp1.LastTemperature);
-  printf("Current Temp1 is %8s",temp);
-
-//initalize a TMP117
-
+  
+  
 
   //From Damons Code --------------------------------------
 
 // if you rearrange the PID.CONFIG struct, you should force rewriting defaults
   // over the EEPROM on next startup. This will *probably* be caught by checking
   // the address of the last controller rather than the first.
-
-  if (!(Controller[3].Sensor.Address & 0b1001000)) // if the stored address is not valid, we probably have invalid data.
+  //Welcome to OOP hell
+  if (!(TCB.Controller.Sensor.Address & 0b1001000)) // if the stored address is not valid, we probably have invalid data.
   {
     printf("The configuration is invalid. Rewriting defaults.");
-    Controller_WipeConfig(Controller);
   }
 
-  for (i=0; i<4; i++)
-    TMP117_Configure(&Controller[i].Sensor);
+  TMP117_Configure(&TCB.Controller.Sensor);
 
-  HAL_TIM_Base_Start_IT(&htim2); // Heater Timer
-  HAL_TIM_Base_Start_IT(&htim3); // Main Timer
+  HAL_TIM_Base_Start_IT(&htim3); // Heater Timer
+  HAL_TIM_Base_Start_IT(&htim4); // Main Timer
 
 //End Damons Code --------------------------------------
 
@@ -357,19 +270,15 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 	  printf("Hello\r\n");
-
-
-    
-	  printf("Current Temp1 is %8s",temp);
 	  
     //Cycle through the DAC channels and set them to the opposite state and increase and decrease the voltage
-    for (voltage = 0; voltage < DAC8718.max_peak2peak; voltage += 0.1){
+    for (voltage = 0; voltage < TCB.DAC8718.max_peak2peak; voltage += 0.1){
 		  for(uint8_t j = 0; j < 3; j++){
-			  Set_Voltage_Peak_to_Peak(&DAC8718, j, &voltage);
+			  Set_Voltage_Peak_to_Peak(&TCB.DAC8718, j, &voltage);
 		  }
-		  voltage2 = DAC8718.max_peak2peak - voltage;
+		  voltage2 = TCB.DAC8718.max_peak2peak - voltage;
 		  for(uint8_t j = 3; j < 6; j++){
-			  Set_Voltage_Peak_to_Peak(&DAC8718, j, &voltage2);
+			  Set_Voltage_Peak_to_Peak(&TCB.DAC8718, j, &voltage2);
 		  }
 		  //HAL_Delay(100);
 	  }
@@ -381,21 +290,18 @@ int main(void)
 
     //-------- Damons Code ----------------------
     // we keep a global copy of this for the timer interrupt
-    for (i=0; i<4; i++)
-      HeaterFrequency[i] = Controller[i].PID.Config.Frequency;
+    HeaterFrequency = TCB.Controller.PID.Config.Frequency;
 
-    if (Controller[0].Sensor.Errors > 10)
-      MX_I2C2_Init();
+    if (TCB.Controller.Sensor.Errors > 10)
+      MX_I2C1_Init();
 
     if (DoSampleTMP117)
     {
       DoSampleTMP117 = false;
-      for (i=0; i<4; i++)
-      {
-        if (Controller[i].Sensor.Configured)
-          TMP117_GetTemperature(&Controller[i].Sensor);
-        else
-          TMP117_Configure(&Controller[i].Sensor);
+      if (TCB.Controller.Sensor.Configured){
+          TMP117_GetTemperature(&TCB.Controller.Sensor);
+      }else{
+          TMP117_Configure(&TCB.Controller.Sensor);
       }
     }
 
@@ -403,17 +309,13 @@ int main(void)
     if (DoCalculatePWM)
     {
       DoCalculatePWM = false;
-      for (i=0; i<4; i++)
-        Controller_Step(&Controller[i]);
+      Controller_Step(&TCB.Controller);
     }
 
     if (StringFIFORemove(&USBFIFO, buffer) == 0)
     {
-      ProcessUserInput(Controller, buffer);
+      ProcessUserInput(&TCB.Controller, buffer);
     }
-
-   
-    //-------- End Damons Code ----------------------
 
   }
   /* USER CODE END 3 */

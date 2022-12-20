@@ -13,7 +13,7 @@
 #include "PID.h"
 #include "DAC.h"
 
-extern volatile uint8_t HeaterDwell[4];
+extern volatile uint8_t HeaterDwell;
 
 struct sController
 {
@@ -22,7 +22,7 @@ struct sController
   struct sPID PID;
 };
 
-void Controller_InitStruct(struct sController* s, uint8_t heater);
+void Controller_InitStruct(struct sController* s, struct sTMP117 *t,uint8_t heater);
 void Controller_SetHeater(uint8_t heater, bool state);
 void Controller_Step(struct sController* C);
 

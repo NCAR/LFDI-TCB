@@ -5,20 +5,17 @@
  *      Author: damonb
  */
 
-#include "controller.h"
+#include "Controller.h"
 
 
 
 
-void Controller_InitStruct(struct sController* s, uint8_t heater)
-{
-  struct sTMP117 TMP117;
-  TMP117_InitStruct(&TMP117, &hi2c2, 0);
+void Controller_InitStruct(struct sController* s, struct sTMP117 *t,uint8_t heater){
   struct sPID PID;
   PID_InitStruct(&PID);
 
   s->Heater = heater;
-  s->Sensor = TMP117;
+  s->Sensor = *t;
   s->PID = PID;
 }
 
@@ -42,10 +39,7 @@ void Controller_SetHeater(uint8_t heater, bool state)
 void Controller_WipeConfig(struct sController* Controller)
 {
 
-  Controller_InitStruct(&Controller[0], 1);
-  Controller_InitStruct(&Controller[1], 2);
-  Controller_InitStruct(&Controller[2], 3);
-  Controller_InitStruct(&Controller[3], 4);
+  Controller_InitStruct(Controller, &Controller->Sensor, 0);
   Controller_SaveConfig(Controller);
 }
 
@@ -57,12 +51,12 @@ void Controller_Step(struct sController* Controller)
   float temp, eff;
   if (Controller->PID.Config.Enabled == false)
   {
-    HeaterDwell[i] = 100; // duty cycle of 0, disabled
+    HeaterDwell = 100; // duty cycle of 0, disabled
     return;
   }
   if (Controller->Sensor.State != TMP117_STATE_VALIDTEMP)
   {
-    HeaterDwell[i] = 100; // duty cycle of 0, disabled
+    HeaterDwell = 100; // duty cycle of 0, disabled
     return;
   }
 
@@ -74,5 +68,5 @@ void Controller_Step(struct sController* Controller)
   // For a 40% duty cycle (effort), dwell becomes 60, making the heater off for 60,
   // on for 80, and off for another 60. This weird design causes heaters with
   // different effort values to turn on and off at different times.
-  HeaterDwell[i] = 100 * (1 - eff);
+  HeaterDwell = 100 * (1 - eff);
 }

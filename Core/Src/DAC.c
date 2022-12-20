@@ -59,9 +59,19 @@ float REFERENCE_VOLTAGE = 3;
 
 
 //
-void DAC_Initialize(struct sDAC* s){
+void DAC_InitStruct(struct sDAC* s, SPI_HandleTypeDef* hspi){
+	
+	s->spi = hspi;
 	Set_Config(s);
 	Set_Max_Peak_To_Peak_Voltage(s, 0);
+	/* USER CODE BEGIN 1 */
+	//Set all DAC Channels Up. Should probably be put into TCB init
+	for (int i = 0; i < 6; i++){
+		s->DAC_Channels[i].DAC_number = i;
+		s->DAC_Channels[i].upper_bound = 0xFFFF;
+		s->DAC_Channels[i].lower_bound = 0x0000;
+		s->DAC_Channels[i].enabled = true;
+	}
 
 }
 //@brief: This function will set a configuration value to the configuration register

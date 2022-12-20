@@ -1,18 +1,18 @@
 /*
- * TunungControlBoard.h
+ * TuningControlBoard.h
  *
  *  Created on: Dec 16, 2022
  *      Author: mitchj
  */
 
-#ifndef INC_CONTROLLER_H_
-#define INC_CONTROLLER_H_
+#ifndef INC_TUNINGCONTROLBOARD_H_
+#define INC_TUNINGCONTROLBOARD_H_
 
 #include "defs.h"
 #include "TMP117.h"
 #include "PID.h"
 #include "DAC.h"
-#include "Heater_Controller.h"
+#include "Controller.h"
 #include "Controller.h"
 
 
@@ -23,12 +23,12 @@
 struct sTuningControlBoard
 {
   struct sController Controller;
-  struct sDAC DAC;
+  struct sDAC DAC8718;
   struct sTMP117 Sensor[7];
 
 };
 
-void TCB_InitStruct(struct sController* s, struct sTMP117** Sensor, struct sDAC* DAC);
+void TCB_InitStruct(struct sTuningControlBoard* s, I2C_HandleTypeDef* hi2c, SPI_HandleTypeDef* hspi);
 
 
 #endif /* INC_TUNINGCONTROLBOARD_H_ */

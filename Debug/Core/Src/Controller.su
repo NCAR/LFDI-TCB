@@ -1,0 +1,4 @@
+../Core/Src/Controller.c:13:6:Controller_InitStruct	1096	static
+../Core/Src/Controller.c:24:6:Controller_SetHeater	24	static
+../Core/Src/Controller.c:39:6:Controller_WipeConfig	16	static
+../Core/Src/Controller.c:48:6:Controller_Step	32	static
