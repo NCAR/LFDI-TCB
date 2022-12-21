@@ -98,6 +98,7 @@ extern uint8_t W2;
 
 //public:
 	void DAC_Initialize(struct sDAC* s);
+	void DAC_InitStruct(struct sDAC* s, SPI_HandleTypeDef* hspi);
 	void DAC_Reset(struct sDAC* s);
 	void Set_DAC_Max(struct sDAC* s , uint8_t DAC_Num);
 	void Set_DAC_Min(struct sDAC* s, uint8_t DAC_Num);
@@ -134,7 +135,7 @@ bool Get_nCS();
 	void Syncronous_Update();
 	void Setup_DAC(struct sDAC* s);
 	void Read_All_Registers(struct sDAC* s);
-
+	void Set_Max_Peak_To_Peak_Voltage(struct sDAC* s, bool Gain);
 
 
 #endif

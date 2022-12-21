@@ -6,6 +6,9 @@
  */
 
 #include "TuningControlBoard.h"
+#include "Controller.h"
+#include "TMP117.h"
+#include "DAC.h"
 
 
 
@@ -14,7 +17,7 @@ void TCB_InitStruct(struct sTuningControlBoard* s, I2C_HandleTypeDef* hi2c, SPI_
 
     //For each of the Seven Temperature sensors initialize the struct
     for(int i = 0; i < 4; i++){
-    	TMP117_InitStruct(&s->Sensor[i], hi2c, i);
+        TMP117_InitStruct(&s->Sensor[i], hi2c, i);
     }   
     Controller_InitStruct(&s->Controller,&s->Sensor[0], 0);
     DAC_InitStruct(&s->DAC8718, hspi);

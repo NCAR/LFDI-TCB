@@ -90,12 +90,12 @@ void ProcessUserInput(struct sController* Controller, uint8_t* buffer)
     else
     {
       /*
-      ShowSensor(&Controller[UI_Controller]);
-      ShowControllerConfig(&Controller[UI_Controller]);
-      ShowEffort(&Controller[UI_Controller]);
+      ShowSensor(&TCB.Controller);
+      ShowControllerConfig(&TCB.Controller);
+      ShowEffort(&TCB.Controller);
       USBSendString("\n");
       */
-      ShowAll(&Controller[UI_Controller], true);
+      ShowAll(Controller, true);
     }
     return;
   }
@@ -104,14 +104,14 @@ void ProcessUserInput(struct sController* Controller, uint8_t* buffer)
   if ((strcmp((char*) buffer, "u") == 0) || (strcmp((char*) buffer, "/") == 0))
   {
     for (i=0; i<4; i++)
-      ShowAll(&Controller[i], true);
+      ShowAll(Controller, true);
     return;
   }
   //Print the Status all the Controllers in non readable format
   if (strcmp((char*) buffer, "r") == 0)
   {
     for (i=0; i<4; i++)
-      ShowAll(&Controller[i], false);
+      ShowAll(Controller, false);
     return;
   }
   //Save the Configuration of a controller
@@ -143,28 +143,28 @@ void ProcessUserInput(struct sController* Controller, uint8_t* buffer)
   if ((strcmp((char*) buffer, "1") == 0) || (strcmp((char*) buffer, "c1") == 0))
   {
     UI_Controller = 0;
-    ShowControllerConfig(&Controller[UI_Controller]);
+    ShowControllerConfig(Controller);
     return;
   }
 
   if ((strcmp((char*) buffer, "2") == 0) || (strcmp((char*) buffer, "c2") == 0))
   {
     UI_Controller = 1;
-    ShowControllerConfig(&Controller[UI_Controller]);
+    ShowControllerConfig(Controller);
     return;
   }
 
   if ((strcmp((char*) buffer, "3") == 0) || (strcmp((char*) buffer, "c3") == 0))
   {
     UI_Controller = 2;
-    ShowControllerConfig(&Controller[UI_Controller]);
+    ShowControllerConfig(Controller);
     return;
   }
 
   if ((strcmp((char*) buffer, "4") == 0) || (strcmp((char*) buffer, "c4") == 0))
   {
     UI_Controller = 3;
-    ShowControllerConfig(&Controller[UI_Controller]);
+    ShowControllerConfig(Controller);
     return;
   }
 
@@ -178,14 +178,14 @@ void ProcessUserInput(struct sController* Controller, uint8_t* buffer)
   if (strcmp((char*) buffer, "e") == 0)
   {
     USBSendString("Controller enabled.\n");
-    Controller[UI_Controller].PID.Config.Enabled = true;
+    Controller->PID.Config.Enabled = true;
     return;
   }
 
   if (strcmp((char*) buffer, "d") == 0)
   {
     USBSendString("Controller disabled.\n");
-    Controller[UI_Controller].PID.Config.Enabled = false;
+    Controller->PID.Config.Enabled = false;
     return;
   }
 
@@ -204,22 +204,22 @@ void ProcessUserInput(struct sController* Controller, uint8_t* buffer)
         {
           case 0:
             USBSendString("Address set to 0b 10 01 00 0x.\n");
-            Controller[UI_Controller].Sensor.Address = 0b1001000;
+            Controller->Sensor.Address = 0b1001000;
             return;
             break;
           case 10:
             USBSendString("Address set to 0b 10 01 01 0x.\n");
-            Controller[UI_Controller].Sensor.Address = 0b1001010;
+            Controller->Sensor.Address = 0b1001010;
             return;
             break;
           case 1:
             USBSendString("Address set to 0b 10 01 00 1x.\n");
-            Controller[UI_Controller].Sensor.Address = 0b1001001;
+            Controller->Sensor.Address = 0b1001001;
             return;
             break;
           case 11:
             USBSendString("Address set to 0b 10 01 01 1x.\n");
-            Controller[UI_Controller].Sensor.Address = 0b1001011;
+            Controller->Sensor.Address = 0b1001011;
             return;
             break;
           default:
@@ -228,12 +228,12 @@ void ProcessUserInput(struct sController* Controller, uint8_t* buffer)
             break;
         }
         // reset our history since we're changing temperature sensors
-        Controller[UI_Controller].Sensor.Ready = false;
-        Controller[UI_Controller].Sensor.Average = -273;
-        Controller[UI_Controller].Sensor.LastTemperature = -273;
-        Controller[UI_Controller].Sensor.Configured = false;
-        Controller[UI_Controller].Sensor.State = 0;
-        Controller[UI_Controller].PID.IntegratorCount = 0;
+        Controller->Sensor.Ready = false;
+        Controller->Sensor.Average = -273;
+        Controller->Sensor.LastTemperature = -273;
+        Controller->Sensor.Configured = false;
+        Controller->Sensor.State = 0;
+        Controller->PID.IntegratorCount = 0;
         break;
       case 'p':
         if (f < 0)
@@ -242,7 +242,7 @@ void ProcessUserInput(struct sController* Controller, uint8_t* buffer)
         {
           snprintf(output, 200, "kp set to %f.\n", f);
           USBSendString(output);
-          Controller[UI_Controller].PID.Config.Kp = f;
+          Controller->PID.Config.Kp = f;
         }
         return;
         break;
@@ -254,7 +254,7 @@ void ProcessUserInput(struct sController* Controller, uint8_t* buffer)
         {
           snprintf(output, 200, "ki set to %f.\n", f);
           USBSendString(output);
-          Controller[UI_Controller].PID.Config.Ki = f;
+          Controller->PID.Config.Ki = f;
         }
         return;
         break;
@@ -266,7 +266,7 @@ void ProcessUserInput(struct sController* Controller, uint8_t* buffer)
         {
           snprintf(output, 200, "kd set to %f.\n", f);
           USBSendString(output);
-          Controller[UI_Controller].PID.Config.Kd = f;
+          Controller->PID.Config.Kd = f;
         }
         return;
         break;
@@ -278,7 +278,7 @@ void ProcessUserInput(struct sController* Controller, uint8_t* buffer)
         {
           snprintf(output, 200, "Frequency set to %.0f (%.2f Hz).\n", f, f/40);
           USBSendString(output);
-          Controller[UI_Controller].PID.Config.Frequency = f;
+          Controller->PID.Config.Frequency = f;
         }
         return;
         break;
@@ -291,7 +291,7 @@ void ProcessUserInput(struct sController* Controller, uint8_t* buffer)
         {
           snprintf(output, 200, "Li set to %f.\n", f);
           USBSendString(output);
-          Controller[UI_Controller].PID.Config.Li = f;
+          Controller->PID.Config.Li = f;
         }
         return;
         break;
@@ -302,7 +302,7 @@ void ProcessUserInput(struct sController* Controller, uint8_t* buffer)
         {
           snprintf(output, 200, "History set to %u.\n", u);
           USBSendString(output);
-          Controller[UI_Controller].PID.Config.History = u;
+          Controller->PID.Config.History = u;
         }
         return;
         break;
@@ -310,7 +310,7 @@ void ProcessUserInput(struct sController* Controller, uint8_t* buffer)
       case 't':
         snprintf(output, 200, "Target temperature set to %f.\n", f);
         USBSendString(output);
-        Controller[UI_Controller].PID.Config.TargetP = f;
+        Controller->PID.Config.TargetP = f;
         return;
         break;
 
