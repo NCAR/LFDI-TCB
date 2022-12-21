@@ -40,7 +40,7 @@ void Controller_WipeConfig(struct sController* Controller)
 {
 
   Controller_InitStruct(Controller, &Controller->Sensor, 0);
-  Controller_SaveConfig(Controller);
+  printf("Cannot Save No EEPROM");
 }
 
 

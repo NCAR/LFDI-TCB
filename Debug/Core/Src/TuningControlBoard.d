@@ -30,8 +30,6 @@ Core/Src/TuningControlBoard.o: ../Core/Src/TuningControlBoard.c \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_i2c_ex.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr_ex.h \
- ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_sd.h \
- ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_sdmmc.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_spi.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h \
@@ -39,8 +37,7 @@ Core/Src/TuningControlBoard.o: ../Core/Src/TuningControlBoard.c \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_usb.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pcd_ex.h \
  ../Core/Inc/TMP117.h ../Core/Inc/PID.h ../Core/Inc/DAC.h \
- ../Core/Inc/funcs.h ../Core/Inc/Controller.h ../Core/Inc/Controller.h \
- ../Core/Inc/TMP117.h ../Core/Inc/DAC.h
+ ../Core/Inc/funcs.h ../Core/Inc/Controller.h
 ../Core/Inc/TuningControlBoard.h:
 ../Core/Inc/defs.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h:
@@ -73,8 +70,6 @@ Core/Src/TuningControlBoard.o: ../Core/Src/TuningControlBoard.c \
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_i2c_ex.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr_ex.h:
-../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_sd.h:
-../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_sdmmc.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_spi.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h:
@@ -86,6 +81,3 @@ Core/Src/TuningControlBoard.o: ../Core/Src/TuningControlBoard.c \
 ../Core/Inc/DAC.h:
 ../Core/Inc/funcs.h:
 ../Core/Inc/Controller.h:
-../Core/Inc/Controller.h:
-../Core/Inc/TMP117.h:
-../Core/Inc/DAC.h:

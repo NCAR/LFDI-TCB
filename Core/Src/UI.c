@@ -117,15 +117,14 @@ void ProcessUserInput(struct sController* Controller, uint8_t* buffer)
   //Save the Configuration of a controller
   if (strcmp((char*) buffer, "s") == 0)
   {
-    Controller_SaveConfig(Controller);
-    USBSendString("Configuration saved.\n");
+
+    USBSendString("Cannot Save, No EEPROM.\n");
     return;
   }
 
   if (strcmp((char*) buffer, "l") == 0)
   {
-    Controller_LoadConfig(Controller);
-    USBSendString("Configuration loaded.\n");
+    USBSendString("Cannot load Configuration, No EEPROM.\n");
     return;
   }
 
