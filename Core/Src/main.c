@@ -55,14 +55,11 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-ADC_HandleTypeDef hadc1;
-
 I2C_HandleTypeDef hi2c1;
 
 SPI_HandleTypeDef hspi4;
 
 TIM_HandleTypeDef htim2;
-TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim4;
 TIM_HandleTypeDef htim6;
 
@@ -97,11 +94,9 @@ struct sStringFIFO USBFIFO;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_ADC1_Init(void);
 static void MX_SPI4_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_TIM2_Init(void);
-static void MX_TIM3_Init(void);
 static void MX_TIM4_Init(void);
 static void MX_TIM6_Init(void);
 /* USER CODE BEGIN PFP */
@@ -128,11 +123,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
         }
       }
-    
-
-    }
+    }//End For
     Syncronous_Update();
-  }
+  }//End Timer 2
 
 
 //--------------------This is from Damons Code-----------------------
@@ -144,13 +137,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         HeaterTick = (HeaterTick + 1) % 200;
         HeaterSubtick = 0;
     }
-  }
+  }//End Timer 3
 
   if ((HeaterTick > HeaterDwell)&& (HeaterTick < (200 - HeaterDwell))){
         Controller_SetHeater(i, true);
   }else{
         Controller_SetHeater(i, false);
-  }
+  }//Dictates If heater is on or off
 
   //Removed ADC stuff
 
@@ -174,8 +167,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
     }
 
   }
-
-  //--------------------End Damons Code-----------------------
 }
 
 /* USER CODE END 0 */
@@ -187,12 +178,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
-
-  //This is from Damons Code will probably need to be the TCB that is being initalized here --------------------------------------
-
   uint8_t buffer[50];
-  //------------------------------------------------------------------------------------------------
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -202,13 +188,7 @@ int main(void)
 
   /* USER CODE BEGIN Init */
   
-  //This Should Initialize the TCB 7 TMP117s and the DAC8718
-  //New Code
-
   StringFIFOInit(&USBFIFO);
-
-
-
 
   /* USER CODE END Init */
 
@@ -225,12 +205,10 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_ADC1_Init();
   MX_SPI4_Init();
   MX_I2C1_Init();
   MX_TIM2_Init();
   MX_USB_DEVICE_Init();
-  MX_TIM3_Init();
   MX_TIM4_Init();
   MX_TIM6_Init();
   /* USER CODE BEGIN 2 */
@@ -242,7 +220,6 @@ int main(void)
   
   
 
-  //From Damons Code --------------------------------------
 
 // if you rearrange the PID.CONFIG struct, you should force rewriting defaults
   // over the EEPROM on next startup. This will *probably* be caught by checking
@@ -318,7 +295,6 @@ int main(void)
 
     if (StringFIFORemove(&USBFIFO, buffer) == 0)
     {
-    	printf("Got Inside");
       ProcessUserInput(&TCB.Controller, buffer);
     }
 
@@ -369,58 +345,6 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-}
-
-/**
-  * @brief ADC1 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_ADC1_Init(void)
-{
-
-  /* USER CODE BEGIN ADC1_Init 0 */
-
-  /* USER CODE END ADC1_Init 0 */
-
-  ADC_ChannelConfTypeDef sConfig = {0};
-
-  /* USER CODE BEGIN ADC1_Init 1 */
-
-  /* USER CODE END ADC1_Init 1 */
-
-  /** Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
-  */
-  hadc1.Instance = ADC1;
-  hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV2;
-  hadc1.Init.Resolution = ADC_RESOLUTION_12B;
-  hadc1.Init.ScanConvMode = DISABLE;
-  hadc1.Init.ContinuousConvMode = DISABLE;
-  hadc1.Init.DiscontinuousConvMode = DISABLE;
-  hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
-  hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
-  hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
-  hadc1.Init.NbrOfConversion = 1;
-  hadc1.Init.DMAContinuousRequests = DISABLE;
-  hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
-  if (HAL_ADC_Init(&hadc1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
-  */
-  sConfig.Channel = ADC_CHANNEL_14;
-  sConfig.Rank = 1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
-  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN ADC1_Init 2 */
-
-  /* USER CODE END ADC1_Init 2 */
-
 }
 
 /**
@@ -551,51 +475,6 @@ static void MX_TIM2_Init(void)
   /* USER CODE BEGIN TIM2_Init 2 */
 
   /* USER CODE END TIM2_Init 2 */
-
-}
-
-/**
-  * @brief TIM3 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_TIM3_Init(void)
-{
-
-  /* USER CODE BEGIN TIM3_Init 0 */
-
-  /* USER CODE END TIM3_Init 0 */
-
-  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
-  TIM_MasterConfigTypeDef sMasterConfig = {0};
-
-  /* USER CODE BEGIN TIM3_Init 1 */
-
-  /* USER CODE END TIM3_Init 1 */
-  htim3.Instance = TIM3;
-  htim3.Init.Prescaler = 1680;
-  htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 100;
-  htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
-  if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
-  if (HAL_TIM_ConfigClockSource(&htim3, &sClockSourceConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
-  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-  if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN TIM3_Init 2 */
-
-  /* USER CODE END TIM3_Init 2 */
 
 }
 
@@ -736,6 +615,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   GPIO_InitStruct.Alternate = GPIO_AF5_SPI1;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PC4 */
+  GPIO_InitStruct.Pin = GPIO_PIN_4;
+  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pin : Heater_Pin */
   GPIO_InitStruct.Pin = Heater_Pin;

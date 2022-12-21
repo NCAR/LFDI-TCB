@@ -459,13 +459,14 @@ void ShowAll(struct sController* Controller, bool readable)
     }
     else
     {
-      if (Controller->Heater == 1)
+      //if (Controller->Heater == 1){
         ShowRawHeader();
-      snprintf(buffer, 200, "C%u\t%5.2f\t%5.2f\t%5.2f\t% 7.1f\t% 7.1f\t% 7.1f\t% 7.1f\t%7.3f\t%8s\t%8s\t%8s\t%2s\t%03u\t%04u\t%s\t%s\n",
+      snprintf(buffer, 200, "C%u\t%5.2f\t%5.2f\t%5.2f\t%7.1f\t%7.1f\t%7.1f\t%7.1f\t%8s\t%8s\t%8s\t%2s\t%03u\t%04u\t%s\t%s\n",
           Controller->Heater, Controller->PID.Config.Kp, Controller->PID.Config.Kd, Controller->PID.Config.Ki,
           100 * Controller->PID.Ep, 100 * Controller->PID.Ed, 100 * Controller->PID.Ei, 100 * Controller->PID.Effort,
           last, average, target, address, Controller->PID.Config.History, Controller->PID.Config.Frequency, enabled, sensor);
       USBSendString(buffer);
+      //}
 
 //      HAL_Delay(1); // don't butcher our buffer before we're done with it
     }
@@ -476,7 +477,7 @@ void ShowAll(struct sController* Controller, bool readable)
 void ShowRawHeader(void)
 {
   static char buffer[250];
-  snprintf(buffer, 200,  "\tkp\tkd\tki\tep\ted\tei\teffort\ttemp\taverage\ttarget\ti2c\thist\tfreq\tenabled\tsensor\n");
+  snprintf(buffer, 200,  "Chan\t  kp\t  kd\t  ki\t    ep\t    ed\t    ei\t  effort temp\t         average          target        i2c\thist\tfreq\tenabled\t       sensor\n");
   USBSendString(buffer);
 //  HAL_Delay(1); // don't butcher our buffer before we're done with it
 }
