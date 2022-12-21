@@ -60,6 +60,7 @@ extern I2C_HandleTypeDef hi2c1;
 extern SPI_HandleTypeDef hspi4;
 extern TIM_HandleTypeDef htim2;
 extern TIM_HandleTypeDef htim4;
+extern TIM_HandleTypeDef htim6;
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
@@ -256,6 +257,20 @@ void I2C1_ER_IRQHandler(void)
   /* USER CODE BEGIN I2C1_ER_IRQn 1 */
 
   /* USER CODE END I2C1_ER_IRQn 1 */
+}
+
+/**
+  * @brief This function handles TIM6 global interrupt, DAC1 and DAC2 underrun error interrupts.
+  */
+void TIM6_DAC_IRQHandler(void)
+{
+  /* USER CODE BEGIN TIM6_DAC_IRQn 0 */
+
+  /* USER CODE END TIM6_DAC_IRQn 0 */
+  HAL_TIM_IRQHandler(&htim6);
+  /* USER CODE BEGIN TIM6_DAC_IRQn 1 */
+
+  /* USER CODE END TIM6_DAC_IRQn 1 */
 }
 
 /**

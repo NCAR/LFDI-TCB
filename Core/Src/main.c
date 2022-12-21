@@ -64,6 +64,7 @@ SPI_HandleTypeDef hspi4;
 TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim4;
+TIM_HandleTypeDef htim6;
 
 /* USER CODE BEGIN PV */
 
@@ -102,6 +103,7 @@ static void MX_I2C1_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_TIM4_Init(void);
+static void MX_TIM6_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -135,7 +137,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
 //--------------------This is from Damons Code-----------------------
   uint8_t i;
-  if (htim->Instance == htim3.Instance)
+  if (htim == &htim6)
   {
     HeaterSubtick += HeaterFrequency;
     if (HeaterSubtick > 1000){
@@ -152,7 +154,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
   //Removed ADC stuff
 
-  if (htim->Instance == htim4.Instance)
+  if (htim == &htim4)
   {
     ClockTick = (ClockTick + 1) % 100;
     // this should be after the ClockTick increment
@@ -230,6 +232,7 @@ int main(void)
   MX_USB_DEVICE_Init();
   MX_TIM3_Init();
   MX_TIM4_Init();
+  MX_TIM6_Init();
   /* USER CODE BEGIN 2 */
   TCB_InitStruct(&TCB, &hi2c1, &hspi4);
   HAL_Delay(500);
@@ -251,8 +254,8 @@ int main(void)
   }
 
   TMP117_Configure(&TCB.Controller.Sensor);
-
-  HAL_TIM_Base_Start_IT(&htim3); // Heater Timer
+  HAL_TIM_Base_Start_IT(&htim2); //DAC Timer
+  HAL_TIM_Base_Start_IT(&htim6); // Heater Timer
   HAL_TIM_Base_Start_IT(&htim4); // Main Timer
 
 //End Damons Code --------------------------------------
@@ -285,7 +288,6 @@ int main(void)
 		  //HAL_Delay(100);
 	  }
     //Set the heater to the opposite state its currently in
-    set_heater(!get_heater());
 	  
 
 
@@ -575,7 +577,7 @@ static void MX_TIM3_Init(void)
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim3.Init.Period = 100;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
   {
     Error_Handler();
@@ -620,7 +622,7 @@ static void MX_TIM4_Init(void)
   htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim4.Init.Period = 100;
   htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV4;
-  htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
   if (HAL_TIM_Base_Init(&htim4) != HAL_OK)
   {
     Error_Handler();
@@ -639,6 +641,44 @@ static void MX_TIM4_Init(void)
   /* USER CODE BEGIN TIM4_Init 2 */
 
   /* USER CODE END TIM4_Init 2 */
+
+}
+
+/**
+  * @brief TIM6 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM6_Init(void)
+{
+
+  /* USER CODE BEGIN TIM6_Init 0 */
+
+  /* USER CODE END TIM6_Init 0 */
+
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM6_Init 1 */
+
+  /* USER CODE END TIM6_Init 1 */
+  htim6.Instance = TIM6;
+  htim6.Init.Prescaler = 1680;
+  htim6.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim6.Init.Period = 100;
+  htim6.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  if (HAL_TIM_Base_Init(&htim6) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim6, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM6_Init 2 */
+
+  /* USER CODE END TIM6_Init 2 */
 
 }
 
