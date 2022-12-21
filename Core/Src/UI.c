@@ -61,7 +61,7 @@ void ProcessUserInput(struct sController* Controller, uint8_t* buffer)
 
   if ((strcmp((char*) buffer, "?") == 0) || (strcmp((char*) buffer, "help") == 0))
   {
-    USBSendString("\nQHC Firmware v1.3\n");
+    USBSendString("\nLFDI TCB Firmware v1.0\n");
     USBSendString("Commands can be upper or lower case. Variables can be set with an equals sign or space or nothing.\n");
     USBSendString("\"channel=1\", \"channel 1\", \"channel1\", \"c1\" are all treated the same.\n");
     USBSendString("\n");
@@ -103,15 +103,13 @@ void ProcessUserInput(struct sController* Controller, uint8_t* buffer)
   //Print the Status all the Controllers
   if ((strcmp((char*) buffer, "u") == 0) || (strcmp((char*) buffer, "/") == 0))
   {
-    for (i=0; i<4; i++)
-      ShowAll(Controller, true);
+    ShowAll(Controller, true);
     return;
   }
   //Print the Status all the Controllers in non readable format
   if (strcmp((char*) buffer, "r") == 0)
   {
-    for (i=0; i<4; i++)
-      ShowAll(Controller, false);
+    ShowAll(Controller, false);
     return;
   }
   //Save the Configuration of a controller
@@ -448,9 +446,6 @@ void ShowAll(struct sController* Controller, bool readable)
 
     static char buffer[250];
 
-    for (i=0; i<8; i++)
-      ADCVal += ADCChannelSamples[(Controller->Heater) - 1][i];
-
     if (readable)
     {
       snprintf(buffer, 200, "C%u: kp=%5.2f   ep=% 7.1f    temp=%8s  freq: %04u  %s\n", Controller->Heater, Controller->PID.Config.Kp, 100 * Controller->PID.Ep, last, Controller->PID.Config.Frequency, enabled);
@@ -459,17 +454,16 @@ void ShowAll(struct sController* Controller, bool readable)
       USBSendString(buffer);
       snprintf(buffer, 200,  "  : ki=%5.2f   ei=% 7.1f  target=%8s  history=%3u\n", Controller->PID.Config.Ki, 100 * Controller->PID.Ei, target, Controller->PID.Config.History);
       USBSendString(buffer);
-      snprintf(buffer, 200,  "  : li=%5.2f  eff=% 7.1f    curr=%7.3fA  sensor: %s\n\n", Controller->PID.Config.Li, 100 * Controller->PID.Effort, ADCVal / 8 / pow(2,12) * (3.3 / 0.1), sensor);
+      snprintf(buffer, 200,  "  : li=%5.2f  eff=% 7.1f  sensor: %s\n\n", Controller->PID.Config.Li, 100 * Controller->PID.Effort, sensor);
       USBSendString(buffer);
     }
     else
     {
       if (Controller->Heater == 1)
         ShowRawHeader();
-      snprintf(buffer, 200, "C%u %5.2f %5.2f %5.2f % 7.1f % 7.1f % 7.1f % 7.1f %7.3f %8s %8s %8s  %2s  %03u  %04u  %s  %s\n",
+      snprintf(buffer, 200, "C%u\t%5.2f\t%5.2f\t%5.2f\t% 7.1f\t% 7.1f\t% 7.1f\t% 7.1f\t%7.3f\t%8s\t%8s\t%8s\t%2s\t%03u\t%04u\t%s\t%s\n",
           Controller->Heater, Controller->PID.Config.Kp, Controller->PID.Config.Kd, Controller->PID.Config.Ki,
           100 * Controller->PID.Ep, 100 * Controller->PID.Ed, 100 * Controller->PID.Ei, 100 * Controller->PID.Effort,
-          ADCVal / 8 / pow(2,12) * (3.3 / 0.1),
           last, average, target, address, Controller->PID.Config.History, Controller->PID.Config.Frequency, enabled, sensor);
       USBSendString(buffer);
 
@@ -482,7 +476,7 @@ void ShowAll(struct sController* Controller, bool readable)
 void ShowRawHeader(void)
 {
   static char buffer[250];
-  snprintf(buffer, 200,  "      kp    kd    ki      ep      ed      ei  effort    curr     temp  average   target i2c hist  freq  enabled   sensor\n");
+  snprintf(buffer, 200,  "\tkp\tkd\tki\tep\ted\tei\teffort\ttemp\taverage\ttarget\ti2c\thist\tfreq\tenabled\tsensor\n");
   USBSendString(buffer);
 //  HAL_Delay(1); // don't butcher our buffer before we're done with it
 }
