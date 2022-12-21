@@ -28,8 +28,8 @@
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-#include "stmf4l1xx.h"
-#include "stm3f4xx_hal.h"
+#include "stm32f4xx.h"
+#include "stm32f4xx_hal.h"
 #include "usbd_def.h"
 
 /* USER CODE BEGIN INCLUDE */

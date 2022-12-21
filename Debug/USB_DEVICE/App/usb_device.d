@@ -46,7 +46,8 @@ USB_DEVICE/App/usb_device.o: ../USB_DEVICE/App/usb_device.c \
  ../USB_DEVICE/App/usbd_desc.h \
  ../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc/usbd_cdc.h \
  ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_ioreq.h \
- ../USB_DEVICE/App/usbd_cdc_if.h
+ ../USB_DEVICE/App/usbd_cdc_if.h ../Core/Inc/defs.h ../Core/Inc/TMP117.h \
+ ../Core/Inc/defs.h
 ../USB_DEVICE/App/usb_device.h:
 ../Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f4xx.h:
 ../Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f427xx.h:
@@ -96,3 +97,6 @@ USB_DEVICE/App/usb_device.o: ../USB_DEVICE/App/usb_device.c \
 ../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc/usbd_cdc.h:
 ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_ioreq.h:
 ../USB_DEVICE/App/usbd_cdc_if.h:
+../Core/Inc/defs.h:
+../Core/Inc/TMP117.h:
+../Core/Inc/defs.h:
