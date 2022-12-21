@@ -39,13 +39,13 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY, DEBUGGING, OCTETS
  17 .debug_macro  0002b538  00000000  00000000  000598b0  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_line   0002489b  00000000  00000000  00084de8  2**0
+ 18 .debug_line   0002489d  00000000  00000000  00084de8  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .debug_str    000ed614  00000000  00000000  000a9683  2**0
+ 19 .debug_str    000ed614  00000000  00000000  000a9685  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 20 .comment      00000050  00000000  00000000  00196c97  2**0
+ 20 .comment      00000050  00000000  00000000  00196c99  2**0
                   CONTENTS, READONLY
- 21 .debug_frame  000089e0  00000000  00000000  00196ce8  2**2
+ 21 .debug_frame  000089e0  00000000  00000000  00196cec  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
 
 Disassembly of section .text:
@@ -3114,7 +3114,7 @@ void ProcessUserInput(struct sController* Controller, uint8_t* buffer)
  8001cae:	3320      	adds	r3, #32
  8001cb0:	e004      	b.n	8001cbc <ProcessUserInput+0x78>
  8001cb2:	bf00      	nop
- 8001cb4:	0801508c 	.word	0x0801508c
+ 8001cb4:	08015090 	.word	0x08015090
  8001cb8:	f897 3114 	ldrb.w	r3, [r7, #276]	; 0x114
  8001cbc:	f8b7 2116 	ldrh.w	r2, [r7, #278]	; 0x116
  8001cc0:	f507 718c 	add.w	r1, r7, #280	; 0x118
@@ -6183,179 +6183,177 @@ int main(void)
   float voltage2 = 0;
  8003682:	f04f 0300 	mov.w	r3, #0
  8003686:	607b      	str	r3, [r7, #4]
-  while (1)
-  {
-    /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  printf("Hello\r\n");
- 8003688:	485e      	ldr	r0, [pc, #376]	; (8003804 <main+0x1fc>)
- 800368a:	f00c fc4b 	bl	800ff24 <puts>
+
 	  
     //Cycle through the DAC channels and set them to the opposite state and increase and decrease the voltage
     for (voltage = 0; voltage < TCB.DAC8718.max_peak2peak; voltage += 0.1){
- 800368e:	f04f 0300 	mov.w	r3, #0
- 8003692:	60bb      	str	r3, [r7, #8]
- 8003694:	e044      	b.n	8003720 <main+0x118>
+ 8003688:	f04f 0300 	mov.w	r3, #0
+ 800368c:	60bb      	str	r3, [r7, #8]
+ 800368e:	e044      	b.n	800371a <main+0x112>
 		  for(uint8_t j = 0; j < 3; j++){
- 8003696:	2300      	movs	r3, #0
- 8003698:	f887 303f 	strb.w	r3, [r7, #63]	; 0x3f
- 800369c:	e00c      	b.n	80036b8 <main+0xb0>
+ 8003690:	2300      	movs	r3, #0
+ 8003692:	f887 303f 	strb.w	r3, [r7, #63]	; 0x3f
+ 8003696:	e00c      	b.n	80036b2 <main+0xaa>
 			  Set_Voltage_Peak_to_Peak(&TCB.DAC8718, j, &voltage);
- 800369e:	f107 0208 	add.w	r2, r7, #8
- 80036a2:	f897 303f 	ldrb.w	r3, [r7, #63]	; 0x3f
- 80036a6:	4619      	mov	r1, r3
- 80036a8:	4857      	ldr	r0, [pc, #348]	; (8003808 <main+0x200>)
- 80036aa:	f7fd fe93 	bl	80013d4 <Set_Voltage_Peak_to_Peak>
+ 8003698:	f107 0208 	add.w	r2, r7, #8
+ 800369c:	f897 303f 	ldrb.w	r3, [r7, #63]	; 0x3f
+ 80036a0:	4619      	mov	r1, r3
+ 80036a2:	4858      	ldr	r0, [pc, #352]	; (8003804 <main+0x1fc>)
+ 80036a4:	f7fd fe96 	bl	80013d4 <Set_Voltage_Peak_to_Peak>
 		  for(uint8_t j = 0; j < 3; j++){
- 80036ae:	f897 303f 	ldrb.w	r3, [r7, #63]	; 0x3f
- 80036b2:	3301      	adds	r3, #1
- 80036b4:	f887 303f 	strb.w	r3, [r7, #63]	; 0x3f
- 80036b8:	f897 303f 	ldrb.w	r3, [r7, #63]	; 0x3f
- 80036bc:	2b02      	cmp	r3, #2
- 80036be:	d9ee      	bls.n	800369e <main+0x96>
+ 80036a8:	f897 303f 	ldrb.w	r3, [r7, #63]	; 0x3f
+ 80036ac:	3301      	adds	r3, #1
+ 80036ae:	f887 303f 	strb.w	r3, [r7, #63]	; 0x3f
+ 80036b2:	f897 303f 	ldrb.w	r3, [r7, #63]	; 0x3f
+ 80036b6:	2b02      	cmp	r3, #2
+ 80036b8:	d9ee      	bls.n	8003698 <main+0x90>
 		  }
 		  voltage2 = TCB.DAC8718.max_peak2peak - voltage;
- 80036c0:	4b4a      	ldr	r3, [pc, #296]	; (80037ec <main+0x1e4>)
- 80036c2:	f503 63ce 	add.w	r3, r3, #1648	; 0x670
- 80036c6:	ed93 7a00 	vldr	s14, [r3]
- 80036ca:	edd7 7a02 	vldr	s15, [r7, #8]
- 80036ce:	ee77 7a67 	vsub.f32	s15, s14, s15
- 80036d2:	edc7 7a01 	vstr	s15, [r7, #4]
+ 80036ba:	4b4c      	ldr	r3, [pc, #304]	; (80037ec <main+0x1e4>)
+ 80036bc:	f503 63ce 	add.w	r3, r3, #1648	; 0x670
+ 80036c0:	ed93 7a00 	vldr	s14, [r3]
+ 80036c4:	edd7 7a02 	vldr	s15, [r7, #8]
+ 80036c8:	ee77 7a67 	vsub.f32	s15, s14, s15
+ 80036cc:	edc7 7a01 	vstr	s15, [r7, #4]
 		  for(uint8_t j = 3; j < 6; j++){
- 80036d6:	2303      	movs	r3, #3
- 80036d8:	f887 303e 	strb.w	r3, [r7, #62]	; 0x3e
- 80036dc:	e00b      	b.n	80036f6 <main+0xee>
+ 80036d0:	2303      	movs	r3, #3
+ 80036d2:	f887 303e 	strb.w	r3, [r7, #62]	; 0x3e
+ 80036d6:	e00b      	b.n	80036f0 <main+0xe8>
 			  Set_Voltage_Peak_to_Peak(&TCB.DAC8718, j, &voltage2);
- 80036de:	1d3a      	adds	r2, r7, #4
- 80036e0:	f897 303e 	ldrb.w	r3, [r7, #62]	; 0x3e
- 80036e4:	4619      	mov	r1, r3
- 80036e6:	4848      	ldr	r0, [pc, #288]	; (8003808 <main+0x200>)
- 80036e8:	f7fd fe74 	bl	80013d4 <Set_Voltage_Peak_to_Peak>
+ 80036d8:	1d3a      	adds	r2, r7, #4
+ 80036da:	f897 303e 	ldrb.w	r3, [r7, #62]	; 0x3e
+ 80036de:	4619      	mov	r1, r3
+ 80036e0:	4848      	ldr	r0, [pc, #288]	; (8003804 <main+0x1fc>)
+ 80036e2:	f7fd fe77 	bl	80013d4 <Set_Voltage_Peak_to_Peak>
 		  for(uint8_t j = 3; j < 6; j++){
- 80036ec:	f897 303e 	ldrb.w	r3, [r7, #62]	; 0x3e
- 80036f0:	3301      	adds	r3, #1
- 80036f2:	f887 303e 	strb.w	r3, [r7, #62]	; 0x3e
- 80036f6:	f897 303e 	ldrb.w	r3, [r7, #62]	; 0x3e
- 80036fa:	2b05      	cmp	r3, #5
- 80036fc:	d9ef      	bls.n	80036de <main+0xd6>
+ 80036e6:	f897 303e 	ldrb.w	r3, [r7, #62]	; 0x3e
+ 80036ea:	3301      	adds	r3, #1
+ 80036ec:	f887 303e 	strb.w	r3, [r7, #62]	; 0x3e
+ 80036f0:	f897 303e 	ldrb.w	r3, [r7, #62]	; 0x3e
+ 80036f4:	2b05      	cmp	r3, #5
+ 80036f6:	d9ef      	bls.n	80036d8 <main+0xd0>
     for (voltage = 0; voltage < TCB.DAC8718.max_peak2peak; voltage += 0.1){
- 80036fe:	68bb      	ldr	r3, [r7, #8]
- 8003700:	4618      	mov	r0, r3
- 8003702:	f7fc ff41 	bl	8000588 <__aeabi_f2d>
- 8003706:	a334      	add	r3, pc, #208	; (adr r3, 80037d8 <main+0x1d0>)
- 8003708:	e9d3 2300 	ldrd	r2, r3, [r3]
- 800370c:	f7fc fdde 	bl	80002cc <__adddf3>
- 8003710:	4602      	mov	r2, r0
- 8003712:	460b      	mov	r3, r1
- 8003714:	4610      	mov	r0, r2
- 8003716:	4619      	mov	r1, r3
- 8003718:	f7fd fa86 	bl	8000c28 <__aeabi_d2f>
- 800371c:	4603      	mov	r3, r0
- 800371e:	60bb      	str	r3, [r7, #8]
- 8003720:	4b32      	ldr	r3, [pc, #200]	; (80037ec <main+0x1e4>)
- 8003722:	f503 63ce 	add.w	r3, r3, #1648	; 0x670
- 8003726:	ed93 7a00 	vldr	s14, [r3]
- 800372a:	edd7 7a02 	vldr	s15, [r7, #8]
- 800372e:	eeb4 7ae7 	vcmpe.f32	s14, s15
- 8003732:	eef1 fa10 	vmrs	APSR_nzcv, fpscr
- 8003736:	dcae      	bgt.n	8003696 <main+0x8e>
+ 80036f8:	68bb      	ldr	r3, [r7, #8]
+ 80036fa:	4618      	mov	r0, r3
+ 80036fc:	f7fc ff44 	bl	8000588 <__aeabi_f2d>
+ 8003700:	a335      	add	r3, pc, #212	; (adr r3, 80037d8 <main+0x1d0>)
+ 8003702:	e9d3 2300 	ldrd	r2, r3, [r3]
+ 8003706:	f7fc fde1 	bl	80002cc <__adddf3>
+ 800370a:	4602      	mov	r2, r0
+ 800370c:	460b      	mov	r3, r1
+ 800370e:	4610      	mov	r0, r2
+ 8003710:	4619      	mov	r1, r3
+ 8003712:	f7fd fa89 	bl	8000c28 <__aeabi_d2f>
+ 8003716:	4603      	mov	r3, r0
+ 8003718:	60bb      	str	r3, [r7, #8]
+ 800371a:	4b34      	ldr	r3, [pc, #208]	; (80037ec <main+0x1e4>)
+ 800371c:	f503 63ce 	add.w	r3, r3, #1648	; 0x670
+ 8003720:	ed93 7a00 	vldr	s14, [r3]
+ 8003724:	edd7 7a02 	vldr	s15, [r7, #8]
+ 8003728:	eeb4 7ae7 	vcmpe.f32	s14, s15
+ 800372c:	eef1 fa10 	vmrs	APSR_nzcv, fpscr
+ 8003730:	dcae      	bgt.n	8003690 <main+0x88>
 		  }
 		  //HAL_Delay(100);
 	  }
     //Set the heater to the opposite state its currently in
     set_heater(!get_heater());
- 8003738:	f7fd feb2 	bl	80014a0 <get_heater>
- 800373c:	4603      	mov	r3, r0
- 800373e:	2b00      	cmp	r3, #0
- 8003740:	bf14      	ite	ne
- 8003742:	2301      	movne	r3, #1
- 8003744:	2300      	moveq	r3, #0
+ 8003732:	f7fd feb5 	bl	80014a0 <get_heater>
+ 8003736:	4603      	mov	r3, r0
+ 8003738:	2b00      	cmp	r3, #0
+ 800373a:	bf14      	ite	ne
+ 800373c:	2301      	movne	r3, #1
+ 800373e:	2300      	moveq	r3, #0
+ 8003740:	b2db      	uxtb	r3, r3
+ 8003742:	f083 0301 	eor.w	r3, r3, #1
  8003746:	b2db      	uxtb	r3, r3
- 8003748:	f083 0301 	eor.w	r3, r3, #1
+ 8003748:	f003 0301 	and.w	r3, r3, #1
  800374c:	b2db      	uxtb	r3, r3
- 800374e:	f003 0301 	and.w	r3, r3, #1
- 8003752:	b2db      	uxtb	r3, r3
- 8003754:	4618      	mov	r0, r3
- 8003756:	f7fd fe89 	bl	800146c <set_heater>
+ 800374e:	4618      	mov	r0, r3
+ 8003750:	f7fd fe8c 	bl	800146c <set_heater>
 
 
 
     //-------- Damons Code ----------------------
     // we keep a global copy of this for the timer interrupt
     HeaterFrequency = TCB.Controller.PID.Config.Frequency;
- 800375a:	4b24      	ldr	r3, [pc, #144]	; (80037ec <main+0x1e4>)
- 800375c:	f8b3 265e 	ldrh.w	r2, [r3, #1630]	; 0x65e
- 8003760:	4b2a      	ldr	r3, [pc, #168]	; (800380c <main+0x204>)
- 8003762:	801a      	strh	r2, [r3, #0]
+ 8003754:	4b25      	ldr	r3, [pc, #148]	; (80037ec <main+0x1e4>)
+ 8003756:	f8b3 265e 	ldrh.w	r2, [r3, #1630]	; 0x65e
+ 800375a:	4b2b      	ldr	r3, [pc, #172]	; (8003808 <main+0x200>)
+ 800375c:	801a      	strh	r2, [r3, #0]
 
     if (TCB.Controller.Sensor.Errors > 10)
- 8003764:	4b21      	ldr	r3, [pc, #132]	; (80037ec <main+0x1e4>)
- 8003766:	f8b3 322a 	ldrh.w	r3, [r3, #554]	; 0x22a
- 800376a:	2b0a      	cmp	r3, #10
- 800376c:	d901      	bls.n	8003772 <main+0x16a>
+ 800375e:	4b23      	ldr	r3, [pc, #140]	; (80037ec <main+0x1e4>)
+ 8003760:	f8b3 322a 	ldrh.w	r3, [r3, #554]	; 0x22a
+ 8003764:	2b0a      	cmp	r3, #10
+ 8003766:	d901      	bls.n	800376c <main+0x164>
       MX_I2C1_Init();
- 800376e:	f000 f90f 	bl	8003990 <MX_I2C1_Init>
+ 8003768:	f000 f912 	bl	8003990 <MX_I2C1_Init>
 
     if (DoSampleTMP117)
- 8003772:	4b27      	ldr	r3, [pc, #156]	; (8003810 <main+0x208>)
- 8003774:	781b      	ldrb	r3, [r3, #0]
- 8003776:	b2db      	uxtb	r3, r3
- 8003778:	2b00      	cmp	r3, #0
- 800377a:	d00e      	beq.n	800379a <main+0x192>
+ 800376c:	4b27      	ldr	r3, [pc, #156]	; (800380c <main+0x204>)
+ 800376e:	781b      	ldrb	r3, [r3, #0]
+ 8003770:	b2db      	uxtb	r3, r3
+ 8003772:	2b00      	cmp	r3, #0
+ 8003774:	d00e      	beq.n	8003794 <main+0x18c>
     {
       DoSampleTMP117 = false;
- 800377c:	4b24      	ldr	r3, [pc, #144]	; (8003810 <main+0x208>)
- 800377e:	2200      	movs	r2, #0
- 8003780:	701a      	strb	r2, [r3, #0]
+ 8003776:	4b25      	ldr	r3, [pc, #148]	; (800380c <main+0x204>)
+ 8003778:	2200      	movs	r2, #0
+ 800377a:	701a      	strb	r2, [r3, #0]
       if (TCB.Controller.Sensor.Configured){
- 8003782:	4b1a      	ldr	r3, [pc, #104]	; (80037ec <main+0x1e4>)
- 8003784:	f893 3218 	ldrb.w	r3, [r3, #536]	; 0x218
- 8003788:	2b00      	cmp	r3, #0
- 800378a:	d003      	beq.n	8003794 <main+0x18c>
+ 800377c:	4b1b      	ldr	r3, [pc, #108]	; (80037ec <main+0x1e4>)
+ 800377e:	f893 3218 	ldrb.w	r3, [r3, #536]	; 0x218
+ 8003782:	2b00      	cmp	r3, #0
+ 8003784:	d003      	beq.n	800378e <main+0x186>
           TMP117_GetTemperature(&TCB.Controller.Sensor);
- 800378c:	481a      	ldr	r0, [pc, #104]	; (80037f8 <main+0x1f0>)
- 800378e:	f7fe f925 	bl	80019dc <TMP117_GetTemperature>
- 8003792:	e002      	b.n	800379a <main+0x192>
+ 8003786:	481c      	ldr	r0, [pc, #112]	; (80037f8 <main+0x1f0>)
+ 8003788:	f7fe f928 	bl	80019dc <TMP117_GetTemperature>
+ 800378c:	e002      	b.n	8003794 <main+0x18c>
       }else{
           TMP117_Configure(&TCB.Controller.Sensor);
- 8003794:	4818      	ldr	r0, [pc, #96]	; (80037f8 <main+0x1f0>)
- 8003796:	f7fe f8db 	bl	8001950 <TMP117_Configure>
+ 800378e:	481a      	ldr	r0, [pc, #104]	; (80037f8 <main+0x1f0>)
+ 8003790:	f7fe f8de 	bl	8001950 <TMP117_Configure>
       }
     }
 
 
     if (DoCalculatePWM)
- 800379a:	4b1e      	ldr	r3, [pc, #120]	; (8003814 <main+0x20c>)
- 800379c:	781b      	ldrb	r3, [r3, #0]
- 800379e:	b2db      	uxtb	r3, r3
- 80037a0:	2b00      	cmp	r3, #0
- 80037a2:	d005      	beq.n	80037b0 <main+0x1a8>
+ 8003794:	4b1e      	ldr	r3, [pc, #120]	; (8003810 <main+0x208>)
+ 8003796:	781b      	ldrb	r3, [r3, #0]
+ 8003798:	b2db      	uxtb	r3, r3
+ 800379a:	2b00      	cmp	r3, #0
+ 800379c:	d005      	beq.n	80037aa <main+0x1a2>
     {
       DoCalculatePWM = false;
- 80037a4:	4b1b      	ldr	r3, [pc, #108]	; (8003814 <main+0x20c>)
- 80037a6:	2200      	movs	r2, #0
- 80037a8:	701a      	strb	r2, [r3, #0]
+ 800379e:	4b1c      	ldr	r3, [pc, #112]	; (8003810 <main+0x208>)
+ 80037a0:	2200      	movs	r2, #0
+ 80037a2:	701a      	strb	r2, [r3, #0]
       Controller_Step(&TCB.Controller);
- 80037aa:	4810      	ldr	r0, [pc, #64]	; (80037ec <main+0x1e4>)
- 80037ac:	f7ff fd1c 	bl	80031e8 <Controller_Step>
+ 80037a4:	4811      	ldr	r0, [pc, #68]	; (80037ec <main+0x1e4>)
+ 80037a6:	f7ff fd1f 	bl	80031e8 <Controller_Step>
     }
 
     if (StringFIFORemove(&USBFIFO, buffer) == 0)
- 80037b0:	f107 030c 	add.w	r3, r7, #12
- 80037b4:	4619      	mov	r1, r3
- 80037b6:	480a      	ldr	r0, [pc, #40]	; (80037e0 <main+0x1d8>)
- 80037b8:	f000 fda4 	bl	8004304 <StringFIFORemove>
- 80037bc:	4603      	mov	r3, r0
- 80037be:	2b00      	cmp	r3, #0
- 80037c0:	f47f af62 	bne.w	8003688 <main+0x80>
+ 80037aa:	f107 030c 	add.w	r3, r7, #12
+ 80037ae:	4619      	mov	r1, r3
+ 80037b0:	480b      	ldr	r0, [pc, #44]	; (80037e0 <main+0x1d8>)
+ 80037b2:	f000 fda7 	bl	8004304 <StringFIFORemove>
+ 80037b6:	4603      	mov	r3, r0
+ 80037b8:	2b00      	cmp	r3, #0
+ 80037ba:	f47f af65 	bne.w	8003688 <main+0x80>
     {
+    	printf("Got Inside");
+ 80037be:	4815      	ldr	r0, [pc, #84]	; (8003814 <main+0x20c>)
+ 80037c0:	f00c fb2a 	bl	800fe18 <iprintf>
       ProcessUserInput(&TCB.Controller, buffer);
  80037c4:	f107 030c 	add.w	r3, r7, #12
  80037c8:	4619      	mov	r1, r3
  80037ca:	4808      	ldr	r0, [pc, #32]	; (80037ec <main+0x1e4>)
  80037cc:	f7fe fa3a 	bl	8001c44 <ProcessUserInput>
-	  printf("Hello\r\n");
+    for (voltage = 0; voltage < TCB.DAC8718.max_peak2peak; voltage += 0.1){
  80037d0:	e75a      	b.n	8003688 <main+0x80>
  80037d2:	bf00      	nop
  80037d4:	f3af 8000 	nop.w
@@ -6370,11 +6368,11 @@ int main(void)
  80037f8:	20000760 	.word	0x20000760
  80037fc:	2000063c 	.word	0x2000063c
  8003800:	20000684 	.word	0x20000684
- 8003804:	08015018 	.word	0x08015018
- 8003808:	20000db8 	.word	0x20000db8
- 800380c:	2000000e 	.word	0x2000000e
- 8003810:	200006cc 	.word	0x200006cc
- 8003814:	200006cd 	.word	0x200006cd
+ 8003804:	20000db8 	.word	0x20000db8
+ 8003808:	2000000e 	.word	0x2000000e
+ 800380c:	200006cc 	.word	0x200006cc
+ 8003810:	200006cd 	.word	0x200006cd
+ 8003814:	08015018 	.word	0x08015018
 
 08003818 <SystemClock_Config>:
 /**
@@ -8445,7 +8443,7 @@ uint8_t StringFIFORemove(struct sStringFIFO* fifo, uint8_t* string)
  8004324:	429a      	cmp	r2, r3
  8004326:	d101      	bne.n	800432c <StringFIFORemove+0x28>
   {
-//    printf("Empty fifo.\n");
+	  //printf("Empty fifo.\n");
     return 3;
  8004328:	2303      	movs	r3, #3
  800432a:	e09e      	b.n	800446a <StringFIFORemove+0x166>
@@ -23009,7 +23007,7 @@ HAL_StatusTypeDef HAL_RCC_ClockConfig(RCC_ClkInitTypeDef  *RCC_ClkInitStruct, ui
  800980a:	bf00      	nop
  800980c:	40023c00 	.word	0x40023c00
  8009810:	40023800 	.word	0x40023800
- 8009814:	08015074 	.word	0x08015074
+ 8009814:	08015078 	.word	0x08015078
  8009818:	20000014 	.word	0x20000014
  800981c:	20000018 	.word	0x20000018
 
@@ -23311,7 +23309,7 @@ uint32_t HAL_RCC_GetPCLK1Freq(void)
  8009a60:	4618      	mov	r0, r3
  8009a62:	bd80      	pop	{r7, pc}
  8009a64:	40023800 	.word	0x40023800
- 8009a68:	08015084 	.word	0x08015084
+ 8009a68:	08015088 	.word	0x08015088
 
 08009a6c <HAL_SPI_Init>:
   * @param  hspi pointer to a SPI_HandleTypeDef structure that contains
@@ -36856,7 +36854,7 @@ uint8_t * USBD_FS_ProductStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length
  800e8a0:	bd80      	pop	{r7, pc}
  800e8a2:	bf00      	nop
  800e8a4:	2000310c 	.word	0x2000310c
- 800e8a8:	08015020 	.word	0x08015020
+ 800e8a8:	08015024 	.word	0x08015024
 
 0800e8ac <USBD_FS_ManufacturerStrDescriptor>:
   * @param  speed : Current device speed
@@ -36885,7 +36883,7 @@ uint8_t * USBD_FS_ManufacturerStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *l
  800e8c8:	46bd      	mov	sp, r7
  800e8ca:	bd80      	pop	{r7, pc}
  800e8cc:	2000310c 	.word	0x2000310c
- 800e8d0:	08015038 	.word	0x08015038
+ 800e8d0:	0801503c 	.word	0x0801503c
 
 0800e8d4 <USBD_FS_SerialStrDescriptor>:
   * @param  speed : Current device speed
@@ -36964,7 +36962,7 @@ uint8_t * USBD_FS_ConfigStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length)
  800e928:	bd80      	pop	{r7, pc}
  800e92a:	bf00      	nop
  800e92c:	2000310c 	.word	0x2000310c
- 800e930:	0801504c 	.word	0x0801504c
+ 800e930:	08015050 	.word	0x08015050
 
 0800e934 <USBD_FS_InterfaceStrDescriptor>:
   * @param  speed : Current device speed
@@ -37008,7 +37006,7 @@ uint8_t * USBD_FS_InterfaceStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *leng
  800e964:	bd80      	pop	{r7, pc}
  800e966:	bf00      	nop
  800e968:	2000310c 	.word	0x2000310c
- 800e96c:	08015058 	.word	0x08015058
+ 800e96c:	0801505c 	.word	0x0801505c
 
 0800e970 <Get_SerialNum>:
   * @brief  Create the serial number string descriptor
@@ -37204,11 +37202,12 @@ void HAL_PCD_MspInit(PCD_HandleTypeDef* pcdHandle)
  800ea82:	613b      	str	r3, [r7, #16]
  800ea84:	693b      	ldr	r3, [r7, #16]
     /**USB_OTG_FS GPIO Configuration
+    PA8     ------> USB_OTG_FS_SOF
     PA11     ------> USB_OTG_FS_DM
     PA12     ------> USB_OTG_FS_DP
     */
-    GPIO_InitStruct.Pin = GPIO_PIN_11|GPIO_PIN_12;
- 800ea86:	f44f 53c0 	mov.w	r3, #6144	; 0x1800
+    GPIO_InitStruct.Pin = GPIO_PIN_8|GPIO_PIN_11|GPIO_PIN_12;
+ 800ea86:	f44f 53c8 	mov.w	r3, #6400	; 0x1900
  800ea8a:	617b      	str	r3, [r7, #20]
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
  800ea8c:	2302      	movs	r3, #2
@@ -37667,9 +37666,9 @@ USBD_StatusTypeDef USBD_LL_Init(USBD_HandleTypeDef *pdev)
  800ed0e:	4b16      	ldr	r3, [pc, #88]	; (800ed68 <USBD_LL_Init+0x94>)
  800ed10:	2202      	movs	r2, #2
  800ed12:	619a      	str	r2, [r3, #24]
-  hpcd_USB_OTG_FS.Init.Sof_enable = DISABLE;
+  hpcd_USB_OTG_FS.Init.Sof_enable = ENABLE;
  800ed14:	4b14      	ldr	r3, [pc, #80]	; (800ed68 <USBD_LL_Init+0x94>)
- 800ed16:	2200      	movs	r2, #0
+ 800ed16:	2201      	movs	r2, #1
  800ed18:	61da      	str	r2, [r3, #28]
   hpcd_USB_OTG_FS.Init.low_power_enable = DISABLE;
  800ed1a:	4b13      	ldr	r3, [pc, #76]	; (800ed68 <USBD_LL_Init+0x94>)
@@ -38796,10 +38795,10 @@ USBD_StatusTypeDef USBD_Get_USB_Status(HAL_StatusTypeDef hal_status)
  800f53c:	e7ee      	b.n	800f51c <_printf_float+0x2b8>
  800f53e:	bf00      	nop
  800f540:	7fefffff 	.word	0x7fefffff
- 800f544:	08015194 	.word	0x08015194
- 800f548:	08015198 	.word	0x08015198
- 800f54c:	080151a0 	.word	0x080151a0
- 800f550:	0801519c 	.word	0x0801519c
+ 800f544:	08015198 	.word	0x08015198
+ 800f548:	0801519c 	.word	0x0801519c
+ 800f54c:	080151a4 	.word	0x080151a4
+ 800f550:	080151a0 	.word	0x080151a0
  800f554:	080154f9 	.word	0x080154f9
  800f558:	9a0a      	ldr	r2, [sp, #40]	; 0x28
  800f55a:	6da3      	ldr	r3, [r4, #88]	; 0x58
@@ -39291,8 +39290,8 @@ USBD_StatusTypeDef USBD_Get_USB_Status(HAL_StatusTypeDef hal_status)
  800f9e8:	f104 0619 	add.w	r6, r4, #25
  800f9ec:	e7f5      	b.n	800f9da <_printf_i+0x22e>
  800f9ee:	bf00      	nop
- 800f9f0:	080151a4 	.word	0x080151a4
- 800f9f4:	080151b5 	.word	0x080151b5
+ 800f9f0:	080151a8 	.word	0x080151a8
+ 800f9f4:	080151b9 	.word	0x080151b9
 
 0800f9f8 <_scanf_float>:
  800f9f8:	e92d 4ff0 	stmdb	sp!, {r4, r5, r6, r7, r8, r9, sl, fp, lr}
@@ -39686,7 +39685,7 @@ USBD_StatusTypeDef USBD_Get_USB_Status(HAL_StatusTypeDef hal_status)
  800fe0a:	e7c4      	b.n	800fd96 <_scanf_float+0x39e>
  800fe0c:	2500      	movs	r5, #0
  800fe0e:	e634      	b.n	800fa7a <_scanf_float+0x82>
- 800fe10:	080151c6 	.word	0x080151c6
+ 800fe10:	080151ca 	.word	0x080151ca
  800fe14:	0801554b 	.word	0x0801554b
 
 0800fe18 <iprintf>:
@@ -40320,7 +40319,7 @@ USBD_StatusTypeDef USBD_Get_USB_Status(HAL_StatusTypeDef hal_status)
  80103c6:	f04f 0c01 	mov.w	ip, #1
  80103ca:	e7f6      	b.n	80103ba <_strtod_l+0x28a>
  80103cc:	08015378 	.word	0x08015378
- 80103d0:	080151cc 	.word	0x080151cc
+ 80103d0:	080151d0 	.word	0x080151d0
  80103d4:	7ff00000 	.word	0x7ff00000
  80103d8:	9a17      	ldr	r2, [sp, #92]	; 0x5c
  80103da:	1c51      	adds	r1, r2, #1
@@ -40609,9 +40608,9 @@ USBD_StatusTypeDef USBD_Get_USB_Status(HAL_StatusTypeDef hal_status)
  80106ba:	6023      	str	r3, [r4, #0]
  80106bc:	e786      	b.n	80105cc <_strtod_l+0x49c>
  80106be:	bf00      	nop
- 80106c0:	080151a1 	.word	0x080151a1
- 80106c4:	080151e0 	.word	0x080151e0
- 80106c8:	08015199 	.word	0x08015199
+ 80106c0:	080151a5 	.word	0x080151a5
+ 80106c4:	080151e4 	.word	0x080151e4
+ 80106c8:	0801519d 	.word	0x0801519d
  80106cc:	08015223 	.word	0x08015223
  80106d0:	0801554b 	.word	0x0801554b
  80106d4:	08015410 	.word	0x08015410
@@ -41328,7 +41327,7 @@ USBD_StatusTypeDef USBD_Get_USB_Status(HAL_StatusTypeDef hal_status)
  8010e42:	230a      	movs	r3, #10
  8010e44:	e7ab      	b.n	8010d9e <_strtol_l.constprop.0+0x56>
  8010e46:	bf00      	nop
- 8010e48:	0801508d 	.word	0x0801508d
+ 8010e48:	08015091 	.word	0x08015091
 
 08010e4c <_strtol_r>:
  8010e4c:	f7ff bf7c 	b.w	8010d48 <_strtol_l.constprop.0>
@@ -43148,7 +43147,7 @@ USBD_StatusTypeDef USBD_Get_USB_Status(HAL_StatusTypeDef hal_status)
  8011fa2:	61a3      	str	r3, [r4, #24]
  8011fa4:	e7d2      	b.n	8011f4c <__sinit+0xc>
  8011fa6:	bf00      	nop
- 8011fa8:	08015190 	.word	0x08015190
+ 8011fa8:	08015194 	.word	0x08015194
  8011fac:	08011ed9 	.word	0x08011ed9
 
 08011fb0 <__sfp>:
@@ -43203,7 +43202,7 @@ USBD_StatusTypeDef USBD_Get_USB_Status(HAL_StatusTypeDef hal_status)
  801202e:	603b      	str	r3, [r7, #0]
  8012030:	e7ee      	b.n	8012010 <__sfp+0x60>
  8012032:	bf00      	nop
- 8012034:	08015190 	.word	0x08015190
+ 8012034:	08015194 	.word	0x08015194
  8012038:	ffff0001 	.word	0xffff0001
 
 0801203c <_fwalk_reent>:
@@ -45905,7 +45904,7 @@ USBD_StatusTypeDef USBD_Get_USB_Status(HAL_StatusTypeDef hal_status)
  8013a12:	e7ab      	b.n	801396c <__ssvfiscanf_r+0x204>
  8013a14:	080136b5 	.word	0x080136b5
  8013a18:	0801372f 	.word	0x0801372f
- 8013a1c:	0801508d 	.word	0x0801508d
+ 8013a1c:	08015091 	.word	0x08015091
  8013a20:	080154ea 	.word	0x080154ea
  8013a24:	4b0b      	ldr	r3, [pc, #44]	; (8013a54 <__ssvfiscanf_r+0x2ec>)
  8013a26:	2b00      	cmp	r3, #0
@@ -46298,7 +46297,7 @@ USBD_StatusTypeDef USBD_Get_USB_Status(HAL_StatusTypeDef hal_status)
  8013db4:	2000      	movs	r0, #0
  8013db6:	e8bd 83f8 	ldmia.w	sp!, {r3, r4, r5, r6, r7, r8, r9, pc}
  8013dba:	bf00      	nop
- 8013dbc:	0801508d 	.word	0x0801508d
+ 8013dbc:	08015091 	.word	0x08015091
 
 08013dc0 <_scanf_i>:
  8013dc0:	e92d 4ff0 	stmdb	sp!, {r4, r5, r6, r7, r8, r9, sl, fp, lr}
@@ -46494,7 +46493,7 @@ USBD_StatusTypeDef USBD_Get_USB_Status(HAL_StatusTypeDef hal_status)
  8013f9a:	e7e6      	b.n	8013f6a <_scanf_i+0x1aa>
  8013f9c:	2001      	movs	r0, #1
  8013f9e:	e7ed      	b.n	8013f7c <_scanf_i+0x1bc>
- 8013fa0:	08015068 	.word	0x08015068
+ 8013fa0:	0801506c 	.word	0x0801506c
  8013fa4:	08014185 	.word	0x08014185
  8013fa8:	08010e4d 	.word	0x08010e4d
  8013fac:	0801550e 	.word	0x0801550e
@@ -46708,7 +46707,7 @@ USBD_StatusTypeDef USBD_Get_USB_Status(HAL_StatusTypeDef hal_status)
  801417a:	230a      	movs	r3, #10
  801417c:	e7af      	b.n	80140de <_strtoul_l.constprop.0+0x3e>
  801417e:	bf00      	nop
- 8014180:	0801508d 	.word	0x0801508d
+ 8014180:	08015091 	.word	0x08015091
 
 08014184 <_strtoul_r>:
  8014184:	f7ff bf8c 	b.w	80140a0 <_strtoul_l.constprop.0>

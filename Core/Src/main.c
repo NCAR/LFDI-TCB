@@ -271,7 +271,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  printf("Hello\r\n");
+
 	  
     //Cycle through the DAC channels and set them to the opposite state and increase and decrease the voltage
     for (voltage = 0; voltage < TCB.DAC8718.max_peak2peak; voltage += 0.1){
@@ -316,6 +316,7 @@ int main(void)
 
     if (StringFIFORemove(&USBFIFO, buffer) == 0)
     {
+    	printf("Got Inside");
       ProcessUserInput(&TCB.Controller, buffer);
     }
 

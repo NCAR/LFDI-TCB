@@ -59,7 +59,7 @@ uint8_t StringFIFORemove(struct sStringFIFO* fifo, uint8_t* string)
 
   if (fifo->head == fifo->tail)
   {
-//    printf("Empty fifo.\n");
+	  //printf("Empty fifo.\n");
     return 3;
   }
 
