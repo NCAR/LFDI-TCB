@@ -1,8 +1,8 @@
 ../Drivers/CMSIS/Include/core_cm4.h:1939:34:__NVIC_SystemReset	4	static,ignoring_inline_asm
-../Core/Src/UI.c:19:6:ProcessUserInput	312	static
-../Core/Src/UI.c:324:6:ShowControllerConfig	360	static
-../Core/Src/UI.c:357:6:ShowSensor	320	static
-../Core/Src/UI.c:392:6:ShowEffort	368	static
-../Core/Src/UI.c:411:6:ShowAll	256	static
-../Core/Src/UI.c:477:6:ShowRawHeader	8	static
-../Core/Src/UI.c:487:6:FormatTemperature	32	static
+../Core/Src/UI.c:21:6:ProcessUserInput	312	static
+../Core/Src/UI.c:337:6:ShowControllerConfig	360	static
+../Core/Src/UI.c:370:6:ShowSensor	320	static
+../Core/Src/UI.c:405:6:ShowEffort	368	static
+../Core/Src/UI.c:424:6:ShowAll	256	static
+../Core/Src/UI.c:490:6:ShowRawHeader	8	static
+../Core/Src/UI.c:500:6:FormatTemperature	32	static

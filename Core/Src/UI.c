@@ -9,6 +9,8 @@
 #include <ctype.h>
 #include "funcs.h"
 #include <math.h>
+#include "DAC.h"
+#include "TuningControlBoard.h"
 
 uint8_t UI_Controller = 9;
 
@@ -319,7 +321,7 @@ void ProcessUserInput(struct sController* Controller, uint8_t* buffer, struct sT
     	  snprintf(output, 200, "Voltage of DAC Channel 0 set to %f.\n", f);
     	  USBSendString(output);
     	  //Need to implement Voltage for the Dac Channels
-    	  Set_Voltage_Peak_to_Peak(&TCB.DAC8718, 0, f);
+    	  Set_Voltage_Peak_to_Peak(&TCB->DAC8718, 0, &f);
     	  return;
     	  break;
 
