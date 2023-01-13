@@ -318,8 +318,10 @@ void ProcessUserInput(struct sController* Controller, uint8_t* buffer, struct sT
       case 'v':
     	  snprintf(output, 2000, "Voltage of DAC Channel 0 set to %f.\n", f);
     	  USBSendString(output);
-    	  	  //Need to implement Voltage for the Dac Channels
-    	  TCB->DAC8718.DAC_Channels[0].
+    	  //Need to implement Voltage for the Dac Channels
+    	  Set_Voltage_Peak_to_Peak(TCB->DAC8718, 0, f);
+    	  return;
+    	  break;
 
       default:
         break;
