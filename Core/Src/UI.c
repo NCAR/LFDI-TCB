@@ -16,7 +16,7 @@ uint8_t UI_Controller = 9;
 //Get the User Input and process it
 //@param Controller: pointer to the controller struct
 //@param buffer: pointer to the buffer
-void ProcessUserInput(struct sController* Controller, uint8_t* buffer)
+void ProcessUserInput(struct sController* Controller, uint8_t* buffer, struct sTuningControlBoard* TCB)
 {
   uint16_t i = 0;
   uint8_t u = 0;
@@ -56,12 +56,14 @@ void ProcessUserInput(struct sController* Controller, uint8_t* buffer)
   replacestr(buffer, "raw", "r");
   replacestr(buffer, "bounce", "b");
   replacestr(buffer, "wipe", "w");
+  replacestr(buffer, "voltage", "v");
+
 
 //  printf("New String: %s\n", buffer);
 
   if ((strcmp((char*) buffer, "?") == 0) || (strcmp((char*) buffer, "help") == 0))
   {
-    USBSendString("\nLFDI TCB Firmware v1.0\n");
+    USBSendString("\nLFDI TCB Firmware v1.2\n");
     USBSendString("Commands can be upper or lower case. Variables can be set with an equals sign or space or nothing.\n");
     USBSendString("\"channel=1\", \"channel 1\", \"channel1\", \"c1\" are all treated the same.\n");
     USBSendString("\n");
@@ -84,6 +86,7 @@ void ProcessUserInput(struct sController* Controller, uint8_t* buffer)
     USBSendString("Bounce          -- performs a power-cycle / reboot on the system\n");
     USBSendString("Load            -- reloads the previously saved values (automatic at power-on)\n");
     USBSendString("Save            -- saves the currently configured values\n");
+    USBSendString("Voltage         -- Set the Peak to Peak Voltage to output on DAC Channel 0\n");
     USBSendString("\n");
     if (UI_Controller == 9)
       USBSendString("No controller selected.\n");
@@ -311,6 +314,12 @@ void ProcessUserInput(struct sController* Controller, uint8_t* buffer)
         Controller->PID.Config.TargetP = f;
         return;
         break;
+
+      case 'v':
+    	  snprintf(output, 2000, "Voltage of DAC Channel 0 set to %f.\n", f);
+    	  USBSendString(output);
+    	  	  //Need to implement Voltage for the Dac Channels
+    	  TCB->DAC8718.DAC_Channels[0].
 
       default:
         break;
