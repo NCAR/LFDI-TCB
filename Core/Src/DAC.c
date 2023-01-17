@@ -68,8 +68,8 @@ void DAC_InitStruct(struct sDAC* s, SPI_HandleTypeDef* hspi){
 	//Set all DAC Channels Up. Should probably be put into TCB init
 	for (int i = 0; i < 6; i++){
 		s->DAC_Channels[i].DAC_number = i;
-		s->DAC_Channels[i].upper_bound = 0xFFFF;
-		s->DAC_Channels[i].lower_bound = 0x0000;
+		s->DAC_Channels[i].upper_bound = 0x7FFF;
+		s->DAC_Channels[i].lower_bound = 0x7FFF;
 		s->DAC_Channels[i].enabled = true;
 	}
 

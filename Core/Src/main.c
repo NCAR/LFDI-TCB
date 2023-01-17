@@ -213,6 +213,13 @@ int main(void)
   MX_TIM6_Init();
   /* USER CODE BEGIN 2 */
   TCB_InitStruct(&TCB, &hi2c1, &hspi4);
+  for (int i = 0; i < 6; i++){
+    TCB.DAC8718.DAC_Channels[i].enabled = true;
+    TCB.DAC8718.DAC_Channels[i].DAC_number = i;
+    TCB.DAC8718.DAC_Channels[i].lower_bound = 0x7FFF;
+    TCB.DAC8718.DAC_Channels[i].upper_bound = 0x7FFF;
+    TCB.DAC8718.DAC_Channels[i].state_high = false;
+  }
   HAL_Delay(500);
   printf("-- REBOOT --\n");
 
@@ -244,8 +251,8 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  float voltage = 0;
-  float voltage2 = 0;
+  // float voltage = 0;
+  // float voltage2 = 0;
   while (1)
   {
     /* USER CODE END WHILE */
