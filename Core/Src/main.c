@@ -254,16 +254,16 @@ int main(void)
 
 	  
     //Cycle through the DAC channels and set them to the opposite state and increase and decrease the voltage
-    for (voltage = 0; voltage < TCB.DAC8718.max_peak2peak; voltage += 0.1){
-		  for(uint8_t j = 0; j < 3; j++){
-			  Set_Voltage_Peak_to_Peak(&TCB.DAC8718, j, &voltage);
-		  }
-		  voltage2 = TCB.DAC8718.max_peak2peak - voltage;
-		  for(uint8_t j = 3; j < 6; j++){
-			  Set_Voltage_Peak_to_Peak(&TCB.DAC8718, j, &voltage2);
-		  }
-		  //HAL_Delay(100);
-	  }
+    // for (voltage = 0; voltage < TCB.DAC8718.max_peak2peak; voltage += 0.1){
+		//   for(uint8_t j = 0; j < 3; j++){
+		// 	  Set_Voltage_Peak_to_Peak(&TCB.DAC8718, j, &voltage);
+		//   }
+		//   voltage2 = TCB.DAC8718.max_peak2peak - voltage;
+		//   for(uint8_t j = 3; j < 6; j++){
+		// 	  Set_Voltage_Peak_to_Peak(&TCB.DAC8718, j, &voltage2);
+		//   }
+		//   //HAL_Delay(100);
+	  // }
     //Set the heater to the opposite state its currently in
 	  
 
