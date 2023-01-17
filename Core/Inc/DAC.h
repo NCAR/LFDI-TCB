@@ -42,7 +42,7 @@ extern uint8_t ZERO_7;
 extern uint8_t GAIN_7;
 
 
-//Reference Voltage is 3V
+//Reference Voltage is 3.3V
 extern float REFERENCE_VOLTAGE;
 
 

@@ -54,8 +54,8 @@ uint8_t W2 = 0x10;
 //NOP Command
 //Used when recieving data from the DAC
 uint8_t NOP_Send[3] = {0x00, 0x00, NOP};
-//Max Voltage peak to peak
-float REFERENCE_VOLTAGE = 3;
+//Reference Voltage scales the Ouput Voltage
+float REFERENCE_VOLTAGE = 3.3;
 
 
 //
