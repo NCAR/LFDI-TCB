@@ -34,6 +34,7 @@
 #include "DAC_Unit_Test.h"
 #include "stm32f4xx_hal.h"
 #include "usbd_cdc_if.h"
+#include "TemperatureCorrectionTable.h"
 
 //#include "usbd_cdc_if.h"
 
@@ -272,8 +273,9 @@ int main(void)
 		//   //HAL_Delay(100);
 	  // }
     //Set the heater to the opposite state its currently in
-	  
-
+	  //Just to Test. Here is the
+	  float dummyWave = 100.0;
+	  Wavelength_to_Voltage(&dummyWave, &TCB.Sensor->Average);
 
 
     //-------- Damons Code ----------------------

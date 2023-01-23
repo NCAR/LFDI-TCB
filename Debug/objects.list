@@ -3,6 +3,7 @@
 "./Core/Src/Heater_Controller.o"
 "./Core/Src/PID.o"
 "./Core/Src/TMP117.o"
+"./Core/Src/TemperatureCorrectionTable.o"
 "./Core/Src/TuningControlBoard.o"
 "./Core/Src/UI.o"
 "./Core/Src/controller.o"

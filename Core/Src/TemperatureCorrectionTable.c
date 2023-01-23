@@ -5,18 +5,19 @@
  * 	the Second is to get the Offset of the needed Voltage Depending on the current temperature
  *
  */
-
+#include "TemperatureCorrectionTable.h"
 
 //This Will translate a nm Tuning request to a position at 25C
 //The Range Should Cover 600nm to 700nm in 0.01 nm intervals or 10000 entries
-uint16_t NM_to_Position(float nm)
+uint16_t NM_to_Position(float * nm)
 {
+	uint16_t index = (uint16_t)*nm*100;
 //Index starts at 600 and moves to 700 in .01 intervals
 //Convert the User input by subtracting 600 and muliplying by 10000
-uint16 adjusted_input = (nm - 600)*10000;
-static const __flash uint16_t lookup[10000] = {0};
-pos = lookup[nm];
-return ps;
+	uint16_t adjusted_input = (*nm - 600)*10000;
+	static const uint16_t lookup[415];
+	uint16_t pos = lookup[index];
+	return pos;
 }
 
 
@@ -25,7 +26,7 @@ float BaseT_Position_to_BaseT_Voltage(uint16_t position){
 	
 	//This look up will convert a pixel position to a voltage at 25C
 	//The Index is the pixel position and the value is the voltage in mV
-	static const __flash uint16_t lookup[983] =
+	static const uint16_t lookup[983] =
 	{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12562,12469,12816,12037,11863,11140,11019,10897,10763,10607,10496,10406,10344,
@@ -68,18 +69,21 @@ float BaseT_Position_to_BaseT_Voltage(uint16_t position){
 
 //This Function Will Convert the temperature to a positional offset
 //This is based on the Found relation ship between Position and Temperature
-uint16_t temperature_position_offset(float* temp){
-	offset = (uint16_t)(46.09*(&temp)-978.1);
+uint16_t temperature_position_offset(double* temp){
+
+	uint16_t offset =(uint16_t)(46.09*(*temp)-978.1);
 	return offset;
 }
 
 
 //This Function Will Convert a Wavelength and a temperature to a Voltage
-float Wavelength_to_Voltage(float* wavelength, float* temp){
-	base_position = nm_to_position(&wavelength);
-	absolute_BaseT_Offset = temperature_position_offset(&temp);
-	absolute_Offset = temperature_position_offset(&temp);
-	position = base_position + (Absolute_BaseT_Offset - Absolute_Offset)
-	Voltage = position_to_Voltage(&position);
+float Wavelength_to_Voltage(float* wavelength, double* temp){
+	//Skip this For now we need a translation table
+	//uint16_t base_position = NM_to_Position(wavelength);
+	uint16_t base_position = 100;
+	uint16_t absolute_BaseT_Offset = temperature_position_offset(temp);
+	uint16_t absolute_Offset = temperature_position_offset(temp);
+	uint16_t position = base_position + (absolute_BaseT_Offset - absolute_Offset);
+	float Voltage = BaseT_Position_to_BaseT_Voltage(position);
 	return Voltage;
 }

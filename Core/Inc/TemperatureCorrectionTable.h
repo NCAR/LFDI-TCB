@@ -6,8 +6,17 @@
  *
  */
 
+#ifndef INC_TEMPERATURECORRECTIONTABLE_H_
+#define INC_TEMPERATURECORRECTIONTABLE_H_
 
-uint16_t NM_to_Position(float nm);
+#include "defs.h"
+
+
+
+uint16_t NM_to_Position(float* nm);
 float BaseT_Position_to_BaseT_Voltage(uint16_t position);
-uint16_t temperature_position_offset(float* temp);
-float Wavelength_to_Voltage(float* wavelength, float* temp);
+uint16_t temperature_position_offset(double* temp);
+float Wavelength_to_Voltage(float* wavelength, double* temp);
+
+
+#endif
