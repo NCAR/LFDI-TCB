@@ -275,8 +275,11 @@ int main(void)
     //Set the heater to the opposite state its currently in
 	  //Just to Test. Here is the
 	  float dummyWave = 100.0;
-	  Wavelength_to_Voltage(&dummyWave, &TCB.Sensor->Average);
-
+	  double temp = TCB.Controller.Sensor.LastTemperature;
+	  float voltage = Wavelength_to_Voltage(&dummyWave, &temp);
+	  for(int i = 0; i<6; i++){
+		  Set_Voltage_Peak_to_Peak(&TCB.DAC8718, i, &voltage);
+	  }
 
     //-------- Damons Code ----------------------
     // we keep a global copy of this for the timer interrupt

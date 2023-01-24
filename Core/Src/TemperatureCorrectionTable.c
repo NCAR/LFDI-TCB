@@ -23,7 +23,9 @@ uint16_t NM_to_Position(float * nm)
 
 //Lookup Table to convert a pixel position to a voltage at the base Temperature. 25C
 float BaseT_Position_to_BaseT_Voltage(uint16_t position){
-	
+	if(position > 982){
+		return 0.0;
+	}
 	//This look up will convert a pixel position to a voltage at 25C
 	//The Index is the pixel position and the value is the voltage in mV
 	static const uint16_t lookup[983] =
@@ -80,8 +82,10 @@ uint16_t temperature_position_offset(double* temp){
 float Wavelength_to_Voltage(float* wavelength, double* temp){
 	//Skip this For now we need a translation table
 	//uint16_t base_position = NM_to_Position(wavelength);
+	double base_temp = 25;
 	uint16_t base_position = 100;
-	uint16_t absolute_BaseT_Offset = temperature_position_offset(temp);
+	base_position= base_position + 415;
+	uint16_t absolute_BaseT_Offset = temperature_position_offset(&base_temp);
 	uint16_t absolute_Offset = temperature_position_offset(temp);
 	uint16_t position = base_position + (absolute_BaseT_Offset - absolute_Offset);
 	float Voltage = BaseT_Position_to_BaseT_Voltage(position);
