@@ -61,6 +61,7 @@ struct sDAC_Channel{
 	uint8_t DAC_number;
     bool state_high;
 	bool enabled;
+	float max_peak2peak;
 };
 
 
