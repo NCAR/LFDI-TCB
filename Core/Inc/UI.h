@@ -27,6 +27,12 @@ void ShowCompensatorHelp(void);
 void ProcessUserInput_MainMenu(struct sTuningControlBoard* s, uint8_t* input);
 void ProcessUserInput_CompensatorMenu(struct sTuningControlBoard* s, uint8_t* input);
 void ProcessUserInput_ControllerMenu(struct sTuningControlBoard* s, uint8_t* input);
+
+
+void TranslateUserInput_MainMenu(struct sTuningControlBoard * s,uint8_t* buffer);
+void TranslateUserInput_CompensatorMenu(struct sTuningControlBoard * s,uint8_t* buffer);
+void SetSensor(struct sTMP117 * sSensor, uint8_t u);
+
 extern volatile uint32_t ADCChannelSamples[4][8];
 
 #endif /* INC_UI_H_ */

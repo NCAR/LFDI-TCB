@@ -27,13 +27,13 @@ void ProcessUserInput(struct sTuningControlBoard* TCB, uint8_t* buffer){
   //Get the User Input
   switch(SUB_MENU){
     case MAIN_MENU:
-      ProcessUserInput_MainMenu(TCB, buffer);
+      TranslateUserInput_MainMenu(TCB, buffer);
       break;
     case CONTROLLER_MENU:
       ProcessUserInput_ControllerMenu(TCB, buffer);
       break;
     case COMPENSATOR_MENU:
-      ProcessUserInput_CompensatorMenu(TCB, buffer);
+      TranslateUserInput_CompensatorMenu(TCB, buffer);
       break;
     default:
       SUB_MENU = MAIN_MENU;
@@ -259,9 +259,9 @@ void ShowCompensatorHelp(void){
     USBSendString("Commands can be upper or lower case. Variables can be set with an equals sign or space or nothing.\n");
     USBSendString("\"channel=1\", \"channel 1\", \"channel1\", \"c1\" are all treated the same.\n");
     USBSendString("\n");
-    USBSendString("v               -- Peak to Peak Voltage output\n");
-    USBSendString("a               -- Toggle Auto Compensation output\n");
-    USBSendString("w               -- Set the Wavelength to Compensation to\n");
+    USBSendString("volt            -- Peak to Peak Voltage output\n");
+    USBSendString("comp            -- Toggle Auto Compensation output\n");
+    USBSendString("wave            -- Set the Wavelength to Compensation to\n");
     USBSendString("enable          -- enable or disable the controller\n");
     USBSendString("disable         -- disable the controller\n");
     USBSendString("address         -- i2c address of the sensor\n");
@@ -270,18 +270,21 @@ void ShowCompensatorHelp(void){
 }
 
 //Parse the input from the main Menu
-void ProcessUserInput_MainMenu(struct sTuningControlBoard * s,uint8_t* input)
-{
-  if (strcmp(input, "controller") == 0 || strcmp(input, "cont") == 0)
+void ProcessUserInput_MainMenu(struct sTuningControlBoard * s,uint8_t* input){
+
+  //Pull up the Controller Sub menu
+  if (strcmp(input, "cont") == 0)
   { 
     SUB_MENU = CONTROLLER_MENU;
-    ShowControllerHelp();
   }
-  else if (strcmp(input, "compensator") == 0 || strcmp(input, "comp") == 0)
+
+  //Pull up the Compensator Sub menu
+  else if (strcmp(input, "comp") == 0)
   { 
     SUB_MENU = COMPENSATOR_MENU;
-    ShowCompensatorHelp();
   }
+
+  //TODO This Should print all of the interesting Values fromthe TCB
   else if (strcmp(input, "update") == 0 || strcmp(input, "u") == 0)
   {
     //ShowUpdate();
@@ -290,28 +293,34 @@ void ProcessUserInput_MainMenu(struct sTuningControlBoard * s,uint8_t* input)
   {
     //ShowRaw();
   }
+  //This Should reset the TCB back to the default values
   else if (strcmp(input, "wipe") == 0 || strcmp(input, "w") == 0)
   {
     //WipeConfig();
     USBSendString("Wiped Configuration\n");
   }
-  else if (strcmp(input, "bounce") == 0 || strcmp(input, "b") == 0)
+
+  //This resets the TCB
+  else if (strcmp(input, "b") == 0)
   {
     USBSendString("Bouncing...\n");
     HAL_Delay(1000);
     NVIC_SystemReset();
   }
-  else if (strcmp(input, "load") == 0 || strcmp(input, "l") == 0)
+  //This loads the TCB from the EEPROM
+  else if (strcmp(input, "l") == 0)
   {
     //LoadConfig();
     USBSendString("no EEPROM Cannot Load Configuration\n");
   }
-  else if (strcmp(input, "save") == 0 || strcmp(input, "s") == 0)
+  //This saves the TCB to the EEPROM
+  else if (strcmp(input, "s") == 0)
   {
     //SaveConfig(); TODO add implementation for SD Card here
     USBSendString("no EEPROM Cannot Save Config\n");
   }
-  else if (strcmp(input, "help") == 0 || strcmp(input, "h") == 0)
+  //This prints the help menu
+  else if (strcmp(input, "h") == 0)
   {
     ShowMainHelp();
   }
@@ -320,17 +329,127 @@ void ProcessUserInput_MainMenu(struct sTuningControlBoard * s,uint8_t* input)
     USBSendString("Unknown Command\n");
   }
 
-
 }
 
 
 //Parse the input from the Compensator Context Menu
 void ProcessUserInput_CompensatorMenu(struct sTuningControlBoard * s,uint8_t* input)
 {
-  ShowCompensatorHelp();
-  USBSendString("Compensator Menu\n");
-  USBSendString("Not Implemented Yet\n");
-  SUB_MENU = MAIN_MENU;
+  uint16_t i = 0;
+  uint8_t u = 0;
+  char output[250];
+  char c;
+  float f = 0;
+
+  //Send back to main menu
+  if (strcmp(input, "b") == 0)
+  {
+    SUB_MENU = MAIN_MENU;
+    return;
+  }
+  //Show Help
+  else if (strcmp(input, "h") == 0)
+  {
+    ShowCompensatorHelp();
+    return;
+  
+  } 
+  //Set the Compensator
+  if ((strcmp((char*) input, "1") == 0) || (strcmp((char*) input, "c1") == 0))
+  {
+    UI_Compensator = 0;
+    //ShowControllerConfig(&TCB->Controller); Todo add this
+    return;
+  }
+  
+  if ((strcmp((char*) input, "2") == 0) || (strcmp((char*) input, "c2") == 0))
+  {
+    UI_Compensator = 1;
+    //ShowControllerConfig(&TCB->Controller);
+    return;
+  }
+
+  if ((strcmp((char*) input, "3") == 0) || (strcmp((char*) input, "c3") == 0))
+  {
+    UI_Compensator = 2;
+    //ShowControllerConfig(&TCB->Controller);
+    return;
+  }
+
+  //If we dont have a valid controller selected dont let user proceed
+  if (UI_Compensator == 9)
+  {
+    USBSendString("No controller selected.\n");
+    return;
+  }
+
+
+  //Turn on the Temperature Controller
+  if (strcmp((char*) input, "e") == 0)
+  {
+    //Check to see if the controller is a Compensator
+    if (UI_Controller < 3){
+      USBSendString("Compensator enabled.\n");
+      s->Compensator[UI_Compensator].Enable = true;
+      return;
+    }
+  }
+
+
+  //Turn off the Temperature Controller
+  if (strcmp((char*) input, "d") == 0)
+  {
+    //Check to see if the controller is a Compensator
+    if (UI_Compensator < 3){
+      USBSendString("Compensator disabled.\n");
+      s->Compensator[UI_Compensator].Enable = false;
+      return;
+    }
+  }
+
+  if (strcmp((char*) input, "co") == 0){
+    if(s->Compensator[UI_Compensator].compensate){
+      s->Compensator[UI_Compensator].compensate = false;
+      USBSendString("Compensator Off.\n");
+    } else {
+      s->Compensator[UI_Compensator].compensate = true;
+      USBSendString("Compensator On.\n");
+    }
+    return;
+  }
+
+  if (sscanf((char*) input, "%c%f", &c, &f) == 2){
+    u = (uint16_t) f;
+    switch (c){
+      case 'c':
+        USBSendString("Invalid Compensator Number.\n");
+        return;
+        break;
+      case 'a':
+        //Set the sensor address
+        SetSensor(&s->Compensator[UI_Compensator].Sensor, u);
+        return;
+        break;
+
+      case 'v':
+        s->Compensator[UI_Compensator].voltage = f;
+        s->Compensator[UI_Compensator].compensate = false;
+        USBSendString("Compensator Voltage Set.\n");
+        break;
+        return;
+
+      case 'w':
+        s->Compensator[UI_Compensator].wavelength = f;
+        USBSendString("Compensator Wavelength Set.\n");
+        break;
+        return;
+      default:
+        USBSendString("Unknown Command.\n");
+        break;
+        return;
+    }
+  }
+
 }
 
 //Parse the input from the Controller Context Menu
@@ -340,4 +459,94 @@ void ProcessUserInput_ControllerMenu(struct sTuningControlBoard * s,uint8_t* inp
   USBSendString("Controller Menu\n");
   USBSendString("Not Implemented Yet\n");
   SUB_MENU = MAIN_MENU;
+
+}
+
+
+
+//Trranslate the input buffers to be one letter commands pass onto the case switch menu
+void TranslateUserInput_MainMenu(struct sTuningControlBoard * s,uint8_t* buffer)
+{
+  //Make everything lowercase
+  for (int i=0; buffer[i]; i++){
+    buffer[i] = tolower(buffer[i]);
+  }
+  replacestr(buffer, "=", "");
+  replacestr(buffer, " ", "");
+  replacestr(buffer, " ", "");
+  replacestr(buffer, " ", "");
+  replacestr(buffer, " ", "");
+  replacestr(buffer, " ", "");
+
+  USBSendString("Controller      -- Open The Controller Context Menu\n");
+  USBSendString("Compensator     -- Open The Compensator Context Menu\n");
+  replacestr(buffer, "save", "s");
+  replacestr(buffer, "load", "l");
+  replacestr(buffer, "update", "u");
+  replacestr(buffer, "raw", "r");
+  replacestr(buffer, "bounce", "b");
+  replacestr(buffer, "wipe", "w");
+  replacestr(buffer, "help", "h");
+  replacestr(buffer, "controller", "cont");
+  replacestr(buffer, "compensator", "comp");
+  ProcessUserInput_MainMenu(s, buffer);
+
+}
+
+
+//Trranslate the input buffers to be one letter commands pass onto the case switch menu
+void TranslateUserInput_CompensatorMenu(struct sTuningControlBoard * s,uint8_t * buffer)
+{
+  //Make everything lowercase
+  for (int i=0; buffer[i]; i++){
+    buffer[i] = tolower(buffer[i]);
+  }
+
+  replacestr(buffer, "=", "");
+  replacestr(buffer, " ", "");
+  replacestr(buffer, "channel", "c");
+  replacestr(buffer, "volt", "v");
+  replacestr(buffer, "comp", "co");
+  replacestr(buffer, "wave", "w");
+  replacestr(buffer, "enable", "e");
+  replacestr(buffer, "disable", "d");
+  replacestr(buffer, "address", "a");
+  replacestr(buffer, "back", "b");
+  replacestr(buffer, "help", "h");
+  ProcessUserInput_CompensatorMenu(s, buffer);
+  
+}
+
+
+//General Set sensor method
+void SetSensor(struct sTMP117 * sSensor, uint8_t u){
+  switch (u){
+    case 0:
+      USBSendString("Address set to 0b 10 01 00 0x.\n");
+      sSensor->Address = 0b1001000;
+      break;
+    case 10:
+      USBSendString("Address set to 0b 10 01 01 0x.\n");
+      sSensor->Address = 0b1001010;
+      break;
+    case 1:
+      USBSendString("Address set to 0b 10 01 00 1x.\n");
+      sSensor->Address = 0b1001001;
+      break;
+    case 11:
+      USBSendString("Address set to 0b 10 01 01 1x.\n");
+      sSensor->Address = 0b1001011;
+      break;
+    default:
+      USBSendString("Invalid Address.\n");
+      return;
+      break;
+  }
+  
+  sSensor->Ready = false;
+  sSensor->Average = -273;
+  sSensor->LastTemperature = -273;
+  sSensor->Configured = false;
+  sSensor->State = 0;
+  return;
 }
