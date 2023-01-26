@@ -1,3 +1,5 @@
+"./Core/Src/CameraController.o"
+"./Core/Src/Compensator.o"
 "./Core/Src/DAC.o"
 "./Core/Src/DAC_Unit_Test.o"
 "./Core/Src/Heater_Controller.o"
