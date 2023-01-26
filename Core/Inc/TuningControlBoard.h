@@ -13,8 +13,10 @@
 #include "PID.h"
 #include "DAC.h"
 #include "Controller.h"
-
-
+#include "TMP117.h"
+#include "DAC.h"
+#include "Compensator.h"
+//#include "CameraController.h"
 
 
 //The Tuning Control Board Contains 8 DACs and 7 TMP117 Temp Sensors as well as One Heater Controller
@@ -22,9 +24,14 @@
 //The TCB will be set up such that the User can choose which TMP117 to use as the input for the PID Controller along with the heater
 struct sTuningControlBoard
 {
-  struct sController Controller;
+  
   struct sDAC DAC8718;
   struct sTMP117 Sensor[7];
+
+
+  struct sController Controller;
+  struct sCompensator Compensator[3];
+  //Camera Controller
 
 };
 

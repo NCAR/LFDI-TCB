@@ -323,7 +323,7 @@ void ProcessUserInput(struct sController* Controller, uint8_t* buffer, struct sT
     	  //Need to implement Voltage for the Dac Channels
         for (uint8_t i = 0; i < 6; i++)
         {
-          Set_Voltage_Peak_to_Peak(&TCB->DAC8718, i, &f);
+          Set_Voltage_Peak_to_Peak(&TCB->DAC8718.DAC_Channels[i], &f);
         }
     	  return;
     	  break;

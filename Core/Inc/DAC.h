@@ -109,7 +109,7 @@ extern uint8_t W2;
 	void Get_DAC_Value(struct sDAC* s, uint8_t DAC_Num, uint16_t* val);
 	void Get_DAC_Zero(struct sDAC* s, uint8_t DAC_Num, uint16_t* val);
 	void Get_DAC_Gain(struct sDAC* s, uint8_t DAC_Num, uint16_t* val);	
-	void Set_Voltage_Peak_to_Peak(struct sDAC* sDAC, uint8_t Channel_Number, float* voltage);
+	void Set_Voltage_Peak_to_Peak(struct sDAC_Channel* sDAC_Channel, float* voltage);
 
 
 

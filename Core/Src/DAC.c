@@ -541,8 +541,8 @@ void Set_Voltage_Peak_to_Peak(struct sDAC_Channel *sChannel, float* voltage){
 	//Find the upper and lower bounds of the voltage with Zero Bias
 	//Divide the voltage by the max voltage to get a percentage and cast to a 16 bit int
 	float percentage = (*voltage/(float)sChannel->max_peak2peak)/2;
-	sChannels->upper_bound = 0xFFFF/2 + percentage*0xFFFF;
-	sChannels->lower_bound = 0xFFFF/2 - percentage*0xFFFF;
+	sChannel->upper_bound = 0xFFFF/2 + percentage*0xFFFF;
+	sChannel->lower_bound = 0xFFFF/2 - percentage*0xFFFF;
 	return;
 
 }
