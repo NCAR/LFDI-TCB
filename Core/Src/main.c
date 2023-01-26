@@ -302,7 +302,7 @@ int main(void)
 
     if (StringFIFORemove(&USBFIFO, buffer) == 0)
     {
-      //ProcessUserInput(&TCB.Controller, buffer, &TCB);
+      ProcessUserInput(&TCB, buffer);
     }
 
   }
