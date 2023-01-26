@@ -274,7 +274,8 @@ int main(void)
 	  // }
     //Set the heater to the opposite state its currently in
 	  //Just to Test. Here is the
-	 Compensator_Update(&TCB.Compensator);
+
+	 Compensator_Update(&TCB.Compensator[0]);
     //-------- Damons Code ----------------------
     // we keep a global copy of this for the timer interrupt
     HeaterFrequency = TCB.Controller.PID.Config.Frequency;
