@@ -12,333 +12,39 @@
 #include "DAC.h"
 #include "TuningControlBoard.h"
 
-uint8_t UI_Controller = 9;
 
+#define CONTROLLER_MENU 1
+#define COMPENSATOR_MENU 2
+#define MAIN_MENU 0
+uint8_t UI_Controller = 9;
+uint8_t UI_Compensator = 9;
+uint8_t SUB_MENU = 0;
 
 //Get the User Input and process it
 //@param Controller: pointer to the controller struct
 //@param buffer: pointer to the buffer
-void ProcessUserInput(struct sController* Controller, uint8_t* buffer, struct sTuningControlBoard* TCB)
-{
-  uint16_t i = 0;
-  uint8_t u = 0;
-  char output[250];
-  char c;
-  float f = 0;
-  for (i=0; buffer[i]; i++)
-    buffer[i] = tolower(buffer[i]);
-//  printf("String: %s\n", buffer);
-
-  replacestr(buffer, "=", "");
-  replacestr(buffer, " ", "");
-  replacestr(buffer, " ", "");
-  replacestr(buffer, " ", "");
-  replacestr(buffer, " ", "");
-  replacestr(buffer, " ", "");
-  replacestr(buffer, "channel", "c");
-//  replacestr(buffer, "controller", "c");
-  replacestr(buffer, "chan", "c");
-//  replacestr(buffer, "con", "c");
-  replacestr(buffer, "address", "a");
-  replacestr(buffer, "kp", "p");
-  replacestr(buffer, "kd", "d");
-  replacestr(buffer, "ki", "i");
-  replacestr(buffer, "li", "l");
-  replacestr(buffer, "target", "t");
-  replacestr(buffer, "temperature", "t");
-  replacestr(buffer, "temp", "t");
-  replacestr(buffer, "frequency", "f");
-  replacestr(buffer, "freq", "f");
-  replacestr(buffer, "enable", "n");
-  replacestr(buffer, "disable", "f");
-  replacestr(buffer, "save", "s");
-  replacestr(buffer, "load", "l");
-  replacestr(buffer, "history", "h");
-  replacestr(buffer, "update", "u");
-  replacestr(buffer, "raw", "r");
-  replacestr(buffer, "bounce", "b");
-  replacestr(buffer, "wipe", "w");
-  replacestr(buffer, "voltage", "v");
-
-
-//  printf("New String: %s\n", buffer);
-
-  if ((strcmp((char*) buffer, "?") == 0) || (strcmp((char*) buffer, "help") == 0))
-  {
-    USBSendString("\nLFDI TCB Firmware v1.2\n");
-    USBSendString("Commands can be upper or lower case. Variables can be set with an equals sign or space or nothing.\n");
-    USBSendString("\"channel=1\", \"channel 1\", \"channel1\", \"c1\" are all treated the same.\n");
-    USBSendString("\n");
-//    USBSendString("Controller = n  -- chooses which controller to configure\n");
-    USBSendString("Channel = n     -- chooses which channel to configure\n");
-    USBSendString("Address = nn    -- sets the address of the temperature sensor (00, 01, 10, or 11)\n");
-    USBSendString("kP = n.nn       -- sets the proportional gain\n");
-    USBSendString("kD = n.nn       -- sets the derivative gain\n");
-    USBSendString("kI = n.nn       -- sets the integral gain\n");
-    USBSendString("Li = n.nn       -- sets the integral gain limit\n");
-    USBSendString("History = nn    -- sets the number of points used in the integral (1-255)\n");
-    USBSendString("Target = n      -- sets the target temperature\n");
-    USBSendString("Temperature = n -- sets the target temperature\n");
-    USBSendString("Freq = n        -- sets the PWM frequency (40 = 1 second)\n");
-    USBSendString("Enable          -- starts the temperature control loop\n");
-    USBSendString("Disable         -- stops the temperature control loop\n");
-    USBSendString("Update          -- shows the status of all of the controllers\n");
-    USBSendString("Raw             -- shows an easily parsable version of Update\n");
-    USBSendString("Wipe            -- wipes the existing configuration and load new defaults\n");
-    USBSendString("Bounce          -- performs a power-cycle / reboot on the system\n");
-    USBSendString("Load            -- reloads the previously saved values (automatic at power-on)\n");
-    USBSendString("Save            -- saves the currently configured values\n");
-    USBSendString("Voltage         -- Set the Peak to Peak Voltage to output on DAC Channel 0\n");
-    USBSendString("\n");
-    if (UI_Controller == 9)
-      USBSendString("No controller selected.\n");
-    else
-    {
-      /*
-      ShowSensor(&TCB.Controller);
-      ShowControllerConfig(&TCB.Controller);
-      ShowEffort(&TCB.Controller);
-      USBSendString("\n");
-      */
-      ShowAll(Controller, true);
-    }
-    return;
+void ProcessUserInput(struct sTuningControlBoard* TCB, uint8_t* buffer){
+  //Get the User Input
+  switch(SUB_MENU){
+    case MAIN_MENU:
+      ProcessUserInput_MainMenu(TCB, buffer);
+      break;
+    case CONTROLLER_MENU:
+      ProcessUserInput_ControllerMenu(TCB, buffer);
+      break;
+    case COMPENSATOR_MENU:
+      ProcessUserInput_CompensatorMenu(TCB, buffer);
+      break;
+    default:
+      SUB_MENU = MAIN_MENU;
+      USBSendString("\nAn Error Occured\n");
+      break;
   }
 
-  //Print the Status all the Controllers
-  if ((strcmp((char*) buffer, "u") == 0) || (strcmp((char*) buffer, "/") == 0))
-  {
-    ShowAll(Controller, true);
-    return;
-  }
-  //Print the Status all the Controllers in non readable format
-  if (strcmp((char*) buffer, "r") == 0)
-  {
-    ShowAll(Controller, false);
-    return;
-  }
-  //Save the Configuration of a controller
-  if (strcmp((char*) buffer, "s") == 0)
-  {
-
-    USBSendString("Cannot Save, No EEPROM.\n");
-    return;
-  }
-
-  if (strcmp((char*) buffer, "l") == 0)
-  {
-    USBSendString("Cannot load Configuration, No EEPROM.\n");
-    return;
-  }
-
-  if (strcmp((char*) buffer, "b") == 0)
-  {
-    NVIC_SystemReset();
-  }
-
-  if (strcmp((char*) buffer, "w") == 0)
-  {
-    Controller_WipeConfig(Controller);
-    USBSendString("Configuration wiped.\n");
-    return;
-  }
-
-  if ((strcmp((char*) buffer, "1") == 0) || (strcmp((char*) buffer, "c1") == 0))
-  {
-    UI_Controller = 0;
-    ShowControllerConfig(Controller);
-    return;
-  }
-
-  if ((strcmp((char*) buffer, "2") == 0) || (strcmp((char*) buffer, "c2") == 0))
-  {
-    UI_Controller = 1;
-    ShowControllerConfig(Controller);
-    return;
-  }
-
-  if ((strcmp((char*) buffer, "3") == 0) || (strcmp((char*) buffer, "c3") == 0))
-  {
-    UI_Controller = 2;
-    ShowControllerConfig(Controller);
-    return;
-  }
-
-  if ((strcmp((char*) buffer, "4") == 0) || (strcmp((char*) buffer, "c4") == 0))
-  {
-    UI_Controller = 3;
-    ShowControllerConfig(Controller);
-    return;
-  }
-
-  if (UI_Controller == 9)
-  {
-    USBSendString("No controller selected.\n");
-    return;
-  }
-
-
-  if (strcmp((char*) buffer, "e") == 0)
-  {
-    USBSendString("Controller enabled.\n");
-    Controller->PID.Config.Enabled = true;
-    return;
-  }
-
-  if (strcmp((char*) buffer, "d") == 0)
-  {
-    USBSendString("Controller disabled.\n");
-    Controller->PID.Config.Enabled = false;
-    return;
-  }
-
-  if (sscanf((char*) buffer, "%c%f", &c, &f) == 2)
-  {
-    u = (uint8_t) f;
-    switch (c)
-    {
-      case 'c':
-        // we shouldn't get here if a valid number was used
-        USBSendString("Invalid controller number.\n");
-        return;
-        break;
-      case 'a':
-        switch (u)
-        {
-          case 0:
-            USBSendString("Address set to 0b 10 01 00 0x.\n");
-            Controller->Sensor.Address = 0b1001000;
-            return;
-            break;
-          case 10:
-            USBSendString("Address set to 0b 10 01 01 0x.\n");
-            Controller->Sensor.Address = 0b1001010;
-            return;
-            break;
-          case 1:
-            USBSendString("Address set to 0b 10 01 00 1x.\n");
-            Controller->Sensor.Address = 0b1001001;
-            return;
-            break;
-          case 11:
-            USBSendString("Address set to 0b 10 01 01 1x.\n");
-            Controller->Sensor.Address = 0b1001011;
-            return;
-            break;
-          default:
-            USBSendString("Invalid Address.\n");
-            return;
-            break;
-        }
-        // reset our history since we're changing temperature sensors
-        Controller->Sensor.Ready = false;
-        Controller->Sensor.Average = -273;
-        Controller->Sensor.LastTemperature = -273;
-        Controller->Sensor.Configured = false;
-        Controller->Sensor.State = 0;
-        Controller->PID.IntegratorCount = 0;
-        break;
-      case 'p':
-        if (f < 0)
-          USBSendString("Invalid value.");
-        else
-        {
-          snprintf(output, 200, "kp set to %f.\n", f);
-          USBSendString(output);
-          Controller->PID.Config.Kp = f;
-        }
-        return;
-        break;
-
-      case 'i':
-        if (f < 0)
-          USBSendString("Invalid value.");
-        else
-        {
-          snprintf(output, 200, "ki set to %f.\n", f);
-          USBSendString(output);
-          Controller->PID.Config.Ki = f;
-        }
-        return;
-        break;
-
-      case 'd':
-        if (f < 0)
-          USBSendString("Invalid value.");
-        else
-        {
-          snprintf(output, 200, "kd set to %f.\n", f);
-          USBSendString(output);
-          Controller->PID.Config.Kd = f;
-        }
-        return;
-        break;
-
-      case 'f':
-        if ((f < 0) || (f > 600))
-          USBSendString("Invalid value.");
-        else
-        {
-          snprintf(output, 200, "Frequency set to %.0f (%.2f Hz).\n", f, f/40);
-          USBSendString(output);
-          Controller->PID.Config.Frequency = f;
-        }
-        return;
-        break;
-
-
-      case 'l':
-        if (f < 0)
-          USBSendString("Invalid value.");
-        else
-        {
-          snprintf(output, 200, "Li set to %f.\n", f);
-          USBSendString(output);
-          Controller->PID.Config.Li = f;
-        }
-        return;
-        break;
-      case 'h':
-        if (u == 0)
-          USBSendString("Invalid value.");
-        else
-        {
-          snprintf(output, 200, "History set to %u.\n", u);
-          USBSendString(output);
-          Controller->PID.Config.History = u;
-        }
-        return;
-        break;
-
-      case 't':
-        snprintf(output, 200, "Target temperature set to %f.\n", f);
-        USBSendString(output);
-        Controller->PID.Config.TargetP = f;
-        return;
-        break;
-
-      case 'v':
-    	  snprintf(output, 200, "Voltage of DAC Channel 0 set to %f.\n", f);
-    	  USBSendString(output);
-    	  //Need to implement Voltage for the Dac Channels
-        for (uint8_t i = 0; i < 6; i++)
-        {
-          Set_Voltage_Peak_to_Peak(&TCB->DAC8718.DAC_Channels[i], &f);
-        }
-    	  return;
-    	  break;
-
-      default:
-        break;
-    }
-  }
-  USBSendString("Unknown command.\n");
-  return;
 }
 
 //Show the Configuration of a Controller
-void ShowControllerConfig(struct sController* Controller)
-{
+void ShowControllerConfig(struct sController* Controller){
   char s1[12];
   char buffer[250];
   FormatTemperature(s1, Controller->PID.Config.TargetP);
@@ -367,7 +73,6 @@ void ShowControllerConfig(struct sController* Controller)
   else
     USBSendString("  DISABLED\n");
 }
-
 
 //Show an individual sensor
 void ShowSensor(struct sController* Controller)
@@ -508,3 +213,131 @@ void FormatTemperature(char* buffer, double temp)
     snprintf(buffer, 10, "  error ");
 }
 
+
+//Main Menu help Text
+void ShowMainHelp(void)
+{
+    USBSendString("\nLFDI TCB Firmware v1.3\n");
+    USBSendString("Commands can be upper or lower case. Variables can be set with an equals sign or space or nothing.\n");
+    USBSendString("\"channel=1\", \"channel 1\", \"channel1\", \"c1\" are all treated the same.\n");
+    USBSendString("\n");
+    USBSendString("Controller      -- Open The Controller Context Menu\n");
+    USBSendString("Compensator     -- Open The Compensator Context Menu\n");
+    USBSendString("Update          -- shows the status of all of the controllers and Compensators\n");
+    USBSendString("Raw             -- shows an easily parsable version of Update\n");
+    USBSendString("Wipe            -- wipes the existing configuration and load new defaults\n");
+    USBSendString("Bounce          -- performs a power-cycle / reboot on the system\n");
+    USBSendString("Load            -- reloads the previously saved values (automatic at power-on)\n");
+    USBSendString("Save            -- saves the currently configured values\n");
+    USBSendString("\n");
+}
+
+//Show the Controller Context Menu
+void ShowControllerHelp(void){
+    USBSendString("\nController Context Menu\n");
+    USBSendString("Commands can be upper or lower case. Variables can be set with an equals sign or space or nothing.\n");
+    USBSendString("\"channel=1\", \"channel 1\", \"channel1\", \"c1\" are all treated the same.\n");
+    USBSendString("\n");
+    USBSendString("kp              -- proportional gain\n");
+    USBSendString("kd              -- derivative gain\n");
+    USBSendString("ki              -- integral gain\n");
+    USBSendString("li              -- integral limit\n");
+    USBSendString("target          -- target temperature\n");
+    USBSendString("history         -- number of samples to average\n");
+    USBSendString("frequency       -- number of times per second to update the heater\n");
+    USBSendString("enable          -- enable or disable the controller\n");
+    USBSendString("disable         -- disable the controller\n");
+    USBSendString("address         -- i2c address of the sensor\n");
+    USBSendString("back            -- return to the main menu\n");
+    USBSendString("\n");
+}
+
+
+//Show the Compensator Context Menu
+void ShowCompensatorHelp(void){
+    USBSendString("\nCompensator Context Menu\n");
+    USBSendString("Commands can be upper or lower case. Variables can be set with an equals sign or space or nothing.\n");
+    USBSendString("\"channel=1\", \"channel 1\", \"channel1\", \"c1\" are all treated the same.\n");
+    USBSendString("\n");
+    USBSendString("v               -- Peak to Peak Voltage output\n");
+    USBSendString("a               -- Toggle Auto Compensation output\n");
+    USBSendString("w               -- Set the Wavelength to Compensation to\n");
+    USBSendString("enable          -- enable or disable the controller\n");
+    USBSendString("disable         -- disable the controller\n");
+    USBSendString("address         -- i2c address of the sensor\n");
+    USBSendString("back            -- return to the main menu\n");
+    USBSendString("\n");
+}
+
+//Parse the input from the main Menu
+void ProcessUserInput_MainMenu(struct sTuningControlBoard * s,uint8_t* input)
+{
+  if (strcmp(input, "controller") == 0 || strcmp(input, "cont") == 0)
+  { 
+    SUB_MENU = CONTROLLER_MENU;
+    ShowControllerHelp();
+  }
+  else if (strcmp(input, "compensator") == 0 || strcmp(input, "comp") == 0)
+  { 
+    SUB_MENU = COMPENSATOR_MENU;
+    ShowCompensatorHelp();
+  }
+  else if (strcmp(input, "update") == 0 || strcmp(input, "u") == 0)
+  {
+    //ShowUpdate();
+  }
+  else if (strcmp(input, "raw") == 0 || strcmp(input, "r") == 0)
+  {
+    //ShowRaw();
+  }
+  else if (strcmp(input, "wipe") == 0 || strcmp(input, "w") == 0)
+  {
+    //WipeConfig();
+    USBSendString("Wiped Configuration\n");
+  }
+  else if (strcmp(input, "bounce") == 0 || strcmp(input, "b") == 0)
+  {
+    USBSendString("Bouncing...\n");
+    HAL_Delay(1000);
+    NVIC_SystemReset();
+  }
+  else if (strcmp(input, "load") == 0 || strcmp(input, "l") == 0)
+  {
+    //LoadConfig();
+    USBSendString("no EEPROM Cannot Load Configuration\n");
+  }
+  else if (strcmp(input, "save") == 0 || strcmp(input, "s") == 0)
+  {
+    //SaveConfig(); TODO add implementation for SD Card here
+    USBSendString("no EEPROM Cannot Save Config\n");
+  }
+  else if (strcmp(input, "help") == 0 || strcmp(input, "h") == 0)
+  {
+    ShowMainHelp();
+  }
+  else
+  {
+    USBSendString("Unknown Command\n");
+  }
+
+
+}
+
+
+//Parse the input from the Compensator Context Menu
+void ProcessUserInput_CompensatorMenu(struct sTuningControlBoard * s,uint8_t* input)
+{
+  ShowCompensatorHelp();
+  USBSendString("Compensator Menu\n");
+  USBSendString("Not Implemented Yet\n");
+  SUB_MENU = MAIN_MENU;
+}
+
+//Parse the input from the Controller Context Menu
+void ProcessUserInput_ControllerMenu(struct sTuningControlBoard * s,uint8_t* input)
+{
+  ShowControllerHelp();
+  USBSendString("Controller Menu\n");
+  USBSendString("Not Implemented Yet\n");
+  SUB_MENU = MAIN_MENU;
+}
