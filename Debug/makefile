@@ -79,8 +79,8 @@ all: main-build
 main-build: LFDI\ Tuning\ Control\ Board.elf secondary-outputs
 
 # Tool invocations
-LFDI\ Tuning\ Control\ Board.elf LFDI\ Tuning\ Control\ Board.map: $(OBJS) $(USER_OBJS) C:\Users\mjeffers\Documents\GitHub\LFDI-TCB\STM32F427VITX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-g++ -o "LFDI Tuning Control Board.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\mjeffers\Documents\GitHub\LFDI-TCB\STM32F427VITX_FLASH.ld" --specs=nosys.specs -Wl,-Map="LFDI Tuning Control Board.map" -Wl,--gc-sections -static -u _printf_float -u _scanf_float --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -lstdc++ -lsupc++ -Wl,--end-group
+LFDI\ Tuning\ Control\ Board.elf LFDI\ Tuning\ Control\ Board.map: $(OBJS) $(USER_OBJS) C:\Users\mjeffers\Desktop\Github\LFDI-TCB\STM32F427VITX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-g++ -o "LFDI Tuning Control Board.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\mjeffers\Desktop\Github\LFDI-TCB\STM32F427VITX_FLASH.ld" --specs=nosys.specs -Wl,-Map="LFDI Tuning Control Board.map" -Wl,--gc-sections -static -u _printf_float -u _scanf_float --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -lstdc++ -lsupc++ -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

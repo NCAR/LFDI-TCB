@@ -1,0 +1,8 @@
+../Core/Src/Compensator.c:7:6:Compensator_InitStruct	24	static
+../Core/Src/Compensator.c:26:6:Compensator_enableChannel	16	static
+../Core/Src/Compensator.c:34:6:Compensator_SetChannel	16	static
+../Core/Src/Compensator.c:45:6:Compensator_UseAverage	16	static
+../Core/Src/Compensator.c:52:6:Compensator_AutoCompensate	24	static
+../Core/Src/Compensator.c:67:6:Compensator_SetWavelength	16	static
+../Core/Src/Compensator.c:74:6:Compensator_SetVoltage	16	static
+../Core/Src/Compensator.c:81:6:Compensator_Update	16	static

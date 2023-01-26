@@ -12,7 +12,7 @@
 #include "controller.h"
 #include "TuningControlBoard.h"
 
-void ProcessUserInput(struct sController* Controller, uint8_t* buffer, struct sTuningControlBoard* TCB);
+void ProcessUserInput(struct sTuningControlBoard* TCB, uint8_t* buffer);
 
 void ShowControllerConfig(struct sController* Controller);
 void ShowSensor(struct sController* Controller);

@@ -71,6 +71,7 @@ void DAC_InitStruct(struct sDAC* s, SPI_HandleTypeDef* hspi){
 		s->DAC_Channels[i].upper_bound = 0x7FFF;
 		s->DAC_Channels[i].lower_bound = 0x7FFF;
 		s->DAC_Channels[i].enabled = true;
+		s->DAC_Channels[i].max_peak2peak = s->max_peak2peak;
 	}
 
 }
@@ -538,9 +539,9 @@ void Set_Voltage_Peak_to_Peak(struct sDAC_Channel* sChannel,  float* voltage){
 	//The max Voltage Peak to Peak is 22.4V so we need to scale the voltage to fit in 16 bits
 	//Find the upper and lower bounds of the voltage with Zero Bias
 	//Divide the voltage by the max voltage to get a percentage and cast to a 16 bit int
-	float percentage = (*voltage/(float)sDAC->max_peak2peak)/2;
-	sDAC_Channel.upper_bound = 0xFFFF/2 + percentage*0xFFFF;
-	sDAC_Channel.lower_bound = 0xFFFF/2 - percentage*0xFFFF;
+	float percentage = (*voltage/(float)sChannel->max_peak2peak)/2;
+	sChannel->upper_bound = 0xFFFF/2 + percentage*0xFFFF;
+	sChannel->lower_bound = 0xFFFF/2 - percentage*0xFFFF;
 	return;
 
 }
