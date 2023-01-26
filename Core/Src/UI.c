@@ -398,7 +398,7 @@ void ProcessUserInput(struct sTuningControlBoard* TCB, uint8_t* buffer)
           USBSendString("Invalid Controller.\n");
           return;
     	  }else{
-          TCB->Compensator[UI_Controller].enable = true;
+          TCB->Compensator[UI_Controller].Enable = true;
         	TCB->Compensator[UI_Controller].voltage = f;
     	  }
         return;

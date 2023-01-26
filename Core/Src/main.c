@@ -272,7 +272,7 @@ int main(void)
 		//   }
 		//   //HAL_Delay(100);
 	  // }
-    Compensator_Update(&TCB.Controller.Compensator);
+    Compensator_Update(&TCB.Compensator);
     //-------- Damons Code ----------------------
     // we keep a global copy of this for the timer interrupt
     HeaterFrequency = TCB.Controller.PID.Config.Frequency;
