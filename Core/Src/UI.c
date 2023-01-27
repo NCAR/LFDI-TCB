@@ -439,7 +439,7 @@ void ProcessUserInput_CompensatorMenu(struct sTuningControlBoard * s,uint8_t* in
       USBSendString("Compensator disabled.\n");
       sprintf(output, "Compensator %d Disabled.\n", UI_Compensator+1);    
     	USBSendString(output);
-      s->Compensator[UI_Compensator].Enable = false;
+      Compensator_enableChannel(&s->Compensator[UI_Compensator], false);
       return;
     }
   }
@@ -451,7 +451,7 @@ void ProcessUserInput_CompensatorMenu(struct sTuningControlBoard * s,uint8_t* in
       USBSendString(output);
     } else {
       s->Compensator[UI_Compensator].compensate = true;
-      sprintf(output, "Compensator %d Auto Compensating Off.\n", UI_Compensator+1);
+      sprintf(output, "Compensator %d Auto Compensating On.\n", UI_Compensator+1);
       USBSendString(output);
     }
     return;
