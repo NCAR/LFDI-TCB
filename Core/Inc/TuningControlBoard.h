@@ -28,8 +28,9 @@ struct sTuningControlBoard
   struct sDAC DAC8718;
   struct sTMP117 Sensor[7];
 
-
-  struct sController Controller;
+  uint8_t NumOfControllers;
+  uint8_t NumOfCompensators;
+  struct sController Controller[1];//INcrease this as we get more controllers
   struct sCompensator Compensator[6];
   //Camera Controller
 

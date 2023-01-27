@@ -233,12 +233,12 @@ int main(void)
   // over the EEPROM on next startup. This will *probably* be caught by checking
   // the address of the last controller rather than the first.
   //Welcome to OOP hell
-  if (!(TCB.Controller.Sensor.Address & 0b1001000)) // if the stored address is not valid, we probably have invalid data.
+  if (!(TCB.Controller[0].Sensor.Address & 0b1001000)) // if the stored address is not valid, we probably have invalid data.
   {
     printf("The configuration is invalid. Rewriting defaults.");
   }
 
-  TMP117_Configure(&TCB.Controller.Sensor);
+  TMP117_Configure(&TCB.Controller[0].Sensor);
   for(uint8_t i = 0; i< 6; i++){
 	  TMP117_Configure(&TCB.Compensator[i].Sensor);
   }
@@ -286,7 +286,7 @@ int main(void)
   Compensator_Update(&TCB.Compensator[5]);
   //-------- Damons Code ----------------------
     // we keep a global copy of this for the timer interrupt
-    HeaterFrequency = TCB.Controller.PID.Config.Frequency;
+    HeaterFrequency = TCB.Controller[0].PID.Config.Frequency;
 
     //Go through Compensator Sensors
     for(uint8_t i = 0; i<6;i++){
@@ -305,23 +305,23 @@ int main(void)
 
     }
 
-    if (TCB.Controller.Sensor.Errors > 10){
+    if (TCB.Controller[0].Sensor.Errors > 10){
       MX_I2C1_Init();
     }
     if (DoSampleTMP117)
     {
       DoSampleTMP117 = false;
-      if (TCB.Controller.Sensor.Configured){
-          TMP117_GetTemperature(&TCB.Controller.Sensor);
+      if (TCB.Controller[0].Sensor.Configured){
+          TMP117_GetTemperature(&TCB.Controller[0].Sensor);
       }else{
-          TMP117_Configure(&TCB.Controller.Sensor);
+          TMP117_Configure(&TCB.Controller[0].Sensor);
       }
     }
 
     if (DoCalculatePWM)
     {
       DoCalculatePWM = false;
-      Controller_Step(&TCB.Controller);
+      Controller_Step(&TCB.Controller[0]);
     }
 
     if (StringFIFORemove(&USBFIFO, buffer) == 0)
