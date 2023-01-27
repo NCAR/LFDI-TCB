@@ -30,7 +30,7 @@ struct sTuningControlBoard
 
 
   struct sController Controller;
-  struct sCompensator Compensator[3];
+  struct sCompensator Compensator[6];
   //Camera Controller
 
 };

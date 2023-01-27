@@ -358,6 +358,7 @@ void ProcessUserInput_CompensatorMenu(struct sTuningControlBoard * s,uint8_t* in
   if ((strcmp((char*) input, "1") == 0) || (strcmp((char*) input, "c1") == 0))
   {
     UI_Compensator = 0;
+    USBSendString("Compensator 1 Selected\n");
     //ShowControllerConfig(&TCB->Controller); Todo add this
     return;
   }
@@ -365,6 +366,7 @@ void ProcessUserInput_CompensatorMenu(struct sTuningControlBoard * s,uint8_t* in
   if ((strcmp((char*) input, "2") == 0) || (strcmp((char*) input, "c2") == 0))
   {
     UI_Compensator = 1;
+    USBSendString("Compensator 2 Selected\n");
     //ShowControllerConfig(&TCB->Controller);
     return;
   }
@@ -372,6 +374,28 @@ void ProcessUserInput_CompensatorMenu(struct sTuningControlBoard * s,uint8_t* in
   if ((strcmp((char*) input, "3") == 0) || (strcmp((char*) input, "c3") == 0))
   {
     UI_Compensator = 2;
+    USBSendString("Compensator 3 Selected\n");
+    //ShowControllerConfig(&TCB->Controller);
+    return;
+  }
+  if ((strcmp((char*) input, "4") == 0) || (strcmp((char*) input, "c4") == 0))
+  {
+    UI_Compensator = 3;
+    USBSendString("Compensator 4 Selected\n");
+    //ShowControllerConfig(&TCB->Controller);
+    return;
+  }
+  if ((strcmp((char*) input, "5") == 0) || (strcmp((char*) input, "c5") == 0))
+  {
+    UI_Compensator = 4;
+    USBSendString("Compensator 5 Selected\n");
+    //ShowControllerConfig(&TCB->Controller);
+    return;
+  }
+  if ((strcmp((char*) input, "6") == 0) || (strcmp((char*) input, "c6") == 0))
+  {
+    UI_Compensator = 5;
+    USBSendString("Compensator 6 Selected\n");
     //ShowControllerConfig(&TCB->Controller);
     return;
   }
@@ -388,9 +412,9 @@ void ProcessUserInput_CompensatorMenu(struct sTuningControlBoard * s,uint8_t* in
   if (strcmp((char*) input, "e") == 0)
   {
     //Check to see if the controller is a Compensator
-    if (UI_Controller < 3){
+    if (UI_Compensator < 6){
       USBSendString("Compensator enabled.\n");
-      s->Compensator[UI_Compensator].Enable = true;
+      Compensator_enableChannel(&s->Compensator[UI_Compensator], true);
       return;
     }
   }
@@ -400,9 +424,9 @@ void ProcessUserInput_CompensatorMenu(struct sTuningControlBoard * s,uint8_t* in
   if (strcmp((char*) input, "d") == 0)
   {
     //Check to see if the controller is a Compensator
-    if (UI_Compensator < 3){
+    if (UI_Compensator < 6){
       USBSendString("Compensator disabled.\n");
-      s->Compensator[UI_Compensator].Enable = false;
+      Compensator_enableChannel(&s->Compensator[UI_Compensator], false);
       return;
     }
   }

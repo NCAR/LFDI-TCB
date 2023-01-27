@@ -4,7 +4,7 @@
 
 
 //Initalize the Structure of the Compensator
-void Compensator_InitStruct(struct sCompensator* s, struct sTMP117 *t,struct sDAC_Channel *c){
+void Compensator_InitStruct(struct sCompensator* s, struct sTMP117 *t, struct sDAC_Channel *c){
 	//is the Channel enabled
 	s->Enable = false;
     //Should we be tryying to Compensate to a specific Wavelength
@@ -83,6 +83,7 @@ void Compensator_Update(struct sCompensator* s){
 		Compensator_AutoCompensate(s);
 	}	
 	//Set the DAC to the Voltage
+	//printf("Compensator_Update: %f\n", s->voltage);
 	Set_Voltage_Peak_to_Peak(&s->Channel, &s->voltage);
 	return;
 

@@ -113,14 +113,14 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
   {
     //Syncronous Update of the DACs
     for (int i = 0; i < 6; i++){
-      if(TCB.DAC8718.DAC_Channels[i].enabled){
-        if(TCB.DAC8718.DAC_Channels[i].state_high){
+      if(TCB.Compensator[i].Channel.enabled){
+        if(TCB.Compensator[i].Channel.state_high){
 
-          Set_DAC_Value(&TCB.DAC8718, TCB.DAC8718.DAC_Channels[i].DAC_number, TCB.DAC8718.DAC_Channels[i].lower_bound);
-          TCB.DAC8718.DAC_Channels[i].state_high = false;
+          Set_DAC_Value(&TCB.DAC8718, TCB.Compensator[i].Channel.DAC_number, TCB.Compensator[i].Channel.lower_bound);
+          TCB.Compensator[i].Channel.state_high = false;
         }else{
-          Set_DAC_Value(&TCB.DAC8718, TCB.DAC8718.DAC_Channels[i].DAC_number, TCB.DAC8718.DAC_Channels[i].upper_bound);
-          TCB.DAC8718.DAC_Channels[i].state_high = true;
+          Set_DAC_Value(&TCB.DAC8718, TCB.Compensator[i].Channel.DAC_number, TCB.Compensator[i].Channel.upper_bound);
+          TCB.Compensator[i].Channel.state_high = true;
 
         }
       }
@@ -239,6 +239,9 @@ int main(void)
   }
 
   TMP117_Configure(&TCB.Controller.Sensor);
+  for(uint8_t i = 0; i< 6; i++){
+	  TMP117_Configure(&TCB.Compensator[i].Sensor);
+  }
   HAL_TIM_Base_Start_IT(&htim2); //DAC Timer
   HAL_TIM_Base_Start_IT(&htim6); // Heater Timer
   HAL_TIM_Base_Start_IT(&htim4); // Main Timer
@@ -275,14 +278,36 @@ int main(void)
     //Set the heater to the opposite state its currently in
 	  //Just to Test. Here is the
 
-	 Compensator_Update(&TCB.Compensator[0]);
-    //-------- Damons Code ----------------------
+  Compensator_Update(&TCB.Compensator[0]);
+  Compensator_Update(&TCB.Compensator[1]);
+  Compensator_Update(&TCB.Compensator[2]);
+  Compensator_Update(&TCB.Compensator[3]);
+  Compensator_Update(&TCB.Compensator[4]);
+  Compensator_Update(&TCB.Compensator[5]);
+  //-------- Damons Code ----------------------
     // we keep a global copy of this for the timer interrupt
     HeaterFrequency = TCB.Controller.PID.Config.Frequency;
 
-    if (TCB.Controller.Sensor.Errors > 10)
-      MX_I2C1_Init();
+    //Go through Compensator Sensors
+    for(uint8_t i = 0; i<6;i++){
+        if (TCB.Compensator[i].Sensor.Errors > 10)
+          MX_I2C1_Init();
 
+        if (DoSampleTMP117)
+        {
+          if (TCB.Compensator[i].Sensor.Configured){
+              TMP117_GetTemperature(&TCB.Compensator[i].Sensor);
+          }else{
+              TMP117_Configure(&TCB.Compensator[i].Sensor);
+          }
+        }
+
+
+    }
+
+    if (TCB.Controller.Sensor.Errors > 10){
+      MX_I2C1_Init();
+    }
     if (DoSampleTMP117)
     {
       DoSampleTMP117 = false;
@@ -292,7 +317,6 @@ int main(void)
           TMP117_Configure(&TCB.Controller.Sensor);
       }
     }
-
 
     if (DoCalculatePWM)
     {

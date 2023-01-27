@@ -22,8 +22,12 @@ void TCB_InitStruct(struct sTuningControlBoard* s, I2C_HandleTypeDef* hi2c, SPI_
     //Initalize the Controller
     Controller_InitStruct(&s->Controller,&s->Sensor[0], 0);
     //Initalize the Compensator
+    //Todo this will need to have different sensors
     for(int i = 0; i < 3; i++){
-        Compensator_InitStruct(&s->Compensator[i], &s->Sensor[i], &s->DAC8718.DAC_Channels[i]);
+        Compensator_InitStruct(&s->Compensator[i], &s->Sensor[0], &s->DAC8718.DAC_Channels[i]);
+    }
+    for(int i = 3; i < 6; i++){
+        Compensator_InitStruct(&s->Compensator[i], &s->Sensor[0], &s->DAC8718.DAC_Channels[i]);
     }
 
 }
