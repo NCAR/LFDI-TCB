@@ -74,6 +74,40 @@ void ShowControllerConfig(struct sController* Controller){
     USBSendString("  DISABLED\n");
 }
 
+//Show the Configuration of a Controller
+void ShowCompensatorConfig(struct sCompensator* Compensator, uint8_t index){
+  char s1[12];
+  char s2[12];
+  char buffer[250];
+  FormatTemperature(s1, Compensator->Sensor.LastTemperature);
+  FormatTemperature(s2, Compensator->Sensor.Average);
+  snprintf(buffer, 200, "C%u: Peak2Peak=%6.2f  Wavelength=%6.2f  Temperature_Inst=%8s Temperature_Average=%8s address=",index, Compensator->voltage,
+       Compensator->wavelength, s1, s2);
+  USBSendString(buffer);
+  switch (Compensator->Sensor.Address & 0x03)
+  {
+    case 0:
+      USBSendString("00");
+      break;
+    case 1:
+      USBSendString("01");
+      break;
+    case 2:
+      USBSendString("10");
+      break;
+    case 3:
+      USBSendString("11");
+      break;
+    default:
+      break;
+  }
+  if (Compensator->Enable)
+    USBSendString("  ENABLED\n");
+  else
+    USBSendString("  DISABLED\n");
+}
+
+
 //Show an individual sensor
 void ShowSensor(struct sController* Controller)
 {
@@ -358,21 +392,21 @@ void ProcessUserInput_CompensatorMenu(struct sTuningControlBoard * s,uint8_t* in
   if ((strcmp((char*) input, "1") == 0) || (strcmp((char*) input, "c1") == 0))
   {
     UI_Compensator = 0;
-    //ShowControllerConfig(&TCB->Controller); Todo add this
+    ShowCompensatorConfig(&s->Compensator[UI_Compensator], UI_Compensator);
     return;
   }
   
   if ((strcmp((char*) input, "2") == 0) || (strcmp((char*) input, "c2") == 0))
   {
     UI_Compensator = 1;
-    //ShowControllerConfig(&TCB->Controller);
+    ShowCompensatorConfig(&s->Compensator[UI_Compensator], UI_Compensator);
     return;
   }
 
   if ((strcmp((char*) input, "3") == 0) || (strcmp((char*) input, "c3") == 0))
   {
     UI_Compensator = 2;
-    //ShowControllerConfig(&TCB->Controller);
+    ShowCompensatorConfig(&s->Compensator[UI_Compensator], UI_Compensator);
     return;
   }
 
@@ -389,7 +423,8 @@ void ProcessUserInput_CompensatorMenu(struct sTuningControlBoard * s,uint8_t* in
   {
     //Check to see if the controller is a Compensator
     if (UI_Controller < 3){
-      USBSendString("Compensator enabled.\n");
+      sprintf(output, "Compensator %d Enabled.\n", UI_Compensator+1);    
+    	USBSendString(output);
       s->Compensator[UI_Compensator].Enable = true;
       return;
     }
@@ -402,6 +437,8 @@ void ProcessUserInput_CompensatorMenu(struct sTuningControlBoard * s,uint8_t* in
     //Check to see if the controller is a Compensator
     if (UI_Compensator < 3){
       USBSendString("Compensator disabled.\n");
+      sprintf(output, "Compensator %d Disabled.\n", UI_Compensator+1);    
+    	USBSendString(output);
       s->Compensator[UI_Compensator].Enable = false;
       return;
     }
@@ -410,10 +447,12 @@ void ProcessUserInput_CompensatorMenu(struct sTuningControlBoard * s,uint8_t* in
   if (strcmp((char*) input, "co") == 0){
     if(s->Compensator[UI_Compensator].compensate){
       s->Compensator[UI_Compensator].compensate = false;
-      USBSendString("Compensator Off.\n");
+      sprintf(output, "Compensator %d Auto Compensating Off.\n", UI_Compensator+1);
+      USBSendString(output);
     } else {
       s->Compensator[UI_Compensator].compensate = true;
-      USBSendString("Compensator On.\n");
+      sprintf(output, "Compensator %d Auto Compensating Off.\n", UI_Compensator+1);
+      USBSendString(output);
     }
     return;
   }
@@ -428,19 +467,25 @@ void ProcessUserInput_CompensatorMenu(struct sTuningControlBoard * s,uint8_t* in
       case 'a':
         //Set the sensor address
         SetSensor(&s->Compensator[UI_Compensator].Sensor, u);
+        sprintf(output, "Compensator %d Sensor Address Set to %d.\n", UI_Compensator+1, u);
+        USBSendString(output);
         return;
         break;
 
       case 'v':
         s->Compensator[UI_Compensator].voltage = f;
         s->Compensator[UI_Compensator].compensate = false;
-        USBSendString("Compensator Voltage Set.\n");
+        //Print out the string with the Compensator number and voltage
+        sprintf(output, "Compensator %d Voltage Set to %f.\n", UI_Compensator+1, f);    
+    	  USBSendString(output);
+    
         break;
         return;
 
       case 'w':
         s->Compensator[UI_Compensator].wavelength = f;
-        USBSendString("Compensator Wavelength Set.\n");
+        sprintf(output, "Compensator %d Wavelength Set to %f.\n", UI_Compensator+1, f);
+        USBSendString(output);
         break;
         return;
       default:
@@ -449,7 +494,6 @@ void ProcessUserInput_CompensatorMenu(struct sTuningControlBoard * s,uint8_t* in
         return;
     }
   }
-
 }
 
 //Parse the input from the Controller Context Menu
@@ -477,9 +521,6 @@ void TranslateUserInput_MainMenu(struct sTuningControlBoard * s,uint8_t* buffer)
   replacestr(buffer, " ", "");
   replacestr(buffer, " ", "");
   replacestr(buffer, " ", "");
-
-  USBSendString("Controller      -- Open The Controller Context Menu\n");
-  USBSendString("Compensator     -- Open The Compensator Context Menu\n");
   replacestr(buffer, "save", "s");
   replacestr(buffer, "load", "l");
   replacestr(buffer, "update", "u");

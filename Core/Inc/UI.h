@@ -14,6 +14,7 @@
 
 void ProcessUserInput(struct sTuningControlBoard* TCB, uint8_t* buffer);
 void ShowControllerConfig(struct sController* Controller);
+void ShowCompensatorConfig(struct sCompensator* Compensator, uint8_t index);
 void ShowSensor(struct sController* Controller);
 void FormatTemperature(char* buffer, double temp);
 void ShowEffort(struct sController* Controller);
