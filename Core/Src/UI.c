@@ -81,7 +81,7 @@ void ShowCompensatorConfig(struct sCompensator* Compensator, uint8_t index){
   char buffer[250];
   FormatTemperature(s1, Compensator->Sensor.LastTemperature);
   FormatTemperature(s2, Compensator->Sensor.Average);
-  snprintf(buffer, 200, "C%u: Peak2Peak=%6.2f  Wavelength=%6.2f  Temperature_Inst=%8s Temperature_Average=%8s address=",index, Compensator->voltage,
+  snprintf(buffer, 200, "C%u: Peak2Peak=%6.2f  Wavelength=%6.2f  Temperature_Inst=%8s Temperature_Average=%8s address=",index+1, Compensator->voltage,
        Compensator->wavelength, s1, s2);
   USBSendString(buffer);
   switch (Compensator->Sensor.Address & 0x03)
@@ -421,14 +421,13 @@ void ProcessUserInput_CompensatorMenu(struct sTuningControlBoard * s,uint8_t* in
   //Turn on the Temperature Controller
   if (strcmp((char*) input, "e") == 0)
   {
-    //Check to see if the controller is a Compensator
-    if (UI_Controller < 3){
+
       sprintf(output, "Compensator %d Enabled.\n", UI_Compensator+1);    
     	USBSendString(output);
-      s->Compensator[UI_Compensator].Enable = true;
+      Compensator_enableChannel(&s->Compensator[UI_Compensator], true);
       return;
-    }
-  }
+   }
+
 
 
   //Turn off the Temperature Controller
@@ -436,7 +435,6 @@ void ProcessUserInput_CompensatorMenu(struct sTuningControlBoard * s,uint8_t* in
   {
     //Check to see if the controller is a Compensator
     if (UI_Compensator < 3){
-      USBSendString("Compensator disabled.\n");
       sprintf(output, "Compensator %d Disabled.\n", UI_Compensator+1);    
     	USBSendString(output);
       Compensator_enableChannel(&s->Compensator[UI_Compensator], false);
