@@ -84,7 +84,7 @@ void ShowCompensatorConfig(struct sCompensator* Compensator, uint8_t index){
   char buffer[300];
   FormatTemperature(s1, Compensator->Sensor.LastTemperature);
   FormatTemperature(s2, Compensator->Sensor.Average);
-  snprintf(buffer, 200, "Comp%u: Peak2Peak=%6.2f  Wavelength=%6.2f  Temperature_Inst=%8s Temperature_Average=%8s address=",index+1, Compensator->voltage,
+  snprintf(buffer, 200, "Comp%u: Peak2Peak=%6.2f  Wave=%6.2f  Temp=%8s Avg=%8s address=",index+1, Compensator->voltage,
        Compensator->wavelength, s1, s2);
   USBSendString(buffer);
   switch (Compensator->Sensor.Address & 0x03)
@@ -219,9 +219,8 @@ void ShowAllController(struct sController* Controller, bool readable)
     else
     {
       //if (Controller->Heater == 1){
-        ShowRawHeaderController();
       snprintf(buffer, 200, "Cont%u\t%5.2f\t%5.2f\t%5.2f\t%7.1f\t%7.1f\t%7.1f\t%7.1f\t%8s\t%8s\t%8s\t%2s\t%03u\t%04u\t%s\t%s\n",
-          Controller->Heater, Controller->PID.Config.Kp, Controller->PID.Config.Kd, Controller->PID.Config.Ki,
+          Controller->Heater+1, Controller->PID.Config.Kp, Controller->PID.Config.Kd, Controller->PID.Config.Ki,
           100 * Controller->PID.Ep, 100 * Controller->PID.Ed, 100 * Controller->PID.Ei, 100 * Controller->PID.Effort,
           last, average, target, address, Controller->PID.Config.History, Controller->PID.Config.Frequency, enabled, sensor);
       USBSendString(buffer);
@@ -293,7 +292,6 @@ void ShowAllTCB(struct sTuningControlBoard* sTCB){
   for(uint8_t i = 0; i < sTCB->NumOfControllers; i++){
     ShowAllController(&sTCB->Controller[i], false);
   }
-  USBSendString("--------------------\n");
   ShowRawHeaderCompensator();
   for(uint8_t i = 0; i < sTCB->NumOfCompensators; i++){
     ShowAllCompensator(&sTCB->Compensator[i], false, i);
@@ -305,7 +303,7 @@ void ShowAllTCB(struct sTuningControlBoard* sTCB){
 void ShowRawHeaderController(void)
 {
   static char buffer[250];
-  snprintf(buffer, 200,  "Cont\tkp\tkd\tki\tep\ted\tei\teffort temp\taverage\ttarget\ti2c\thist\tfreq\tenabled\tsensor\n");
+  snprintf(buffer, 200,  "Cont\tkp\tkd\tki\tep\ted\tei\teffort\ttemp\taverage\ttarget\ti2c\thist\tfreq\tenabled\tsensor\n");
   USBSendString(buffer);
 //  HAL_Delay(1); // don't butcher our buffer before we're done with it
 }
@@ -342,12 +340,14 @@ void ProcessUserInput_MainMenu(struct sTuningControlBoard * s,char* input){
   if (strcmp(input, "cont") == 0)
   { 
     SUB_MENU = CONTROLLER_MENU;
+    return;
   }
 
   //Pull up the Compensator Sub menu
   else if (strcmp(input, "comp") == 0)
   { 
     SUB_MENU = COMPENSATOR_MENU;
+    return;
   }
 
   //TODO This Should print all of the interesting Values fromthe TCB
@@ -359,7 +359,7 @@ void ProcessUserInput_MainMenu(struct sTuningControlBoard * s,char* input){
   {
     ShowAllTCB(s);
   }
-  //This Should reset the TCB back to the default values
+  //This Should reset the TCB  to the default values
   else if (strcmp(input, "wipe") == 0 || strcmp(input, "w") == 0)
   {
     //WipeConfig();
@@ -405,8 +405,8 @@ void ProcessUserInput_CompensatorMenu(struct sTuningControlBoard * s,char* input
   char c;
   float f = 0;
 
-  //Send back to main menu
-  if (strcmp(input, "b") == 0)
+  //Send  to main menu
+  if (strcmp(input, "m") == 0)
   {
     SUB_MENU = MAIN_MENU;
     UI_Compensator = 9;
@@ -529,7 +529,7 @@ void ProcessUserInput_CompensatorMenu(struct sTuningControlBoard * s,char* input
 
       case 'v':
         //Check the Voltage is greater than 0 and less than max peak to peak
-        if (f > 0 && f < s->Compensator[UI_Compensator].Channel.max_peak2peak){
+        if (f >= 0 && f < s->Compensator[UI_Compensator].Channel.max_peak2peak){
           s->Compensator[UI_Compensator].voltage = f;
           s->Compensator[UI_Compensator].compensate = false;
           //Print out the string with the Compensator number and voltage
@@ -544,11 +544,20 @@ void ProcessUserInput_CompensatorMenu(struct sTuningControlBoard * s,char* input
         }
 
       case 'w':
-        s->Compensator[UI_Compensator].wavelength = f;
-        sprintf(output, "Compensator %d Wavelength Set to %f.\n", UI_Compensator+1, f);
-        USBSendString(output);
-        break;
-        return;
+        //Set the wavelength
+        //Check that the wavelength is greater than 0 and less than 500
+        if (f > 0 && f < 500){
+          s->Compensator[UI_Compensator].wavelength = f;
+          sprintf(output, "Compensator %d Wavelength Set to %f.\n", UI_Compensator+1, f);
+          USBSendString(output);
+          break;
+          return;
+        } else {
+          USBSendString("Invalid Wavelength. Must be between 0 and 500\n");
+          break;
+          return;
+        }
+
       default:
         USBSendString("Unknown Command.\n");
         break;
@@ -565,12 +574,12 @@ void ProcessUserInput_ControllerMenu(struct sTuningControlBoard * s,char* buffer
   char c;
   float f = 0;
 
-  //Send back to main menu
-  if (strcmp(buffer, "b") == 0)
+  //Send  to main menu
+  if (strcmp(buffer, "m") == 0)
   {
     SUB_MENU = MAIN_MENU;
     UI_Controller = 9;
-    ShowMainMenuHeader();
+
     return;
   }
    if ((strcmp((char*) buffer, "?") == 0) || (strcmp((char*) buffer, "help") == 0))
@@ -803,7 +812,7 @@ void TranslateUserInput_CompensatorMenu(struct sTuningControlBoard * s,char * bu
   replacestr(buffer, "enable", "e");
   replacestr(buffer, "disable", "d");
   replacestr(buffer, "address", "a");
-  replacestr(buffer, "back", "b");
+  replacestr(buffer, "main", "m");
   replacestr(buffer, "help", "h");
   replacestr(buffer, "raw", "r");
   ProcessUserInput_CompensatorMenu(s, buffer);
@@ -841,7 +850,7 @@ void TranslateUserInput_ControllerMenu(struct sTuningControlBoard * s,char * buf
   replacestr(buffer, "history", "h");
   replacestr(buffer, "update", "u");
   replacestr(buffer, "raw", "r");
-  replacestr(buffer, "back", "b");
+  replacestr(buffer, "main", "m");
   ProcessUserInput_ControllerMenu(s, buffer);
   
 }
@@ -907,7 +916,7 @@ void ShowControllerHelp(void){
     USBSendString("disable         -- disable the controller\n");
     USBSendString("address         -- i2c address of the sensor\n");
     USBSendString("raw             -- shows an easily parsable version of the Information\n");
-    USBSendString("back            -- return to the main menu\n");
+    USBSendString("main            -- return to the main menu\n");
     USBSendString("\n");
 }
 
@@ -924,7 +933,7 @@ void ShowCompensatorHelp(void){
     USBSendString("disable         -- disable the controller\n");
     USBSendString("address         -- i2c address of the sensor\n");
     USBSendString("raw             -- shows an easily parsable version of the Information\n");
-    USBSendString("back            -- return to the main menu\n");
+    USBSendString("main            -- return to the main menu\n");
     USBSendString("\n");
 }
 

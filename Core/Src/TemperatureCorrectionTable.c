@@ -82,8 +82,12 @@ uint16_t temperature_position_offset(double* temp){
 float Wavelength_to_Voltage(float* wavelength, double* temp){
 	//Skip this For now we need a translation table
 	//uint16_t base_position = NM_to_Position(wavelength);
+	
+	//Because we dont have a Conversion from Pixel to Wave
+	//Convert the float wavelength to a uint16_t position
+	//Therefore wavelength needs to be between 570 and 0 and 
+	uint16_t base_position = (uint16_t)(*wavelength);
 	double base_temp = 25;
-	uint16_t base_position = 100;
 	base_position= base_position + 415;
 	uint16_t absolute_BaseT_Offset = temperature_position_offset(&base_temp);
 	uint16_t absolute_Offset = temperature_position_offset(temp);
