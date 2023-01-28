@@ -599,20 +599,7 @@ void ProcessUserInput_ControllerMenu(struct sTuningControlBoard * s,char* buffer
     }
     return;
   }
-  //Print the Status all the Controllers
-  if ((strcmp((char*) buffer, "u") == 0) || (strcmp((char*) buffer, "/") == 0))
-  {
-    ShowAllController(&s->Controller[UI_Controller], true);
-    return;
-  }
-  //Print the Status all the Controllers in non readable format
-  if (strcmp((char*) buffer, "r") == 0)
-  {
-    ShowRawHeaderController();
-    ShowAllController(&s->Controller[UI_Controller], false);//Todo Implement this
-    return;
-  }
- 
+  //Select the controller
   if ((strcmp((char*) buffer, "1") == 0) || (strcmp((char*) buffer, "c1") == 0))
   {
     UI_Controller = 0;
@@ -647,6 +634,21 @@ void ProcessUserInput_ControllerMenu(struct sTuningControlBoard * s,char* buffer
     USBSendString("No controller selected.\n");
     return;
   }
+
+  //Print the Status all the Controllers
+  if ((strcmp((char*) buffer, "u") == 0) || (strcmp((char*) buffer, "/") == 0))
+  {
+    ShowAllController(&s->Controller[UI_Controller], true);
+    return;
+  }
+  //Print the Status all the Controllers in non readable format
+  if (strcmp((char*) buffer, "r") == 0)
+  {
+    ShowRawHeaderController();
+    ShowAllController(&s->Controller[UI_Controller], false);//Todo Implement this
+    return;
+  }
+
   //Enable the Controller
   if (strcmp((char*) buffer, "e") == 0)
   {
@@ -661,6 +663,7 @@ void ProcessUserInput_ControllerMenu(struct sTuningControlBoard * s,char* buffer
     s->Controller[UI_Controller].PID.Config.Enabled = false;
     return;
   }
+
 
   if (sscanf((char*) buffer, "%c%f", &c, &f) == 2)
   {
