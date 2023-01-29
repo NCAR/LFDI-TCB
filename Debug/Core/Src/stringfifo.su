@@ -1,5 +1,0 @@
-../Core/Src/stringfifo.c:11:6:StringFIFOInit	24	static
-../Core/Src/stringfifo.c:20:10:StringFIFOUsed	24	static
-../Core/Src/stringfifo.c:28:10:StringFIFOAvailable	24	static
-../Core/Src/stringfifo.c:35:9:StringFIFOAdd	32	static
-../Core/Src/stringfifo.c:53:9:StringFIFORemove	32	static

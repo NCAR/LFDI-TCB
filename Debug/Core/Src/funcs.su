@@ -1,7 +1,0 @@
-../Core/Src/funcs.c:19:5:parse_comma_delimited_str	32	static
-../Core/Src/funcs.c:30:6:USBSendString	24	static
-../Core/Src/funcs.c:43:6:InitDWTTimer	4	static
-../Core/Src/funcs.c:50:6:Delay_us	24	static
-../Core/Src/funcs.c:59:9:UIntToInt	24	static
-../Core/Src/funcs.c:65:10:IntToUInt	24	static
-../Core/Src/funcs.c:72:6:replacestr	48	static

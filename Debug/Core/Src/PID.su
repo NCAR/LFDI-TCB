@@ -1,5 +1,0 @@
-../Core/Src/PID.c:10:6:PID_InitStruct	24	static
-../Core/Src/PID.c:31:6:PID_SavePoint	24	static
-../Core/Src/PID.c:39:7:PID_SumError	24	static
-../Core/Src/PID.c:59:7:PID_Velocity	24	static
-../Core/Src/PID.c:69:7:PID_CalculateEffort	24	static

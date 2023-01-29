@@ -1,4 +1,0 @@
-../Core/Src/TemperatureCorrectionTable.c:12:10:NM_to_Position	24	static
-../Core/Src/TemperatureCorrectionTable.c:25:7:BaseT_Position_to_BaseT_Voltage	24	static
-../Core/Src/TemperatureCorrectionTable.c:74:10:temperature_position_offset	24	static
-../Core/Src/TemperatureCorrectionTable.c:82:7:Wavelength_to_Voltage	40	static

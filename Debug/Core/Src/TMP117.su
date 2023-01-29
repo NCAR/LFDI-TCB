@@ -1,3 +1,0 @@
-../Core/Src/TMP117.c:20:6:TMP117_InitStruct	32	static
-../Core/Src/TMP117.c:47:6:TMP117_Configure	32	static
-../Core/Src/TMP117.c:71:6:TMP117_GetTemperature	56	static
