@@ -68,6 +68,7 @@ void DAC_InitStruct(struct sDAC* s, SPI_HandleTypeDef* hspi){
 	//Set all DAC Channels Up. Should probably be put into TCB init
 	for (int i = 0; i < 6; i++){
 		s->DAC_Channels[i].DAC_number = i;
+		//Set it to Centered
 		s->DAC_Channels[i].upper_bound = 0x7FFF;
 		s->DAC_Channels[i].lower_bound = 0x7FFF;
 		s->DAC_Channels[i].enabled = true;
@@ -535,7 +536,7 @@ void Set_Max_Peak_To_Peak_Voltage(struct sDAC* s, bool Gain){
 //@brief: This function sets the upper and lower bounds of a DAC Channel
 //@param: s: The DAC Channel to set the bounds of
 //@param: voltage: The voltage to set the bounds to
-void Set_Voltage_Peak_to_Peak(struct sDAC_Channel* sChannel,  float* voltage){
+void Set_Voltage_Peak_to_Peak(struct sDAC_Channel *sChannel, float* voltage){
 	//The max Voltage Peak to Peak is 22.4V so we need to scale the voltage to fit in 16 bits
 	//Find the upper and lower bounds of the voltage with Zero Bias
 	//Divide the voltage by the max voltage to get a percentage and cast to a 16 bit int

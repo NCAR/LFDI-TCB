@@ -113,14 +113,14 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
   {
     //Syncronous Update of the DACs
     for (int i = 0; i < 6; i++){
-      if(TCB.DAC8718.DAC_Channels[i].enabled){
-        if(TCB.DAC8718.DAC_Channels[i].state_high){
+      if(TCB.Compensator[i].Channel.enabled){
+        if(TCB.Compensator[i].Channel.state_high){
 
-          Set_DAC_Value(&TCB.DAC8718, TCB.DAC8718.DAC_Channels[i].DAC_number, TCB.DAC8718.DAC_Channels[i].lower_bound);
-          TCB.DAC8718.DAC_Channels[i].state_high = false;
+          Set_DAC_Value(&TCB.DAC8718, TCB.Compensator[i].Channel.DAC_number, TCB.Compensator[i].Channel.lower_bound);
+          TCB.Compensator[i].Channel.state_high = false;
         }else{
-          Set_DAC_Value(&TCB.DAC8718, TCB.DAC8718.DAC_Channels[i].DAC_number, TCB.DAC8718.DAC_Channels[i].upper_bound);
-          TCB.DAC8718.DAC_Channels[i].state_high = true;
+          Set_DAC_Value(&TCB.DAC8718, TCB.Compensator[i].Channel.DAC_number, TCB.Compensator[i].Channel.upper_bound);
+          TCB.Compensator[i].Channel.state_high = true;
 
         }
       }
@@ -233,12 +233,15 @@ int main(void)
   // over the EEPROM on next startup. This will *probably* be caught by checking
   // the address of the last controller rather than the first.
   //Welcome to OOP hell
-  if (!(TCB.Controller.Sensor.Address & 0b1001000)) // if the stored address is not valid, we probably have invalid data.
+  if (!(TCB.Controller[0].Sensor.Address & 0b1001000)) // if the stored address is not valid, we probably have invalid data.
   {
     printf("The configuration is invalid. Rewriting defaults.");
   }
 
-  TMP117_Configure(&TCB.Controller.Sensor);
+  TMP117_Configure(&TCB.Controller[0].Sensor);
+  for(uint8_t i = 0; i< 6; i++){
+	  TMP117_Configure(&TCB.Compensator[i].Sensor);
+  }
   HAL_TIM_Base_Start_IT(&htim2); //DAC Timer
   HAL_TIM_Base_Start_IT(&htim6); // Heater Timer
   HAL_TIM_Base_Start_IT(&htim4); // Main Timer
@@ -272,29 +275,54 @@ int main(void)
 		//   }
 		//   //HAL_Delay(100);
 	  // }
-    Compensator_Update(&TCB.Compensator);
-    //-------- Damons Code ----------------------
+
+    //Set the heater to the opposite state its currently in
+	  //Just to Test. Here is the
+
+  Compensator_Update(&TCB.Compensator[0]);
+  Compensator_Update(&TCB.Compensator[1]);
+  Compensator_Update(&TCB.Compensator[2]);
+  Compensator_Update(&TCB.Compensator[3]);
+  Compensator_Update(&TCB.Compensator[4]);
+  Compensator_Update(&TCB.Compensator[5]);
+  //-------- Damons Code ----------------------
     // we keep a global copy of this for the timer interrupt
-    HeaterFrequency = TCB.Controller.PID.Config.Frequency;
+    HeaterFrequency = TCB.Controller[0].PID.Config.Frequency;
 
-    if (TCB.Controller.Sensor.Errors > 10)
+    //Go through Compensator Sensors
+    for(uint8_t i = 0; i<6;i++){
+        if (TCB.Compensator[i].Sensor.Errors > 10)
+          MX_I2C1_Init();
+
+        if (DoSampleTMP117)
+        {
+          if (TCB.Compensator[i].Sensor.Configured){
+              TMP117_GetTemperature(&TCB.Compensator[i].Sensor);
+          }else{
+              TMP117_Configure(&TCB.Compensator[i].Sensor);
+          }
+        }
+
+
+    }
+
+    if (TCB.Controller[0].Sensor.Errors > 10){
       MX_I2C1_Init();
-
+    }
     if (DoSampleTMP117)
     {
       DoSampleTMP117 = false;
-      if (TCB.Controller.Sensor.Configured){
-          TMP117_GetTemperature(&TCB.Controller.Sensor);
+      if (TCB.Controller[0].Sensor.Configured){
+          TMP117_GetTemperature(&TCB.Controller[0].Sensor);
       }else{
-          TMP117_Configure(&TCB.Controller.Sensor);
+          TMP117_Configure(&TCB.Controller[0].Sensor);
       }
     }
-
 
     if (DoCalculatePWM)
     {
       DoCalculatePWM = false;
-      Controller_Step(&TCB.Controller);
+      Controller_Step(&TCB.Controller[0]);
     }
 
     if (StringFIFORemove(&USBFIFO, buffer) == 0)

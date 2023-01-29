@@ -10,10 +10,10 @@
 
 
 
-void Controller_InitStruct(struct sController* s, struct sTMP117 *t,uint8_t heater){
+void Controller_InitStruct(struct sController* s, struct sTMP117 *t, uint8_t heater){
+  
   struct sPID PID;
   PID_InitStruct(&PID);
-
   s->Heater = heater;
   s->Sensor = *t;
   s->PID = PID;

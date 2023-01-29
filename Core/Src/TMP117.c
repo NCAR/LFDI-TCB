@@ -70,7 +70,6 @@ void TMP117_Configure(struct sTMP117* s)
 //@return None
 void TMP117_GetTemperature(struct sTMP117* s)
 {
-  uint8_t i;
   uint16_t u;
   double t = 0;
   //setup an empty Buffer to request the temperature
