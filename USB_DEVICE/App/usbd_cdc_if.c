@@ -268,7 +268,7 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
   /* USER CODE BEGIN 6 */
   uint16_t len = (uint8_t) *Len;
   if(StringFIFOAdd(&USBFIFO, Buf, len)){
-    printf("USB FIFO overflow\nReinitalizing FIFO")
+    printf("USB FIFO overflow\nReinitalizing FIFO");
     StringFIFOInit(&USBFIFO);
     return USBD_FAIL;
   }
