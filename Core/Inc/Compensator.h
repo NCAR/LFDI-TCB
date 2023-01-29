@@ -1,5 +1,6 @@
 /*
  * Compensator.h
+
  * This is a structure that pairs a specific Temperature Sensor with Specific DAC Channel
  * And Performs Compensation algorythom to set output voltage
  *  Created on: Jan 24, 2023
@@ -46,5 +47,6 @@ void Compensator_AutoCompensate(struct sCompensator* s);
 void Compensator_SetWavelength(struct sCompensator* s, float wavelength);
 void Compensator_SetVoltage(struct sCompensator* s, float voltage);
 void Compensator_Update(struct sCompensator* s);
+
 
 #endif /* INC_COMPENSATOR_H_ */

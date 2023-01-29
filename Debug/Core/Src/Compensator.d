@@ -1,4 +1,5 @@
-Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
+Core/Src/Compensator.o: ../Core/Src/Compensator.c \
+ ../Core/Inc/Compensator.h ../Core/Inc/defs.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h \
  ../Core/Inc/stm32f4xx_hal_conf.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_rcc.h \
@@ -32,25 +33,10 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pcd.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_usb.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pcd_ex.h \
- ../USB_DEVICE/App/usb_device.h \
- ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_def.h \
- ../USB_DEVICE/Target/usbd_conf.h ../Core/Inc/PID.h ../Core/Inc/defs.h \
- ../Core/Inc/TMP117.h ../Core/Inc/Controller.h ../Core/Inc/PID.h \
- ../Core/Inc/DAC.h ../Core/Inc/funcs.h ../Core/Inc/TuningControlBoard.h \
- ../Core/Inc/Controller.h ../Core/Inc/Compensator.h \
- ../Core/Inc/TemperatureCorrectionTable.h ../Core/Inc/CameraController.h \
- ../Core/Inc/stringfifo.h ../Core/Inc/UI.h ../Core/Inc/controller.h \
- ../Core/Inc/TuningControlBoard.h ../Core/Inc/Heater_Controller.h \
  ../Core/Inc/TMP117.h ../Core/Inc/DAC.h ../Core/Inc/funcs.h \
- ../Core/Inc/DAC_Unit_Test.h ../USB_DEVICE/App/usbd_cdc_if.h \
- ../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc/usbd_cdc.h \
- ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_ioreq.h \
- ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_def.h \
- ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_core.h \
- ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_ioreq.h \
- ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_ctlreq.h \
- ../Core/Inc/defs.h ../Core/Inc/TemperatureCorrectionTable.h
-../Core/Inc/main.h:
+ ../Core/Inc/TemperatureCorrectionTable.h
+../Core/Inc/Compensator.h:
+../Core/Inc/defs.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h:
 ../Core/Inc/stm32f4xx_hal_conf.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_rcc.h:
@@ -84,36 +70,7 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pcd.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_usb.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pcd_ex.h:
-../USB_DEVICE/App/usb_device.h:
-../Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_def.h:
-../USB_DEVICE/Target/usbd_conf.h:
-../Core/Inc/PID.h:
-../Core/Inc/defs.h:
-../Core/Inc/TMP117.h:
-../Core/Inc/Controller.h:
-../Core/Inc/PID.h:
-../Core/Inc/DAC.h:
-../Core/Inc/funcs.h:
-../Core/Inc/TuningControlBoard.h:
-../Core/Inc/Controller.h:
-../Core/Inc/Compensator.h:
-../Core/Inc/TemperatureCorrectionTable.h:
-../Core/Inc/CameraController.h:
-../Core/Inc/stringfifo.h:
-../Core/Inc/UI.h:
-../Core/Inc/controller.h:
-../Core/Inc/TuningControlBoard.h:
-../Core/Inc/Heater_Controller.h:
 ../Core/Inc/TMP117.h:
 ../Core/Inc/DAC.h:
 ../Core/Inc/funcs.h:
-../Core/Inc/DAC_Unit_Test.h:
-../USB_DEVICE/App/usbd_cdc_if.h:
-../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc/usbd_cdc.h:
-../Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_ioreq.h:
-../Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_def.h:
-../Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_core.h:
-../Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_ioreq.h:
-../Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_ctlreq.h:
-../Core/Inc/defs.h:
 ../Core/Inc/TemperatureCorrectionTable.h:

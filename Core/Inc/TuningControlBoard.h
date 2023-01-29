@@ -24,10 +24,9 @@
 //The TCB will be set up such that the User can choose which TMP117 to use as the input for the PID Controller along with the heater
 struct sTuningControlBoard
 {
-  
   struct sDAC DAC8718;
   struct sTMP117 Sensor[7];
-
+  
   uint8_t NumOfControllers;
   uint8_t NumOfCompensators;
   struct sController Controller[1];//INcrease this as we get more controllers

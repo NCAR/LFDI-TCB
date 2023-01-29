@@ -257,6 +257,7 @@ void ShowAllCompensator(struct sCompensator* Compensator, bool readable, uint8_t
       case TMP117_STATE_RECEIVEFAIL:  strcpy(sensor, "No response");   break;
       case TMP117_STATE_VALIDTEMP:    strcpy(sensor, "OK");            break;
       default: break;
+
     }
     //Is Auto Compensatilng enabled?
     char compensating[10];
@@ -476,7 +477,6 @@ void ProcessUserInput_CompensatorMenu(struct sTuningControlBoard * s,char* input
     return;
   }
 
-
   //Turn on the Temperature Controller
   if (strcmp((char*) input, "e") == 0)
   {
@@ -615,7 +615,6 @@ void ProcessUserInput_ControllerMenu(struct sTuningControlBoard * s,char* buffer
   }
   if ((strcmp((char*) buffer, "3") == 0) || (strcmp((char*) buffer, "c3") == 0))
   {
-
     UI_Controller = 9;
     USBSendString("Controller 3 not implemented.\n");
     //ShowControllerConfig(Controller);
@@ -634,7 +633,6 @@ void ProcessUserInput_ControllerMenu(struct sTuningControlBoard * s,char* buffer
     USBSendString("No controller selected.\n");
     return;
   }
-
   //Print the Status all the Controllers
   if ((strcmp((char*) buffer, "u") == 0) || (strcmp((char*) buffer, "/") == 0))
   {
@@ -669,13 +667,16 @@ void ProcessUserInput_ControllerMenu(struct sTuningControlBoard * s,char* buffer
   {
     //Convert the float to an integer
     u = (uint8_t) f;
+    //Switch on the character
     switch (c)
     {
+      //User is trying to set the Channel
       case 'c':
         // we shouldn't get here if a valid number was used
         USBSendString("Invalid controller number.\n");
         return;
         break;
+      //User is trying to set the Sensor Address
       case 'a':
         SetSensor(&s->Controller[UI_Controller].Sensor, u);
         // reset our history since we're changing temperature sensors
@@ -760,7 +761,6 @@ void ProcessUserInput_ControllerMenu(struct sTuningControlBoard * s,char* buffer
         s->Controller[UI_Controller].PID.Config.TargetP = f;
         return;
         break;
-
       default:
         break;
     }

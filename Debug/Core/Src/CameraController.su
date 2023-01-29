@@ -1,0 +1,2 @@
+../Core/Src/CameraController.c:5:6:CameraController_InitStruct	16	static
+../Core/Src/CameraController.c:12:6:CameraController_TriggerCamera	16	static

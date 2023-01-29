@@ -8,7 +8,6 @@
 #include "TuningControlBoard.h"
 
 
-
 //This Will Setup the TCB structer by initiallizing the DAC and the TMP117 and the Controller
 void TCB_InitStruct(struct sTuningControlBoard* s, I2C_HandleTypeDef* hi2c, SPI_HandleTypeDef* hspi){
 

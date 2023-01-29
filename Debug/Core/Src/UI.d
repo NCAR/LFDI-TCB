@@ -34,8 +34,9 @@ Core/Src/UI.o: ../Core/Src/UI.c ../Core/Inc/UI.h ../Core/Inc/defs.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pcd_ex.h \
  ../Core/Inc/TMP117.h ../Core/Inc/controller.h ../Core/Inc/PID.h \
  ../Core/Inc/DAC.h ../Core/Inc/funcs.h ../Core/Inc/TuningControlBoard.h \
- ../Core/Inc/Controller.h ../Core/Inc/funcs.h ../Core/Inc/DAC.h \
- ../Core/Inc/TuningControlBoard.h
+ ../Core/Inc/Controller.h ../Core/Inc/Compensator.h \
+ ../Core/Inc/TemperatureCorrectionTable.h ../Core/Inc/CameraController.h \
+ ../Core/Inc/funcs.h ../Core/Inc/DAC.h ../Core/Inc/TuningControlBoard.h
 ../Core/Inc/UI.h:
 ../Core/Inc/defs.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h:
@@ -78,6 +79,9 @@ Core/Src/UI.o: ../Core/Src/UI.c ../Core/Inc/UI.h ../Core/Inc/defs.h \
 ../Core/Inc/funcs.h:
 ../Core/Inc/TuningControlBoard.h:
 ../Core/Inc/Controller.h:
+../Core/Inc/Compensator.h:
+../Core/Inc/TemperatureCorrectionTable.h:
+../Core/Inc/CameraController.h:
 ../Core/Inc/funcs.h:
 ../Core/Inc/DAC.h:
 ../Core/Inc/TuningControlBoard.h:

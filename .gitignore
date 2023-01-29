@@ -1,110 +1,15 @@
 
-Debug/Core/Src/Compensator.d
+*.o
+*.su
+*.mk
+Debug/Core/Src/CameraController.o
 Debug/Core/Src/Compensator.o
-Debug/Core/Src/Compensator.su
-Debug/Core/Src/DAC.o
-Debug/Core/Src/DAC.su
-Debug/Core/Src/DAC_Unit_Test.o
-Debug/Core/Src/main.d
-Debug/Core/Src/main.o
-Debug/Core/Src/main.su
-Debug/Core/Src/subdir.mk
-Debug/Core/Src/TuningControlBoard.d
-Debug/Core/Src/TuningControlBoard.o
-Debug/Core/Src/TuningControlBoard.su
-Debug/Core/Src/UI.d
-Debug/Core/Src/UI.o
-Debug/LFDI Tuning Control Board.elf
-Debug/LFDI Tuning Control Board.list
-Debug/LFDI Tuning Control Board.map
-Debug/objects.list
-Debug/Core/Src/DAC.o
-Debug/Core/Src/DAC.su
-Debug/Core/Src/DAC_Unit_Test.o
-Debug/Core/Src/main.d
-Debug/Core/Src/main.o
-Debug/Core/Src/main.su
-Debug/Core/Src/subdir.mk
-Debug/Core/Src/TuningControlBoard.d
-Debug/Core/Src/TuningControlBoard.o
-Debug/Core/Src/TuningControlBoard.su
-Debug/Core/Src/UI.d
-Debug/Core/Src/UI.o
-Debug/LFDI Tuning Control Board.elf
-Debug/LFDI Tuning Control Board.list
-Debug/LFDI Tuning Control Board.map
-Debug/objects.list
 Debug/Core/Src/Controller.o
 Debug/Core/Src/DAC.o
-Debug/Core/Src/DAC.su
 Debug/Core/Src/DAC_Unit_Test.o
 Debug/Core/Src/funcs.o
 Debug/Core/Src/Heater_Controller.o
-Debug/Core/Src/main.d
 Debug/Core/Src/main.o
-Debug/Core/Src/main.su
-Debug/Core/Src/PID.o
-Debug/Core/Src/stm32f4xx_hal_msp.o
-Debug/Core/Src/stm32f4xx_it.o
-Debug/Core/Src/stringfifo.o
-Debug/Core/Src/subdir.mk
-Debug/Core/Src/syscalls.o
-Debug/Core/Src/sysmem.o
-Debug/Core/Src/system_stm32f4xx.o
-Debug/Core/Src/TemperatureCorrectionTable.o
-Debug/Core/Src/TMP117.o
-Debug/Core/Src/TuningControlBoard.d
-Debug/Core/Src/TuningControlBoard.o
-Debug/Core/Src/TuningControlBoard.su
-Debug/Core/Src/UI.d
-Debug/Core/Src/UI.o
-Debug/Core/Src/UI.su
-Debug/LFDI Tuning Control Board.elf
-Debug/LFDI Tuning Control Board.list
-Debug/LFDI Tuning Control Board.map
-Debug/makefile
-Debug/objects.list
-.settings/stm32cubeide.project.prefs
-Debug/Core/Src/Controller.o
-Debug/Core/Src/DAC.o
-Debug/Core/Src/DAC.su
-Debug/Core/Src/DAC_Unit_Test.o
-Debug/Core/Src/funcs.o
-Debug/Core/Src/Heater_Controller.o
-Debug/Core/Src/main.d
-Debug/Core/Src/main.o
-Debug/Core/Src/main.su
-Debug/Core/Src/PID.o
-Debug/Core/Src/stm32f4xx_hal_msp.o
-Debug/Core/Src/stm32f4xx_it.o
-Debug/Core/Src/stringfifo.o
-Debug/Core/Src/subdir.mk
-Debug/Core/Src/syscalls.o
-Debug/Core/Src/sysmem.o
-Debug/Core/Src/system_stm32f4xx.o
-Debug/Core/Src/TemperatureCorrectionTable.o
-Debug/Core/Src/TMP117.o
-Debug/Core/Src/TuningControlBoard.d
-Debug/Core/Src/TuningControlBoard.o
-Debug/Core/Src/TuningControlBoard.su
-Debug/Core/Src/UI.d
-Debug/Core/Src/UI.o
-Debug/Core/Src/UI.su
-Debug/LFDI Tuning Control Board.elf
-Debug/LFDI Tuning Control Board.list
-Debug/LFDI Tuning Control Board.map
-Debug/makefile
-Debug/objects.list
-.settings/stm32cubeide.project.prefs
-Debug/Core/Src/Controller.o
-Debug/Core/Src/DAC.o
-Debug/Core/Src/DAC.su
-Debug/Core/Src/DAC_Unit_Test.o
-Debug/Core/Src/funcs.o
-Debug/Core/Src/Heater_Controller.o
-Debug/Core/Src/main.d
-Debug/Core/Src/main.o
-Debug/Core/Src/main.su
 Debug/Core/Src/PID.o
 Debug/Core/Src/stm32f4xx_hal_msp.o
 Debug/Core/Src/stm32f4xx_it.o
