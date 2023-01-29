@@ -491,7 +491,7 @@ void ProcessUserInput_CompensatorMenu(struct sTuningControlBoard * s,char* input
   if (strcmp((char*) input, "d") == 0)
   {
     //Check to see if the controller is a Compensator
-    if (UI_Compensator < 3){
+    if (UI_Compensator < 6){
       sprintf(output, "Compensator %d Disabled.\n", UI_Compensator+1);    
     	USBSendString(output);
       Compensator_enableChannel(&s->Compensator[UI_Compensator], false);
@@ -678,6 +678,7 @@ void ProcessUserInput_ControllerMenu(struct sTuningControlBoard * s,char* buffer
         break;
       case 'a':
         SetSensor(&s->Controller[UI_Controller].Sensor, u);
+        sprintf(output, "Controller %d Sensor Address Set to %d.\n", UI_Controller+1, u);
         // reset our history since we're changing temperature sensors
         s->Controller[UI_Controller].PID.IntegratorCount = 0;
         break;
