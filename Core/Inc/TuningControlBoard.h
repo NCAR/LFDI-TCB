@@ -8,6 +8,14 @@
 #ifndef INC_TUNINGCONTROLBOARD_H_
 #define INC_TUNINGCONTROLBOARD_H_
 
+
+#define NUMOFCONTROLLERS 3
+#define NUMOFCOMPENSATORS 6
+#define NUMOFSENSORS 8
+#define NUMOFSENSORSBUS1 4
+#define NUMOFSENSORSBUS2 4
+#define NUMOFGPIO 5
+
 #include "defs.h"
 #include "TMP117.h"
 #include "PID.h"
@@ -16,6 +24,7 @@
 #include "TMP117.h"
 #include "DAC.h"
 #include "Compensator.h"
+#include "GPIO.h"
 //#include "CameraController.h"
 
 
@@ -25,17 +34,15 @@
 struct sTuningControlBoard
 {
   struct sDAC DAC8718;
-  struct sTMP117 Sensor[7];
-  
-  uint8_t NumOfControllers;
-  uint8_t NumOfCompensators;
-  struct sController Controller[1];//INcrease this as we get more controllers
-  struct sCompensator Compensator[6];
+  struct sTMP117 Sensor[NUMOFSENSORS];
+  struct sController Controller[NUMOFCONTROLLERS];//INcrease this as we get more controllers
+  struct sCompensator Compensator[NUMOFCOMPENSATORS];
+  struct sGPIO GPIO[NUMOFGPIO];
   //Camera Controller
 
 };
 
-void TCB_InitStruct(struct sTuningControlBoard* s, I2C_HandleTypeDef* hi2c, SPI_HandleTypeDef* hspi);
+void TCB_InitStruct(struct sTuningControlBoard* s, I2C_HandleTypeDef* hi2c1, I2C_HandleTypeDef* hi2c2, SPI_HandleTypeDef* hspi);
 
 
 #endif /* INC_TUNINGCONTROLBOARD_H_ */

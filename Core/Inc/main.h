@@ -57,16 +57,16 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define Heater_Pin GPIO_PIN_5
-#define Heater_GPIO_Port GPIOC
-#define nWakeUp_Pin GPIO_PIN_8
-#define nWakeUp_GPIO_Port GPIOE
-#define nRst_Pin GPIO_PIN_9
-#define nRst_GPIO_Port GPIOE
-#define nClr_Pin GPIO_PIN_10
-#define nClr_GPIO_Port GPIOE
-#define nCS_Pin GPIO_PIN_11
-#define nCS_GPIO_Port GPIOE
+#define Heater_Enable_1_Pin GPIO_PIN_1
+#define Heater_Enable_1_GPIO_Port GPIOB
+#define Heater_Enable_2_Pin GPIO_PIN_8
+#define Heater_Enable_2_GPIO_Port GPIOE
+#define Heater_Enable_3_Pin GPIO_PIN_9
+#define Heater_Enable_3_GPIO_Port GPIOE
+#define DAC_nRST_Pin GPIO_PIN_10
+#define DAC_nRST_GPIO_Port GPIOE
+#define DAC_nCLR_Pin GPIO_PIN_11
+#define DAC_nCLR_GPIO_Port GPIOE
 #define nLDAC_Pin GPIO_PIN_9
 #define nLDAC_GPIO_Port GPIOD
 

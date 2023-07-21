@@ -27,7 +27,6 @@
 #include "TuningControlBoard.h"
 #include "stringfifo.h"
 #include "UI.h"
-#include "Heater_Controller.h"
 #include "TMP117.h"
 #include "DAC.h"
 #include "funcs.h"
@@ -57,6 +56,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 I2C_HandleTypeDef hi2c1;
+I2C_HandleTypeDef hi2c2;
 
 SPI_HandleTypeDef hspi4;
 
@@ -76,7 +76,6 @@ volatile bool DoCalculatePWM = false;
 volatile uint16_t HeaterTick = 0;
 volatile uint16_t HeaterSubtick = 0;
 volatile uint16_t HeaterFrequency = 200;
-volatile uint8_t HeaterDwell = 100;
 
 volatile uint8_t Ticks_TMP117 = 0;
 volatile uint8_t Ticks_CalculatePWM = 0;
@@ -100,6 +99,7 @@ static void MX_I2C1_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_TIM4_Init(void);
 static void MX_TIM6_Init(void);
+static void MX_I2C2_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -112,7 +112,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
   if (htim == &htim2 )
   {
     //Syncronous Update of the DACs
-    for (int i = 0; i < 6; i++){
+    for (int i = 0; i < NUMOFCOMPENSATORS; i++){
       if(TCB.Compensator[i].Channel.enabled){
         if(TCB.Compensator[i].Channel.state_high){
 
@@ -129,8 +129,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
   }//End Timer 2
 
 
-//--------------------This is from Damons Code-----------------------
-  uint8_t i;
+
+  
   if (htim == &htim6)
   {
     HeaterSubtick += HeaterFrequency;
@@ -139,12 +139,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         HeaterSubtick = 0;
     }
   }//End Timer 3
-
-  if ((HeaterTick > HeaterDwell)&& (HeaterTick < (200 - HeaterDwell))){
-        Controller_SetHeater(i, true);
+  for (int i = 0; i < NUMOFCONTROLLERS; i++){
+    if ((HeaterTick > TCB.Controller[i].HeaterDwell)&& (HeaterTick < (200 - TCB.Controller[i].HeaterDwell))){
+    	set_HeaterEnable(&TCB.Controller[i].Heater, true);
   }else{
-        Controller_SetHeater(i, false);
+	  set_HeaterEnable(&TCB.Controller[i].Heater, false);
   }//Dictates If heater is on or off
+    }
+  
+  
 
   //Removed ADC stuff
 
@@ -212,8 +215,9 @@ int main(void)
   MX_USB_DEVICE_Init();
   MX_TIM4_Init();
   MX_TIM6_Init();
+  MX_I2C2_Init();
   /* USER CODE BEGIN 2 */
-  TCB_InitStruct(&TCB, &hi2c1, &hspi4);
+  TCB_InitStruct(&TCB, &hi2c1, &hi2c2, &hspi4);
   for (int i = 0; i < 6; i++){
     TCB.DAC8718.DAC_Channels[i].enabled = true;
     TCB.DAC8718.DAC_Channels[i].DAC_number = i;
@@ -226,10 +230,15 @@ int main(void)
 
  // HAL_TIM_Base_Start_IT(&htim2);
   
-  
+  set_HeaterEnable(&TCB.Controller[0].Heater, true);
+  set_HeaterEnable(&TCB.Controller[1].Heater, true);
+  set_HeaterEnable(&TCB.Controller[2].Heater, true);
+  set_HeaterEnable(&TCB.Controller[0].Heater, false);
+  set_HeaterEnable(&TCB.Controller[1].Heater, false);
+  set_HeaterEnable(&TCB.Controller[2].Heater, false);
 
 
-// if you rearrange the PID.CONFIG struct, you should force rewriting defaults
+  // if you rearrange the PID.CONFIG struct, you should force rewriting defaults
   // over the EEPROM on next startup. This will *probably* be caught by checking
   // the address of the last controller rather than the first.
   //Welcome to OOP hell
@@ -237,9 +246,10 @@ int main(void)
   {
     printf("The configuration is invalid. Rewriting defaults.");
   }
-
-  TMP117_Configure(&TCB.Controller[0].Sensor);
-  for(uint8_t i = 0; i< 6; i++){
+  for(uint8_t i = 0; i< NUMOFCONTROLLERS; i++){
+    TMP117_Configure(&TCB.Controller[i].Sensor);
+  }
+  for(uint8_t i = 0; i< NUMOFCOMPENSATORS; i++){
 	  TMP117_Configure(&TCB.Compensator[i].Sensor);
   }
   HAL_TIM_Base_Start_IT(&htim2); //DAC Timer
@@ -257,6 +267,8 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   // float voltage = 0;
   // float voltage2 = 0;
+
+  //SUPER LOOP!!!!
   while (1)
   {
     /* USER CODE END WHILE */
@@ -289,40 +301,45 @@ int main(void)
     // we keep a global copy of this for the timer interrupt
     HeaterFrequency = TCB.Controller[0].PID.Config.Frequency;
 
-    //Go through Compensator Sensors
-    for(uint8_t i = 0; i<6;i++){
-        if (TCB.Compensator[i].Sensor.Errors > 10)
-          MX_I2C1_Init();
 
-        if (DoSampleTMP117)
-        {
-          if (TCB.Compensator[i].Sensor.Configured){
-              TMP117_GetTemperature(&TCB.Compensator[i].Sensor);
-          }else{
-              TMP117_Configure(&TCB.Compensator[i].Sensor);
-          }
-        }
+	//This is set by an interrupt timer. When this is true the system will go through an  take a sample
+	if (DoSampleTMP117){
+		//If there are a ton of error restart the I2C bus to see if that helps
+		DoSampleTMP117 = false;
+		//For each of the compensators
+		for(uint8_t i = 0; i<NUMOFCOMPENSATORS;i++){
+			//If there are errors Restart the Buses
+			if (TCB.Compensator[i].Sensor.Errors > 10){
+				MX_I2C1_Init();
+				MX_I2C2_Init();
+			}
+			if (TCB.Compensator[i].Sensor.Configured){
+				TMP117_GetTemperature(&TCB.Compensator[i].Sensor);
+			}else{
+				TMP117_Configure(&TCB.Compensator[i].Sensor);
+			}
+		}//End Compensator For loop
+		//For all of the Controllers
+		for (int i = 0; i < NUMOFCONTROLLERS; i++){
+			if (TCB.Controller[i].Sensor.Errors > 10){
+				MX_I2C1_Init();
+				MX_I2C2_Init();
+			}
+			if (TCB.Controller[i].Sensor.Configured){
+				TMP117_GetTemperature(&TCB.Controller[i].Sensor);
+			}else{
+				TMP117_Configure(&TCB.Controller[i].Sensor);
+			}
+		}//End Controller For loop
+      }//End do Sample
 
-
-    }
-
-    if (TCB.Controller[0].Sensor.Errors > 10){
-      MX_I2C1_Init();
-    }
-    if (DoSampleTMP117)
-    {
-      DoSampleTMP117 = false;
-      if (TCB.Controller[0].Sensor.Configured){
-          TMP117_GetTemperature(&TCB.Controller[0].Sensor);
-      }else{
-          TMP117_Configure(&TCB.Controller[0].Sensor);
-      }
-    }
 
     if (DoCalculatePWM)
     {
       DoCalculatePWM = false;
-      Controller_Step(&TCB.Controller[0]);
+      for (int i = 0; i < NUMOFCONTROLLERS; i++){
+        Controller_Step(&TCB.Controller[i]);
+      }
     }
 
     if (StringFIFORemove(&USBFIFO, buffer) == 0)
@@ -424,6 +441,54 @@ static void MX_I2C1_Init(void)
   /* USER CODE BEGIN I2C1_Init 2 */
 
   /* USER CODE END I2C1_Init 2 */
+
+}
+
+/**
+  * @brief I2C2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_I2C2_Init(void)
+{
+
+  /* USER CODE BEGIN I2C2_Init 0 */
+
+  /* USER CODE END I2C2_Init 0 */
+
+  /* USER CODE BEGIN I2C2_Init 1 */
+
+  /* USER CODE END I2C2_Init 1 */
+  hi2c2.Instance = I2C2;
+  hi2c2.Init.ClockSpeed = 100000;
+  hi2c2.Init.DutyCycle = I2C_DUTYCYCLE_2;
+  hi2c2.Init.OwnAddress1 = 0;
+  hi2c2.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+  hi2c2.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+  hi2c2.Init.OwnAddress2 = 0;
+  hi2c2.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+  hi2c2.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+  if (HAL_I2C_Init(&hi2c2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Analogue filter
+  */
+  if (HAL_I2CEx_ConfigAnalogFilter(&hi2c2, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Digital filter
+  */
+  if (HAL_I2CEx_ConfigDigitalFilter(&hi2c2, 0) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN I2C2_Init 2 */
+
+  /* USER CODE END I2C2_Init 2 */
 
 }
 
@@ -607,23 +672,24 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOC_CLK_ENABLE();
-  __HAL_RCC_GPIOD_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
+  __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_3|nWakeUp_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_3|Heater_Enable_2_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(Heater_GPIO_Port, Heater_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(Heater_Enable_1_GPIO_Port, Heater_Enable_1_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOE, nRst_Pin|nClr_Pin|nCS_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOE, Heater_Enable_3_Pin|DAC_nRST_Pin|DAC_nCLR_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(nLDAC_GPIO_Port, nLDAC_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_0, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_10|GPIO_PIN_11|GPIO_PIN_12|GPIO_PIN_13
+                          |GPIO_PIN_14|GPIO_PIN_0, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : PE3 */
   GPIO_InitStruct.Pin = GPIO_PIN_3;
@@ -654,15 +720,15 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : Heater_Pin */
-  GPIO_InitStruct.Pin = Heater_Pin;
+  /*Configure GPIO pin : Heater_Enable_1_Pin */
+  GPIO_InitStruct.Pin = Heater_Enable_1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(Heater_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(Heater_Enable_1_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : nWakeUp_Pin nRst_Pin nClr_Pin nCS_Pin */
-  GPIO_InitStruct.Pin = nWakeUp_Pin|nRst_Pin|nClr_Pin|nCS_Pin;
+  /*Configure GPIO pins : Heater_Enable_2_Pin Heater_Enable_3_Pin DAC_nRST_Pin DAC_nCLR_Pin */
+  GPIO_InitStruct.Pin = Heater_Enable_2_Pin|Heater_Enable_3_Pin|DAC_nRST_Pin|DAC_nCLR_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
@@ -675,6 +741,15 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(nLDAC_GPIO_Port, &GPIO_InitStruct);
 
+  /*Configure GPIO pins : PD10 PD11 PD12 PD13
+                           PD14 PD0 */
+  GPIO_InitStruct.Pin = GPIO_PIN_10|GPIO_PIN_11|GPIO_PIN_12|GPIO_PIN_13
+                          |GPIO_PIN_14|GPIO_PIN_0;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+
   /*Configure GPIO pins : PC8 PC9 PC10 PC11
                            PC12 */
   GPIO_InitStruct.Pin = GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10|GPIO_PIN_11
@@ -684,13 +759,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   GPIO_InitStruct.Alternate = GPIO_AF12_SDIO;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : PD0 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PD2 */
   GPIO_InitStruct.Pin = GPIO_PIN_2;

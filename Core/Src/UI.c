@@ -15,9 +15,11 @@
 
 #define CONTROLLER_MENU 1
 #define COMPENSATOR_MENU 2
+#define GPIO_MENU 3
 #define MAIN_MENU 0
 uint8_t UI_Controller = 9;
 uint8_t UI_Compensator = 9;
+uint8_t UI_GPIO = 9;
 uint8_t SUB_MENU = 0;
 
 //Get the User Input and process it
@@ -35,11 +37,27 @@ void ProcessUserInput(struct sTuningControlBoard* TCB, char* buffer){
     case COMPENSATOR_MENU:
       TranslateUserInput_CompensatorMenu(TCB, buffer);
       break;
+    case GPIO_MENU:
+      TranslateUserInput_GPIOMenu(TCB, buffer);
+      break;
+		break;
     default:
       SUB_MENU = MAIN_MENU;
       USBSendString("\nAn Error Occured\n");
       break;
   }
+
+}
+
+void ShowGPIOConfig(struct sGPIO* GPIO, uint8_t index){
+  char buffer[250];
+  char enabled[10];
+  if (GPIO->Enabled)
+    strcpy(enabled, "ENABLED ");
+  else
+    strcpy(enabled, "DISABLED");
+  snprintf(buffer, 200, "GPIO%u: %s\n", index+1, enabled);
+  USBSendString(buffer);
 
 }
 
@@ -120,7 +138,7 @@ void ShowSensor(struct sController* Controller)
   FormatTemperature(s2, Controller->Sensor.LastTemperature);
   FormatTemperature(s3, Controller->PID.Config.TargetP);
 
-  snprintf(buffer, 200, "C%u: temp=%8s  avg=%8s  target=%8s  sensor: ", Controller->Heater, s2, s1, s3);
+  snprintf(buffer, 200, "C%u: temp=%8s  avg=%8s  target=%8s  sensor: ", Controller->Heater.HeaterNum, s2, s1, s3);
   USBSendString(buffer);
 
   switch (Controller->Sensor.State)
@@ -155,12 +173,28 @@ void ShowEffort(struct sController* Controller)
   FormatTemperature(s2, Controller->Sensor.LastTemperature);
   FormatTemperature(s3, Controller->PID.Config.TargetP);
 
-  snprintf(buffer, 200, "C%u: Effort p=% 6.1f  d=% 6.1f  i=% 6.1f  total=% 6.1f%%\n", Controller->Heater,
+  snprintf(buffer, 200, "C%u: Effort p=% 6.1f  d=% 6.1f  i=% 6.1f  total=% 6.1f%%\n", Controller->Heater.HeaterNum,
       100 * Controller->PID.Ep, 100 * Controller->PID.Ed,
       100 * Controller->PID.Ei, 100 * Controller->PID.Effort);
   USBSendString(buffer);
 
 }
+
+
+
+void ShowAllGPIO(struct sGPIO* GPIO, bool readable){
+  char buffer[250];
+  char enabled[10];
+  if (GPIO->Enabled)
+    strcpy(enabled, "ENABLED ");
+  else
+    strcpy(enabled, "DISABLED");
+  snprintf(buffer, 200, "GPIO%u: %s\n", GPIO->GPIONum, enabled);
+  USBSendString(buffer);
+}
+
+
+
 
 //Show all the information for one of the mechanisims
 //=============================================================================
@@ -174,6 +208,7 @@ void ShowAllController(struct sController* Controller, bool readable)
     char target[12];
     FormatTemperature(target, Controller->PID.Config.TargetP);
     char address[3];
+    //Get the Address
     switch (Controller->Sensor.Address & 0x03)
     {
       case 0: strcpy(address, "00"); break;
@@ -182,17 +217,20 @@ void ShowAllController(struct sController* Controller, bool readable)
       case 3: strcpy(address, "11"); break;
       default: break;
     }
+    //Get whether it is enabled
     char enabled[10];
     if (Controller->PID.Config.Enabled)
       strcpy(enabled, "ENABLED ");
     else
       strcpy(enabled, "DISABLED");
+    //Get Temperatures
     char average[12], last[12], targetp[12];
     FormatTemperature(average, Controller->Sensor.Average);
     FormatTemperature(last, Controller->Sensor.LastTemperature);
     FormatTemperature(targetp, Controller->PID.Config.TargetP);
 
     char sensor[15];
+    //Get the Sensor State
     switch (Controller->Sensor.State)
     {
       case TMP117_STATE_UNKNOWN:      strcpy(sensor, "Unknown");       break;
@@ -207,7 +245,7 @@ void ShowAllController(struct sController* Controller, bool readable)
 
     if (readable)
     {
-      snprintf(buffer, 200, "C%u: kp=%5.2f   ep=% 7.1f    temp=%8s  freq: %04u  %s\n", Controller->Heater, Controller->PID.Config.Kp, 100 * Controller->PID.Ep, last, Controller->PID.Config.Frequency, enabled);
+      snprintf(buffer, 200, "C%u: kp=%5.2f   ep=% 7.1f    temp=%8s  freq: %04u  %s\n", Controller->Heater.HeaterNum, Controller->PID.Config.Kp, 100 * Controller->PID.Ep, last, Controller->PID.Config.Frequency, enabled);
       USBSendString(buffer);
       snprintf(buffer, 200,  "  : kd=%5.2f   ed=% 7.1f     avg=%8s  i2c: %2s\n", Controller->PID.Config.Kd, 100 * Controller->PID.Ed, average, address);
       USBSendString(buffer);
@@ -220,7 +258,7 @@ void ShowAllController(struct sController* Controller, bool readable)
     {
       //if (Controller->Heater == 1){
       snprintf(buffer, 200, "Cont%u\t%5.2f\t%5.2f\t%5.2f\t%7.1f\t%7.1f\t%7.1f\t%7.1f\t%8s\t%8s\t%8s\t%2s\t%03u\t%04u\t%s\t%s\n",
-          Controller->Heater+1, Controller->PID.Config.Kp, Controller->PID.Config.Kd, Controller->PID.Config.Ki,
+          Controller->Heater.HeaterNum, Controller->PID.Config.Kp, Controller->PID.Config.Kd, Controller->PID.Config.Ki,
           100 * Controller->PID.Ep, 100 * Controller->PID.Ed, 100 * Controller->PID.Ei, 100 * Controller->PID.Effort,
           last, average, target, address, Controller->PID.Config.History, Controller->PID.Config.Frequency, enabled, sensor);
       USBSendString(buffer);
@@ -229,6 +267,7 @@ void ShowAllController(struct sController* Controller, bool readable)
 //      HAL_Delay(1); // don't butcher our buffer before we're done with it
     }
 }
+
 
 //Show all the Information about the Compensator
 void ShowAllCompensator(struct sCompensator* Compensator, bool readable, uint8_t index)
@@ -290,12 +329,16 @@ void ShowAllCompensator(struct sCompensator* Compensator, bool readable, uint8_t
 //Show Everything for the TCB
 void ShowAllTCB(struct sTuningControlBoard* sTCB){
   ShowRawHeaderController();
-  for(uint8_t i = 0; i < sTCB->NumOfControllers; i++){
+  for(uint8_t i = 0; i < NUMOFCONTROLLERS; i++){
     ShowAllController(&sTCB->Controller[i], false);
   }
   ShowRawHeaderCompensator();
-  for(uint8_t i = 0; i < sTCB->NumOfCompensators; i++){
+  for(uint8_t i = 0; i < NUMOFCOMPENSATORS; i++){
     ShowAllCompensator(&sTCB->Compensator[i], false, i);
+  }
+  ShowRawHeaderGPIO();
+  for(uint8_t i = 0; i < NUMOFGPIO; i++){
+    ShowAllGPIO(&sTCB->GPIO[i], false);
   }
 }
 //Show the Hearders for the Raw Data
@@ -318,6 +361,14 @@ void ShowRawHeaderCompensator(void)
 //  HAL_Delay(1); // don't butcher our buffer before we're done with it
 }
 
+
+//Show the Raw GPIO header
+void ShowRawHeaderGPIO(void)
+{
+  static char buffer[250];
+  snprintf(buffer, 200,  "GPIO\tEnabled\n");
+  USBSendString(buffer);
+}
 
 //Formath the Temperature for the Display
 //=================================================================================================
@@ -349,6 +400,9 @@ void ProcessUserInput_MainMenu(struct sTuningControlBoard * s,char* input){
   { 
     SUB_MENU = COMPENSATOR_MENU;
     return;
+  }else if(strcmp(input, "gpio")==0){
+	  SUB_MENU = GPIO_MENU;
+	  return;
   }
 
   //TODO This Should print all of the interesting Values fromthe TCB
@@ -608,15 +662,17 @@ void ProcessUserInput_ControllerMenu(struct sTuningControlBoard * s,char* buffer
   }
   if ((strcmp((char*) buffer, "2") == 0) || (strcmp((char*) buffer, "c2") == 0))
   {
-    UI_Controller = 9;
-    USBSendString("Controller 2 not implemented.\n");
+    UI_Controller = 1;
+    ShowControllerConfig(&s->Controller[UI_Controller], UI_Controller);
+    //USBSendString("Controller 2 not implemented.\n");
     //ShowControllerConfig(Controller);
     return;
   }
   if ((strcmp((char*) buffer, "3") == 0) || (strcmp((char*) buffer, "c3") == 0))
   {
-    UI_Controller = 9;
-    USBSendString("Controller 3 not implemented.\n");
+    UI_Controller = 2;
+    ShowControllerConfig(&s->Controller[UI_Controller], UI_Controller);
+    //USBSendString("Controller 3 not implemented.\n");
     //ShowControllerConfig(Controller);
     return;
   }
@@ -771,6 +827,159 @@ void ProcessUserInput_ControllerMenu(struct sTuningControlBoard * s,char* buffer
 
 }
 
+
+//Parse the input from the GPIO Context Menu
+void ProcessUserInput_GPIOMenu(struct sTuningControlBoard * s, char * buffer){
+  
+  uint8_t u = 0;
+  char output[250];
+  char c;
+  float f = 0;
+
+  //Send  to main menu
+  if (strcmp(buffer, "m") == 0)
+  {
+    SUB_MENU = MAIN_MENU;
+    UI_GPIO = 9;
+
+    return;
+  }
+   if ((strcmp((char*) buffer, "?") == 0) || (strcmp((char*) buffer, "help") == 0))
+  {
+    ShowGPIOHelp();
+    if (UI_GPIO == 9)
+      USBSendString("No GPIO selected.\n");
+    else
+    {
+      /*
+      ShowSensor(&TCB.Controller);
+      ShowControllerConfig(&TCB.Controller);
+      ShowEffort(&TCB.Controller);
+      USBSendString("\n");
+      */
+      ShowAllGPIO(&s->GPIO[UI_GPIO], true);
+    }
+    return;
+  }
+  //Select the controller
+  if ((strcmp((char*) buffer, "1") == 0) || (strcmp((char*) buffer, "g1") == 0))
+  {
+    UI_GPIO = 0;
+    ShowGPIOConfig(&s->GPIO[UI_GPIO], UI_GPIO);
+    return;
+  }
+  if ((strcmp((char*) buffer, "2") == 0) || (strcmp((char*) buffer, "g2") == 0))
+  {
+    UI_GPIO = 1;
+    ShowGPIOConfig(&s->GPIO[UI_GPIO], UI_GPIO);
+    //USBSendString("Controller 2 not implemented.\n");
+    //ShowControllerConfig(Controller);
+    return;
+  }
+  if ((strcmp((char*) buffer, "3") == 0) || (strcmp((char*) buffer, "g3") == 0))
+  {
+    UI_GPIO = 2;
+    ShowGPIOConfig(&s->GPIO[UI_GPIO], UI_GPIO);
+    //USBSendString("Controller 3 not implemented.\n");
+    //ShowControllerConfig(Controller);
+    return;
+  }
+  if ((strcmp((char*) buffer, "4") == 0) || (strcmp((char*) buffer, "g4") == 0))
+  {
+    UI_GPIO = 3;
+    ShowGPIOConfig(&s->GPIO[UI_GPIO], UI_GPIO);
+    //ShowControllerConfig(Controller);
+    return;
+  }
+  if ((strcmp((char*) buffer, "5") == 0) || (strcmp((char*) buffer, "g5") == 0))
+  {
+    UI_GPIO = 4;
+    ShowGPIOConfig(&s->GPIO[UI_GPIO], UI_GPIO);
+    //ShowControllerConfig(Controller);
+    return;
+  }
+  //If there is no valid Controller Selected
+  if (UI_GPIO == 9)
+  {
+    USBSendString("No GPIO selected.\n");
+    return;
+  }
+
+  //Print the Status all the Controllers
+  if ((strcmp((char*) buffer, "u") == 0) || (strcmp((char*) buffer, "/") == 0))
+  {
+    ShowAllGPIO(&s->GPIO[UI_GPIO], true);
+    return;
+  }
+  //Print the Status all the Controllers in non readable format
+  if (strcmp((char*) buffer, "r") == 0)
+  {
+    ShowRawHeaderGPIO();
+    ShowAllGPIO(&s->GPIO[UI_GPIO], false);//Todo Implement this
+    return;
+  }
+
+  //Enable the Controller
+  if (strcmp((char*) buffer, "e") == 0)
+  {
+    USBSendString("GPIO enabled.\n");
+    GPIO_SetState(&s->GPIO[UI_GPIO], true);
+    return;
+  }
+  //Disable the Controller
+  if (strcmp((char*) buffer, "d") == 0)
+  {
+    USBSendString("GPIO disabled.\n");
+    GPIO_SetState(&s->GPIO[UI_GPIO], true);
+    return;
+  }
+
+
+  if (sscanf((char*) buffer, "%c%f", &c, &f) == 2)
+  {
+    //Convert the float to an integer
+    u = (uint8_t) f;
+    //Switch on the character
+    switch (c)
+    {
+      //User is trying to set the Channel
+      case 'c':
+        // we shouldn't get here if a valid number was used
+        USBSendString("Invalid controller number.\n");
+        return;
+        break;
+      
+      default:
+        break;
+    }
+  }
+  USBSendString("Unknown command.\n");
+  return;
+
+}
+void TranslateUserInput_GPIOMenu(struct sTuningControlBoard * s,char * buffer){
+  //Make everything lowercase
+  for (int i=0; buffer[i]; i++){
+    buffer[i] = tolower(buffer[i]);
+  }
+  replacestr(buffer, "=", "");
+  replacestr(buffer, " ", "");
+  replacestr(buffer, " ", "");
+  replacestr(buffer, " ", "");
+  replacestr(buffer, " ", "");
+  replacestr(buffer, " ", "");
+  replacestr(buffer, "gpio", "g");
+  replacestr(buffer, "enable", "e");
+  replacestr(buffer, "disable", "d");
+  replacestr(buffer, "input", "i");
+  replacestr(buffer, "output", "o");
+  replacestr(buffer, "help", "h");
+  replacestr(buffer, "raw", "r");
+  replacestr(buffer, "main", "m");
+  ProcessUserInput_GPIOMenu(s, buffer);
+}
+
+
 //format the User input
 //=================================================================================================
 //Trranslate the input buffers to be one letter commands pass onto the case switch menu
@@ -881,13 +1090,18 @@ void ShowControllerMenuHeader(void)
   USBSendString("===============\n");
 }
 
+void ShowGPIOMenuHeader(void){
+	USBSendString("GPIO Menu\n");
+	USBSendString("===============\n");
+}
 
 //Help Menus for End User
 //=================================================================================================
 //Main Menu help Text
 void ShowMainHelp(void)
 {
-    USBSendString("\nLFDI TCB Firmware v1.3\n");
+    USBSendString("\nLFDI TCB Firmware v1.5\n");
+    USBSendString("\nLFDI TCB Hardware Rev v1\n");
     ShowMainMenuHeader();
     USBSendString("Commands can be upper or lower case. Variables can be set with an equals sign or space or nothing.\n");
     USBSendString("\"channel=1\", \"channel 1\", \"channel1\", \"c1\" are all treated the same.\n");
@@ -939,6 +1153,23 @@ void ShowCompensatorHelp(void){
     USBSendString("raw             -- shows an easily parsable version of the Information\n");
     USBSendString("main            -- return to the main menu\n");
     USBSendString("\n");
+}
+
+//Show the GPIO Context Menu
+void ShowGPIOHelp(void){
+    ShowGPIOMenuHeader();
+    USBSendString("Commands can be upper or lower case. Variables can be set with an equals sign or space or nothing.\n");
+    USBSendString("\"gpio=1\", \"gpio 1\", \"gpio1\", \"g1\" are all treated the same.\n");
+    USBSendString("\n");
+    USBSendString("gpio            -- GPIO Pin to set\n");
+    USBSendString("enable          -- enable or disable the controller\n");
+    USBSendString("disable         -- disable the controller\n");
+    USBSendString("input           -- set the pin to input\n");
+    USBSendString("output          -- set the pin to output\n");
+    USBSendString("raw             -- shows an easily parsable version of the Information\n");
+    USBSendString("main            -- return to the main menu\n");
+    USBSendString("\n");
+
 }
 
 

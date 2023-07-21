@@ -11,19 +11,18 @@
 #include "defs.h"
 #include "TMP117.h"
 #include "PID.h"
-#include "DAC.h"
+#include "Heater.h"
 
-extern volatile uint8_t HeaterDwell;
 
 struct sController
 {
-  uint8_t Heater;
+  struct sHeater Heater;
   struct sTMP117 Sensor;
   struct sPID PID;
+  uint8_t HeaterDwell;
 };
 
-void Controller_InitStruct(struct sController* s, struct sTMP117 *t,uint8_t heater);
-void Controller_SetHeater(uint8_t heater, bool state);
+void Controller_InitStruct(struct sController* s, struct sTMP117 *t, uint8_t heater);
 void Controller_Step(struct sController* C);
 
 void Controller_LoadConfig(struct sController* Controller);

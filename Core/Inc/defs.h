@@ -19,17 +19,6 @@
 
 extern I2C_HandleTypeDef hi2c2;
 
-struct sState
-{
-  uint32_t TemperatureTarget[6];
-  int32_t MSPressure, MSTemperature;
-  bool HeaterControllerMode[6];
-  uint32_t TestBuffer;
-  struct sHeaters* Heaters;
-  uint8_t Frequency;
-
-};
-
 struct sUARTBuffer
 {
   uint8_t Index;
