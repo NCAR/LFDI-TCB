@@ -13,14 +13,18 @@ From TuningControlBoard.h
 ```
 struct sTuningControlBoard
 {
+  //Structure For the DAC
   struct sDAC DAC8718;
-  struct sTMP117 Sensor[7];
-  
-  uint8_t NumOfControllers;
-  uint8_t NumOfCompensators;
-  struct sController Controller[1];//INcrease this as we get more controllers
-  struct sCompensator Compensator[6];
-  //Camera Controller
+  //Structure For the Temperature Sensors
+  struct sTMP117 Sensor[NUMOFSENSORS];
+  // Structure For the Temperature Controllers
+  struct sController Controller[NUMOFCONTROLLERS];//INcrease this as we get more controllers
+  //Structure For the LCVR Compensators
+  struct sCompensator Compensator[NUMOFCOMPENSATORS];
+  //Structure for the GPIO Output Logic Level
+  struct sGPIO GPIO[NUMOFGPIO];
+  //Structure for the Bipolar Output
+  struct sBipolarOutput BipolarOutput[NUMOFBipolarOutputs];
 
 };
 ```
@@ -30,7 +34,7 @@ Later on comera control and FLC control and be Coordinated as well
 
 ## Mid-level Structures
 ### Controller
-The Controller Structure helps control the Heater conntected to the PCB.
+The Controller Structure helps control the Heaters conntected to the PCB.
 It's composed of two hardware level and one software level structure
 The Controler will control the Heat based onthe TMP117 Heater and the PID structure settings
 
@@ -45,7 +49,7 @@ struct sController
 
 ### Compensator
 The Compensator controls the tuning of the LCVR based on the Temperature
-The Compensator uses one TMP117 and one DAC Channel
+The Compensator uses one TMP117 and one DAC Channel it will then Refence the look up table to apply the Correct Voltage to achieve a certain wavelength at a certain temperature
 
 ```
 //Structure that Pairs a specific Temperature Sensor with Specific DAC Channel
@@ -68,6 +72,33 @@ struct sCompensator
 
 };
 ```
+### GPIO
+The GPIO Structure is used to Drive logic level GPIO on the STM
+```
+struct sGPIO{
+	uint8_t GPIONum; // The Identifying Number of the GPIO
+	uint16_t EnablePin; // The Enable Pin of the GPIO
+	GPIO_TypeDef* EnablePort; // Th  Enable Port of the GPIO
+	bool Input; //Whether the pin is an input (true) or an output (false)
+	bool Enabled; //if the Pin is currently on
+};
+```
+
+### Bipolar Output
+The Bipolar Output is used to drive the remaining 2 DAC channels at different Frequencies, Pulses, and Voltage levels
+These Will primarily be used to Control the FLC on either end of LFDI
+```
+struct sBipolarOutput{
+	uint8_t BipolarOutputNum; // The Identifying Number of the GPIO
+	struct sDAC_Channel Channel; // The DAC Channel to Output to
+	uint16_t Frequency; // The Frequency of the Output
+	uint16_t Pulses; // The Number of Pulses to Output
+	bool Enabled;
+	//A count down timer that will be used to determine when to change the output
+	uint16_t Timer;
+	float voltage;
+};```
+
 
 ## Low-Level
 These Structure will mostly be controlling Hardware and peripeherials attached to the TCB
