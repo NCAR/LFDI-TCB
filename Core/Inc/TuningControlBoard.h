@@ -15,6 +15,7 @@
 #define NUMOFSENSORSBUS1 4
 #define NUMOFSENSORSBUS2 4
 #define NUMOFGPIO 5
+#define NUMOFBipolarOutputs 2
 
 #include "defs.h"
 #include "TMP117.h"
@@ -25,6 +26,7 @@
 #include "DAC.h"
 #include "Compensator.h"
 #include "GPIO.h"
+#include "BipolarOutput.h"
 //#include "CameraController.h"
 
 
@@ -38,7 +40,7 @@ struct sTuningControlBoard
   struct sController Controller[NUMOFCONTROLLERS];//INcrease this as we get more controllers
   struct sCompensator Compensator[NUMOFCOMPENSATORS];
   struct sGPIO GPIO[NUMOFGPIO];
-  //Camera Controller
+  struct sBipolarOutput BipolarOutput[NUMOFBipolarOutputs];
 
 };
 

@@ -55,18 +55,19 @@ uint8_t W2 = 0x10;
 //Used when recieving data from the DAC
 uint8_t NOP_Send[3] = {0x00, 0x00, NOP};
 //Reference Voltage scales the Ouput Voltage
-float REFERENCE_VOLTAGE = 3.3;
+float REFERENCE_VOLTAGE = 3.0;
 
 
 //
 void DAC_InitStruct(struct sDAC* s, SPI_HandleTypeDef* hspi){
 	
 	s->spi = hspi;
+	Set_nWakeUp_high(false); // Wake up the DAC
 	Set_Config(s);
+
 	Set_Max_Peak_To_Peak_Voltage(s, 0);
-	/* USER CODE BEGIN 1 */
 	//Set all DAC Channels Up. Should probably be put into TCB init
-	for (int i = 0; i < 6; i++){
+	for (int i = 0; i < 8; i++){
 		s->DAC_Channels[i].DAC_number = i;
 		//Set it to Centered
 		s->DAC_Channels[i].upper_bound = 0x7FFF;
@@ -407,9 +408,9 @@ void Read_All_Registers(struct sDAC* s){
 //@return: None
 void Set_nWakeUp_high(bool HIGH){
 	if(HIGH){
-		HAL_GPIO_WritePin(GPIOE, GPIO_PIN_8, SET);
+		HAL_GPIO_WritePin(nWakeUp_GPIO_Port, nWakeUp_Pin, SET);
 	}else{
-		HAL_GPIO_WritePin(GPIOE, GPIO_PIN_8, RESET);
+		HAL_GPIO_WritePin(nWakeUp_GPIO_Port, nWakeUp_Pin, RESET);
 	}
 }
 
@@ -418,7 +419,7 @@ void Set_nWakeUp_high(bool HIGH){
 //@param: None
 //@return: The Value of the nWakeUp pin
 bool Get_nWakeUp(){
-	bool state = HAL_GPIO_ReadPin(GPIOE, GPIO_PIN_8);
+	bool state = HAL_GPIO_ReadPin(nWakeUp_GPIO_Port, nWakeUp_Pin);
 	return state;
 }
 
@@ -427,9 +428,9 @@ bool Get_nWakeUp(){
 //@return: None
 void Set_nLDAC_high(bool HIGH){
 	if(HIGH){
-		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_9, SET);
+		HAL_GPIO_WritePin(nLDAC_GPIO_Port, nLDAC_Pin, SET);
 	}else{
-		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_9, RESET);
+		HAL_GPIO_WritePin(nLDAC_GPIO_Port, nLDAC_Pin, RESET);
 	}
 }
 
@@ -437,7 +438,7 @@ void Set_nLDAC_high(bool HIGH){
 //@param: None
 //@return: The Value of the nLDAC pin
 bool Get_nLDAC(){
-	bool state = HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_9);
+	bool state = HAL_GPIO_ReadPin(nLDAC_GPIO_Port, nLDAC_Pin);
 	return state;
 }
 
@@ -446,9 +447,9 @@ bool Get_nLDAC(){
 //@return: None
 void Set_nCLR_high(bool HIGH){
 	if(HIGH){
-		HAL_GPIO_WritePin(GPIOE, GPIO_PIN_10, SET);
+		HAL_GPIO_WritePin(nCLR_GPIO_Port, nCLR_Pin, SET);
 	}else{
-		HAL_GPIO_WritePin(GPIOE, GPIO_PIN_10, RESET);
+		HAL_GPIO_WritePin(nCLR_GPIO_Port, nCLR_Pin, RESET);
 	}
 }
 
@@ -456,7 +457,7 @@ void Set_nCLR_high(bool HIGH){
 //@param: None
 //@return: The Value of the nCLR pin
 bool Get_nCLR(){
-	bool state = HAL_GPIO_ReadPin(GPIOE, GPIO_PIN_10);
+	bool state = HAL_GPIO_ReadPin(nCLR_GPIO_Port, nCLR_Pin);
 	return state;
 }
 
@@ -465,9 +466,9 @@ bool Get_nCLR(){
 //@return: None
 void Set_nRST_high(bool HIGH){
 	if(HIGH){
-		HAL_GPIO_WritePin(GPIOE, GPIO_PIN_9, SET);
+		HAL_GPIO_WritePin(nRST_GPIO_Port, nRST_Pin, SET);
 	}else{
-		HAL_GPIO_WritePin(GPIOE, GPIO_PIN_9, RESET);
+		HAL_GPIO_WritePin(nRST_GPIO_Port, nRST_Pin, RESET);
 	}
 
 }
@@ -476,7 +477,7 @@ void Set_nRST_high(bool HIGH){
 //@param: None
 //@return: The Value of the nRST pin
 bool Get_nRST(){
-	bool state = HAL_GPIO_ReadPin(GPIOE, GPIO_PIN_9);
+	bool state = HAL_GPIO_ReadPin(nRST_GPIO_Port, nRST_Pin);
 	return state;
 }
 
@@ -485,9 +486,9 @@ bool Get_nRST(){
 //@return: None
 void Set_nCS_high(bool HIGH){
 	if(HIGH){
-		HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, SET);
+		HAL_GPIO_WritePin(nCS_GPIO_Port, nCS_Pin, SET);
 	}else{
-		HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, RESET);
+		HAL_GPIO_WritePin(nCS_GPIO_Port, nCS_Pin, RESET);
 	}
 
 }
@@ -496,7 +497,7 @@ void Set_nCS_high(bool HIGH){
 //@param: None
 //@return: The Value of the nCS pin
 bool Get_nCS(){
-	bool state = HAL_GPIO_ReadPin(GPIOE, GPIO_PIN_11);
+	bool state = HAL_GPIO_ReadPin(nCS_GPIO_Port, nCS_Pin);
 	return state;
 }
 

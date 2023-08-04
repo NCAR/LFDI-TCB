@@ -5,6 +5,18 @@
 #include "stm32f4xx_hal.h"
 #include "funcs.h"
 
+#define nLDAC_Pin GPIO_PIN_13
+#define nLDAC_GPIO_Port GPIOB
+#define nCLR_Pin GPIO_PIN_11
+#define nCLR_GPIO_Port GPIOE
+#define nRST_Pin GPIO_PIN_10
+#define nRST_GPIO_Port GPIOE
+#define nCS_Pin GPIO_PIN_14
+#define nCS_GPIO_Port GPIOB
+#define nWakeUp_Pin GPIO_PIN_12
+#define nWakeUp_GPIO_Port GPIOB
+
+
 //Read/Write Should be OR-ed with the Register address
 extern uint8_t WRITE;
 extern uint8_t READ;
@@ -42,7 +54,7 @@ extern uint8_t ZERO_7;
 extern uint8_t GAIN_7;
 
 
-//Reference Voltage is 3.3V
+//Reference Voltage is 3.0V
 extern float REFERENCE_VOLTAGE;
 
 

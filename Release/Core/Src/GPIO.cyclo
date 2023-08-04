@@ -1,0 +1,4 @@
+GPIO.c:46:6:GPIO_SetInput	1
+GPIO.c:52:6:GPIO_SetOutput	1
+GPIO.c:57:6:GPIO_SetState	2
+GPIO.c:5:6:GPIO_InitStruct	6

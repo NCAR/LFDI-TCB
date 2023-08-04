@@ -22,7 +22,7 @@ void TCB_InitStruct(struct sTuningControlBoard* s, I2C_HandleTypeDef* hi2c1,I2C_
         TMP117_InitStruct(&s->Sensor[i+NUMOFSENSORSBUS1], hi2c2, 0);
     }
     //Initalize the DAC
-    DAC_InitStruct(&s->DAC8718, hspi);   
+    DAC_InitStruct(&s->DAC8718, hspi);
     
     //Initalize the Controller
     //All of these are set up to use the first sensor this will need to be changed as we get more sensors
@@ -39,6 +39,11 @@ void TCB_InitStruct(struct sTuningControlBoard* s, I2C_HandleTypeDef* hi2c1,I2C_
     //Initalize the GPIO
     for(int i = 0; i < NUMOFGPIO; i++){
         GPIO_InitStruct(&s->GPIO[i], i+1);
+    }
+
+    //Initalize the Bipolar Output
+    for(int i = 0; i < NUMOFBipolarOutputs; i++){
+        BipolarOutput_InitStruct(&s->BipolarOutput[i], i+1, &s->DAC8718.DAC_Channels[i+NUMOFCOMPENSATORS]);
     }
     
 

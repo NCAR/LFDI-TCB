@@ -67,6 +67,12 @@ void Error_Handler(void);
 #define DAC_nRST_GPIO_Port GPIOE
 #define DAC_nCLR_Pin GPIO_PIN_11
 #define DAC_nCLR_GPIO_Port GPIOE
+#define DAC_nWake_Pin GPIO_PIN_12
+#define DAC_nWake_GPIO_Port GPIOB
+#define DAC_nLDAC_Pin GPIO_PIN_13
+#define DAC_nLDAC_GPIO_Port GPIOB
+#define DAC_nCS_Pin GPIO_PIN_14
+#define DAC_nCS_GPIO_Port GPIOB
 #define nLDAC_Pin GPIO_PIN_9
 #define nLDAC_GPIO_Port GPIOD
 

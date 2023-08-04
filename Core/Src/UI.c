@@ -16,10 +16,12 @@
 #define CONTROLLER_MENU 1
 #define COMPENSATOR_MENU 2
 #define GPIO_MENU 3
+#define BIPOLAROUTPUT_MENU 4
 #define MAIN_MENU 0
 uint8_t UI_Controller = 9;
 uint8_t UI_Compensator = 9;
 uint8_t UI_GPIO = 9;
+uint8_t UI_BipolarOutput = 9;
 uint8_t SUB_MENU = 0;
 
 //Get the User Input and process it
@@ -32,7 +34,7 @@ void ProcessUserInput(struct sTuningControlBoard* TCB, char* buffer){
       TranslateUserInput_MainMenu(TCB, buffer);
       break;
     case CONTROLLER_MENU:
-      ProcessUserInput_ControllerMenu(TCB, buffer);
+      TranslateUserInput_ControllerMenu(TCB, buffer);
       break;
     case COMPENSATOR_MENU:
       TranslateUserInput_CompensatorMenu(TCB, buffer);
@@ -40,7 +42,9 @@ void ProcessUserInput(struct sTuningControlBoard* TCB, char* buffer){
     case GPIO_MENU:
       TranslateUserInput_GPIOMenu(TCB, buffer);
       break;
-		break;
+    case BIPOLAROUTPUT_MENU:
+      TranslateUserInput_BipolarOutputMenu(TCB, buffer);
+      break;
     default:
       SUB_MENU = MAIN_MENU;
       USBSendString("\nAn Error Occured\n");
@@ -61,6 +65,19 @@ void ShowGPIOConfig(struct sGPIO* GPIO, uint8_t index){
 
 }
 
+//Show the Bipolar Output Config
+void ShowBipolarOutputConfig(struct sBipolarOutput* BipolarOutput, uint8_t index){
+  char buffer[250];
+  char enabled[10];
+  if (BipolarOutput->Enabled)
+    strcpy(enabled, "ENABLED ");
+  else
+    strcpy(enabled, "DISABLED");
+  
+  snprintf(buffer, 200, "Bipolar%u: frequency= %04u pulses= %04u  Peak2Peak=%6.2f  %s\n", index+1, BipolarOutput->Frequency, BipolarOutput->Pulses, BipolarOutput->voltage, enabled);
+  USBSendString(buffer);
+
+}
 
 //Show the configuration of the Mechanisms
 //=================================================================================================
@@ -129,6 +146,8 @@ void ShowCompensatorConfig(struct sCompensator* Compensator, uint8_t index){
 }
 
 
+
+
 //Show an individual sensor
 void ShowSensor(struct sController* Controller)
 {
@@ -180,8 +199,22 @@ void ShowEffort(struct sController* Controller)
 
 }
 
+//Show All the information for the Bipolar Output
+void ShowAllBipolarOutput(struct sBipolarOutput* BipolarOutput, bool readable, uint8_t index){
+  char buffer[250];
+  char enabled[10];
+  if (BipolarOutput->Enabled)
+    strcpy(enabled, "ENABLED ");
+  else
+    strcpy(enabled, "DISABLED");
+  
+  snprintf(buffer, 200, "Bipolar%u: frequency= %04u pulses= %04u  Peak2Peak=%6.2f  %s\n", index+1, BipolarOutput->Frequency, BipolarOutput->Pulses, BipolarOutput->voltage, enabled);
+  USBSendString(buffer);
+
+}
 
 
+//Show All the information for the GPIO
 void ShowAllGPIO(struct sGPIO* GPIO, bool readable){
   char buffer[250];
   char enabled[10];
@@ -340,6 +373,10 @@ void ShowAllTCB(struct sTuningControlBoard* sTCB){
   for(uint8_t i = 0; i < NUMOFGPIO; i++){
     ShowAllGPIO(&sTCB->GPIO[i], false);
   }
+  ShowRawHeaderBipolarOutput();
+  for(uint8_t i = 0; i < NUMOFBipolarOutputs; i++){
+    ShowAllBipolarOutput(&sTCB->BipolarOutput[i], false, i);
+  }
 }
 //Show the Hearders for the Raw Data
 //=================================================================================================
@@ -370,6 +407,14 @@ void ShowRawHeaderGPIO(void)
   USBSendString(buffer);
 }
 
+//Show the Raw Header for the Bipolar Output
+void ShowRawHeaderBipolarOutput(void)
+{
+  static char buffer[250];
+  snprintf(buffer, 200,  "Bipolar\tfrequency\tpulses\tPeak2Peak\tEnabled\n");
+  USBSendString(buffer);
+}
+
 //Formath the Temperature for the Display
 //=================================================================================================
 //Formats the Float to fit into the Temperature Display
@@ -394,14 +439,17 @@ void ProcessUserInput_MainMenu(struct sTuningControlBoard * s,char* input){
     SUB_MENU = CONTROLLER_MENU;
     return;
   }
-
   //Pull up the Compensator Sub menu
   else if (strcmp(input, "comp") == 0)
   { 
     SUB_MENU = COMPENSATOR_MENU;
     return;
+  //Pull up the GPIO Sub menu
   }else if(strcmp(input, "gpio")==0){
 	  SUB_MENU = GPIO_MENU;
+	  return;
+  }else if(strcmp(input, "bipo")== 0){
+	  SUB_MENU = BIPOLAROUTPUT_MENU;
 	  return;
   }
 
@@ -830,9 +878,9 @@ void ProcessUserInput_ControllerMenu(struct sTuningControlBoard * s,char* buffer
 
 //Parse the input from the GPIO Context Menu
 void ProcessUserInput_GPIOMenu(struct sTuningControlBoard * s, char * buffer){
-  
-  uint8_t u = 0;
-  char output[250];
+	uint8_t u = 0;
+	char output[250];
+
   char c;
   float f = 0;
 
@@ -957,6 +1005,173 @@ void ProcessUserInput_GPIOMenu(struct sTuningControlBoard * s, char * buffer){
   return;
 
 }
+
+//Process User Input for the Bipolar Output Menu
+void ProcessUserInput_BipolarOutputMenu(struct sTuningControlBoard * s, char * buffer){
+  
+  uint8_t u = 0;
+  char output[250];
+  char c;
+  float f = 0;
+
+  //Send  to main menu
+  if (strcmp(buffer, "m") == 0)
+  {
+    SUB_MENU = MAIN_MENU;
+    UI_GPIO = 9;
+
+    return;
+  }
+   if ((strcmp((char*) buffer, "?") == 0) || (strcmp((char*) buffer, "help") == 0))
+  {
+    ShowBipolarOutputHelp();
+    if (UI_GPIO == 9)
+      USBSendString("No Bipolar Output selected.\n");
+    else
+    {
+      /*
+      ShowSensor(&TCB.Controller);
+      ShowControllerConfig(&TCB.Controller);
+      ShowEffort(&TCB.Controller);
+      USBSendString("\n");
+      */
+      ShowAllBipolarOutput(&s->BipolarOutput[UI_BipolarOutput], true, UI_BipolarOutput + 1);
+    }
+    return;
+  }
+  //Select the BipolarOutput
+  if ((strcmp((char*) buffer, "1") == 0) || (strcmp((char*) buffer, "b1") == 0))
+  {
+    UI_BipolarOutput = 0;
+    ShowBipolarOutputConfig(&s->BipolarOutput[UI_BipolarOutput], UI_BipolarOutput);
+    return;
+  }
+  if ((strcmp((char*) buffer, "2") == 0) || (strcmp((char*) buffer, "b2") == 0))
+  {
+    UI_BipolarOutput = 1;
+    ShowBipolarOutputConfig(&s->BipolarOutput[UI_BipolarOutput], UI_BipolarOutput);
+    return;
+  }
+  //If there is no valid Controller Selected
+  if (UI_BipolarOutput == 9)
+  {
+    USBSendString("No Bipolar Output selected.\n");
+    return;
+  }
+  
+
+  //Print the Status all the Controllers
+  if ((strcmp((char*) buffer, "u") == 0) || (strcmp((char*) buffer, "/") == 0))
+  {
+    ShowAllBipolarOutput(&s->BipolarOutput[UI_BipolarOutput], true, UI_BipolarOutput+1);
+    return;
+  }
+  //Print the Status all the Controllers in non readable format
+  if (strcmp((char*) buffer, "r") == 0)
+  {
+    ShowRawHeaderBipolarOutput();
+    ShowAllBipolarOutput(&s->BipolarOutput[UI_BipolarOutput], false, UI_BipolarOutput+1);
+    return;
+  }
+
+  //Enable the Controller
+  if (strcmp((char*) buffer, "e") == 0)
+  {
+    USBSendString("BipolarOutput enabled.\n");
+    BipolarOutput_Enable(&s->BipolarOutput[UI_BipolarOutput], true);
+    return;
+  }
+  //Disable the Controller
+  if (strcmp((char*) buffer, "d") == 0)
+  {
+    USBSendString("BipolarOutput disabled.\n");
+    BipolarOutput_Enable(&s->BipolarOutput[UI_BipolarOutput], true);
+    return;
+  }
+
+
+  if (sscanf((char*) buffer, "%c%f", &c, &f) == 2)
+  {
+    //Convert the float to an integer
+    u = (uint16_t) f;
+    //Switch on the character
+    switch (c)
+    {
+      //User is trying to set the Channel
+      case 'b':
+        // we shouldn't get here if a valid number was used
+        USBSendString("Invalid controller number.\n");
+        return;
+        break;
+      case 'f':
+        if (f < 0)
+          USBSendString("Invalid value.");
+        else
+        {
+          snprintf(output, 200, "Frequency set to %f.\n", f);
+          USBSendString(output);
+          BipolarOutput_SetFrequency(&s->BipolarOutput[UI_BipolarOutput], f);
+        }
+        break;
+      case 'p':
+        if (f < 0)
+          USBSendString("Invalid value.");
+        else
+        {
+          snprintf(output, 200, "Pulses set to %f.\n", f);
+          USBSendString(output);
+          BipolarOutput_SetPulses(&s->BipolarOutput[UI_BipolarOutput], u);
+        }
+        break;
+
+       case 'v':
+        //Check the Voltage is greater than 0 and less than max peak to peak
+        if (f >= 0 && f < s->BipolarOutput[UI_BipolarOutput].Channel.max_peak2peak){
+          BipolarOutput_SetVoltage(&s->BipolarOutput[UI_BipolarOutput], f);
+          //Print out the string with the Compensator number and voltage
+          sprintf(output, "BipolarOutput %d Voltage Set to %f.\n", UI_BipolarOutput+1, f);    
+      	  USBSendString(output);
+          break;
+          return;
+        } else {
+          USBSendString("Invalid Voltage.\n");
+          break;
+          return;
+        }
+
+        break;
+      default:
+        break;
+    }
+  }
+  USBSendString("Unknown command.\n");
+  return;
+
+
+}
+
+
+void TranslateUserInput_BipolarOutputMenu(struct sTuningControlBoard * s, char * buffer){
+  //Make everything lowercase
+  for (int i=0; buffer[i]; i++){
+    buffer[i] = tolower(buffer[i]);
+  }
+  replacestr(buffer, "=", "");
+  replacestr(buffer, " ", "");
+  replacestr(buffer, " ", "");
+  replacestr(buffer, "bipolar", "b");
+  replacestr(buffer, "enable", "e");
+  replacestr(buffer, "disable", "d");
+  replacestr(buffer, "voltage", "v");
+  replacestr(buffer, "frequency", "f");
+  replacestr(buffer, "pulses", "p");
+  replacestr(buffer, "help", "h");
+  replacestr(buffer, "raw", "r");
+  replacestr(buffer, "main", "m");
+  ProcessUserInput_BipolarOutputMenu(s, buffer);
+
+}
+
 void TranslateUserInput_GPIOMenu(struct sTuningControlBoard * s,char * buffer){
   //Make everything lowercase
   for (int i=0; buffer[i]; i++){
@@ -1003,7 +1218,8 @@ void TranslateUserInput_MainMenu(struct sTuningControlBoard * s,char* buffer)
   replacestr(buffer, "wipe", "w");
   replacestr(buffer, "help", "h");
   replacestr(buffer, "controller", "cont");
-  replacestr(buffer, "compensator", "comp");
+  replacestr(buffer, "compensator", "comp");\
+
   ProcessUserInput_MainMenu(s, buffer);
 
 }
@@ -1095,6 +1311,11 @@ void ShowGPIOMenuHeader(void){
 	USBSendString("===============\n");
 }
 
+void ShowBipolarOutputMenuHeader(void){
+  USBSendString("Bipolar Output Menu\n");
+  USBSendString("===============\n");
+}
+
 //Help Menus for End User
 //=================================================================================================
 //Main Menu help Text
@@ -1172,6 +1393,23 @@ void ShowGPIOHelp(void){
 
 }
 
+
+void ShowBipolarOutputHelp(void){
+  ShowBipolarOutputMenuHeader();
+  USBSendString("Commands can be upper or lower case. Variables can be set with an equals sign or space or nothing.\n");
+  USBSendString("\"bipolar=1\", \"bipolar 1\", \"bipolar1\", \"b1\" are all treated the same.\n");
+  USBSendString("\n");
+  USBSendString("bipolar         -- Bipolar Output to set\n");
+  USBSendString("enable          -- enable or disable the controller\n");
+  USBSendString("disable         -- disable the controller\n");
+  USBSendString("voltage         -- set the voltage of the Bipolar Output\n");
+  USBSendString("frequency       -- set the frequency of the Bipolar Output\n");
+  USBSendString("pulses          -- set the number of pulses of the Bipolar Output\n");
+  USBSendString("raw             -- shows an easily parsable version of the Information\n");
+  USBSendString("main            -- return to the main menu\n");
+  USBSendString("\n");
+  
+}
 
 
 //Case Switched to Set the Sensors

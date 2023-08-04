@@ -63,6 +63,7 @@ SPI_HandleTypeDef hspi4;
 TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim4;
 TIM_HandleTypeDef htim6;
+TIM_HandleTypeDef htim9;
 
 /* USER CODE BEGIN PV */
 
@@ -100,6 +101,7 @@ static void MX_TIM2_Init(void);
 static void MX_TIM4_Init(void);
 static void MX_TIM6_Init(void);
 static void MX_I2C2_Init(void);
+static void MX_TIM9_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -109,28 +111,51 @@ static void MX_I2C2_Init(void);
 //This Intterupot is called every .25ms Will Toggle the State of the Dac Channels
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
   // Check which version of the timer triggered this callback and toggle LED
-  if (htim == &htim2 )
-  {
-    //Syncronous Update of the DACs
-    for (int i = 0; i < NUMOFCOMPENSATORS; i++){
-      if(TCB.Compensator[i].Channel.enabled){
-        if(TCB.Compensator[i].Channel.state_high){
+  //This is the Timer for the DAC Compensator. Should happen 4000 times a second
+	if (htim == &htim2 ){
+		//Syncronous Update of the DACs
+		for (int i = 0; i < NUMOFCOMPENSATORS; i++){
+		  if(TCB.Compensator[i].Channel.enabled){
+			if(TCB.Compensator[i].Channel.state_high){
 
-          Set_DAC_Value(&TCB.DAC8718, TCB.Compensator[i].Channel.DAC_number, TCB.Compensator[i].Channel.lower_bound);
-          TCB.Compensator[i].Channel.state_high = false;
-        }else{
-          Set_DAC_Value(&TCB.DAC8718, TCB.Compensator[i].Channel.DAC_number, TCB.Compensator[i].Channel.upper_bound);
-          TCB.Compensator[i].Channel.state_high = true;
+			  Set_DAC_Value(&TCB.DAC8718, TCB.Compensator[i].Channel.DAC_number, TCB.Compensator[i].Channel.lower_bound);
+			  TCB.Compensator[i].Channel.state_high = false;
+			}else{
+			  Set_DAC_Value(&TCB.DAC8718, TCB.Compensator[i].Channel.DAC_number, TCB.Compensator[i].Channel.upper_bound);
+			  TCB.Compensator[i].Channel.state_high = true;
 
-        }
-      }
-    }//End For
-    Syncronous_Update();
+			}
+		  }
+		}//End For
+		//This is a General Purpose Timer for Bipolar Output
+		//Go Through Every Bipolar Output
+		for (int i = 0; i < NUMOFBipolarOutputs; i++){
+		  //If the Bipolar Output is enabled
+		  if(TCB.BipolarOutput[i].Enabled && TCB.BipolarOutput[i].Pulses > 0){
+			//If the Timer is 0 then toggle the output
+			if(TCB.BipolarOutput[i].Timer == 0){
+			  if(TCB.BipolarOutput[i].Channel.state_high){
+				Set_DAC_Value(&TCB.DAC8718, TCB.BipolarOutput[i].Channel.DAC_number, TCB.BipolarOutput[i].Channel.lower_bound);
+				TCB.BipolarOutput[i].Channel.state_high = false;
+				TCB.BipolarOutput[i].Pulses--;
+			  }else{
+				Set_DAC_Value(&TCB.DAC8718, TCB.BipolarOutput[i].Channel.DAC_number, TCB.BipolarOutput[i].Channel.upper_bound);
+				TCB.BipolarOutput[i].Channel.state_high = true;
+			  }
+			  //Reload the Timer
+			  BipolarOutput_TimerReload(&TCB.BipolarOutput[i]);
+			//If the Timer is not 0 then decrement the timer
+			}else{
+			  TCB.BipolarOutput[i].Timer--;
+			}
+		  }//End Bipolar Output Update
+		}//End For loop
+
+
+		Syncronous_Update();
   }//End Timer 2
 
-
-
-  
+  //Timer For Heaters  
   if (htim == &htim6)
   {
     HeaterSubtick += HeaterFrequency;
@@ -139,18 +164,20 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         HeaterSubtick = 0;
     }
   }//End Timer 3
+
+  // Check to See if the Heaters should be on or off
   for (int i = 0; i < NUMOFCONTROLLERS; i++){
     if ((HeaterTick > TCB.Controller[i].HeaterDwell)&& (HeaterTick < (200 - TCB.Controller[i].HeaterDwell))){
     	set_HeaterEnable(&TCB.Controller[i].Heater, true);
-  }else{
-	  set_HeaterEnable(&TCB.Controller[i].Heater, false);
-  }//Dictates If heater is on or off
-    }
+    }else{
+	    set_HeaterEnable(&TCB.Controller[i].Heater, false);
+    }//Dictates If heater is on or off
+  }
   
-  
+
 
   //Removed ADC stuff
-
+  //Clock Tick for Sampling TMP117 
   if (htim == &htim4)
   {
     ClockTick = (ClockTick + 1) % 100;
@@ -182,7 +209,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-  uint8_t buffer[50];
+  char buffer[50];
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -216,6 +243,7 @@ int main(void)
   MX_TIM4_Init();
   MX_TIM6_Init();
   MX_I2C2_Init();
+  MX_TIM9_Init();
   /* USER CODE BEGIN 2 */
   TCB_InitStruct(&TCB, &hi2c1, &hi2c2, &hspi4);
   for (int i = 0; i < 6; i++){
@@ -252,11 +280,10 @@ int main(void)
   for(uint8_t i = 0; i< NUMOFCOMPENSATORS; i++){
 	  TMP117_Configure(&TCB.Compensator[i].Sensor);
   }
+
   HAL_TIM_Base_Start_IT(&htim2); //DAC Timer
   HAL_TIM_Base_Start_IT(&htim6); // Heater Timer
   HAL_TIM_Base_Start_IT(&htim4); // Main Timer
-
-//End Damons Code --------------------------------------
 
 
 
@@ -275,18 +302,19 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-	  
+//	  uint16_t voltage;
+//	  uint16_t voltage2;
     //Cycle through the DAC channels and set them to the opposite state and increase and decrease the voltage
-    // for (voltage = 0; voltage < TCB.DAC8718.max_peak2peak; voltage += 0.1){
-		//   for(uint8_t j = 0; j < 3; j++){
-		// 	  Set_Voltage_Peak_to_Peak(&TCB.DAC8718, j, &voltage);
-		//   }
-		//   voltage2 = TCB.DAC8718.max_peak2peak - voltage;
-		//   for(uint8_t j = 3; j < 6; j++){
-		// 	  Set_Voltage_Peak_to_Peak(&TCB.DAC8718, j, &voltage2);
-		//   }
-		//   //HAL_Delay(100);
-	  // }
+//     for (voltage = 0; voltage < TCB.DAC8718.max_peak2peak; voltage += 0.1){
+//		   for(uint8_t j = 0; j < 3; j++){
+//		 	  Set_Voltage_Peak_to_Peak(&TCB.DAC8718.DAC_Channels[j], &voltage);
+//		   }
+//		   voltage2 = TCB.DAC8718.max_peak2peak - voltage;
+//		   for(uint8_t j = 3; j < 6; j++){
+//		 	  Set_Voltage_Peak_to_Peak(&TCB.DAC8718.DAC_Channels[j], &voltage2);
+//		   }
+//		   //HAL_Delay(100);
+//	   }
 
     //Set the heater to the opposite state its currently in
 	  //Just to Test. Here is the
@@ -297,7 +325,6 @@ int main(void)
   Compensator_Update(&TCB.Compensator[3]);
   Compensator_Update(&TCB.Compensator[4]);
   Compensator_Update(&TCB.Compensator[5]);
-  //-------- Damons Code ----------------------
     // we keep a global copy of this for the timer interrupt
     HeaterFrequency = TCB.Controller[0].PID.Config.Frequency;
 
@@ -659,6 +686,44 @@ static void MX_TIM6_Init(void)
 }
 
 /**
+  * @brief TIM9 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM9_Init(void)
+{
+
+  /* USER CODE BEGIN TIM9_Init 0 */
+
+  /* USER CODE END TIM9_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+
+  /* USER CODE BEGIN TIM9_Init 1 */
+
+  /* USER CODE END TIM9_Init 1 */
+  htim9.Instance = TIM9;
+  htim9.Init.Prescaler = 420;
+  htim9.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim9.Init.Period = 50;
+  htim9.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim9.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  if (HAL_TIM_Base_Init(&htim9) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim9, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM9_Init 2 */
+
+  /* USER CODE END TIM9_Init 2 */
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -679,7 +744,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOE, GPIO_PIN_3|Heater_Enable_2_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(Heater_Enable_1_GPIO_Port, Heater_Enable_1_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, Heater_Enable_1_Pin|DAC_nWake_Pin|DAC_nLDAC_Pin|DAC_nCS_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOE, Heater_Enable_3_Pin|DAC_nRST_Pin|DAC_nCLR_Pin, GPIO_PIN_SET);
@@ -720,12 +785,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : Heater_Enable_1_Pin */
-  GPIO_InitStruct.Pin = Heater_Enable_1_Pin;
+  /*Configure GPIO pins : Heater_Enable_1_Pin DAC_nWake_Pin DAC_nLDAC_Pin DAC_nCS_Pin */
+  GPIO_InitStruct.Pin = Heater_Enable_1_Pin|DAC_nWake_Pin|DAC_nLDAC_Pin|DAC_nCS_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(Heater_Enable_1_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pins : Heater_Enable_2_Pin Heater_Enable_3_Pin DAC_nRST_Pin DAC_nCLR_Pin */
   GPIO_InitStruct.Pin = Heater_Enable_2_Pin|Heater_Enable_3_Pin|DAC_nRST_Pin|DAC_nCLR_Pin;
