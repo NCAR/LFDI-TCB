@@ -98,8 +98,8 @@ struct sBipolarOutput{
 	uint16_t Timer;
 	float voltage;
 };
-```
 
+```
 
 ## Low-Level
 These Structure will mostly be controlling Hardware and peripeherials attached to the TCB
