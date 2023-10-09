@@ -208,7 +208,7 @@ void ShowAllBipolarOutput(struct sBipolarOutput* BipolarOutput, bool readable, u
   else
     strcpy(enabled, "DISABLED");
   
-  snprintf(buffer, 200, "Bipolar%u: frequency= %04u pulses= %04u  Peak2Peak=%6.2f  %s\n", index+1, BipolarOutput->Frequency, BipolarOutput->Pulses, BipolarOutput->voltage, enabled);
+  snprintf(buffer, 200, "Bipolar%u:\t%04u\t%04u\t%6.2f\t%s\n", index+1, BipolarOutput->Frequency, BipolarOutput->Pulses, BipolarOutput->voltage, enabled);
   USBSendString(buffer);
 
 }
@@ -222,7 +222,7 @@ void ShowAllGPIO(struct sGPIO* GPIO, bool readable){
     strcpy(enabled, "ENABLED ");
   else
     strcpy(enabled, "DISABLED");
-  snprintf(buffer, 200, "GPIO%u: %s\n", GPIO->GPIONum, enabled);
+  snprintf(buffer, 200, "GPIO%u:\t%s\n", GPIO->GPIONum, enabled);
   USBSendString(buffer);
 }
 
