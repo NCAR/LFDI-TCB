@@ -59,7 +59,7 @@ void Set_Config(struct sDAC* s){
 	Recieve_Data(s, Data);
 	
 	//if Data is the same as tx_data then the command was successful
-	if(Data[1] = =  tx_data[1] && Data[2] = =  tx_data[2]){
+	if((Data[1] ==  tx_data[1]) && (Data[2] ==  tx_data[2])){
 		s->config = (Data[1] << 8) | Data[2];
 		s->Configured = true;
 		s->State = DAC_STATE_OK;
@@ -87,7 +87,7 @@ uint16_t Get_Config(struct sDAC* s){
 
 //@brief: This function will ramp all the DACs from 0 to FFFF
 void Ramp_DACs(struct sDAC *s, uint8_t DAC_NUM , uint16_t increment, uint16_t lower_bound, uint16_t upper_bound){
-	for(uint16_t Value = lower_bound; Value < =  upper_bound; Value = Value+increment){
+	for(uint16_t Value = lower_bound; Value <=  upper_bound; Value = Value+increment){
 		Set_DAC_Value(s, DAC_NUM, Value);
 		Set_nLDAC_high(true);
 		Set_nLDAC_high(false);
@@ -194,8 +194,8 @@ void Set_DAC_Gain(struct sDAC* s, uint8_t DAC_Num, uint16_t val){
 //@param spi: The spi handle to use
 //@return: None
 void Set_All_DACs_to_Zero(struct sDAC *s){
-	uint8_t tx_data[3] = {WRITE | i, 0x7f, 0xff};
-	for (int i = Set_DAC0; i < =  Set_DAC7; i++){
+	for (int i = Set_DAC0; i <=  Set_DAC7; i++){
+		uint8_t tx_data[3] = {WRITE | i, 0x7f, 0xff};
 		Send_Command(s, tx_data);
 	}
 	Set_nLDAC_high(true);
