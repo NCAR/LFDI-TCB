@@ -74,7 +74,7 @@ void ShowBipolarOutputConfig(struct sBipolarOutput* BipolarOutput, uint8_t index
   else
     strcpy(enabled, "DISABLED");
   
-  snprintf(buffer, 200, "Bipolar%u: frequency= %04u pulses= %04u  Peak2Peak=%6.2f  %s\n", index+1, BipolarOutput->Frequency, BipolarOutput->Pulses, BipolarOutput->voltage, enabled);
+  snprintf(buffer, 200, "Bipolar%u: frequency= %04u pulses= %04u  Peak2Peak=%6.2f  %s\n", index+1, BipolarOutput->Frequency, BipolarOutput->Pulses, BipolarOutput->Voltage, enabled);
   USBSendString(buffer);
 
 }
@@ -208,7 +208,7 @@ void ShowAllBipolarOutput(struct sBipolarOutput* BipolarOutput, bool readable, u
   else
     strcpy(enabled, "DISABLED");
   
-  snprintf(buffer, 200, "Bipolar%u:\t%04u\t%04u\t%6.2f\t%s\n", index+1, BipolarOutput->Frequency, BipolarOutput->Pulses, BipolarOutput->voltage, enabled);
+  snprintf(buffer, 200, "Bipolar%u:\t%04u\t%04u\t%6.2f\t%s\n", index+1, BipolarOutput->Frequency, BipolarOutput->Pulses, BipolarOutput->Voltage, enabled);
   USBSendString(buffer);
 
 }

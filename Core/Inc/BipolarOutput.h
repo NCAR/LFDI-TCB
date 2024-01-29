@@ -14,7 +14,7 @@ struct sBipolarOutput{
     bool Enabled;
     //A count down timer that will be used to determine when to change the output
     uint16_t Timer;
-    float voltage;
+    float Voltage;
 };
 
 

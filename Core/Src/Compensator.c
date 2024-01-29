@@ -1,25 +1,20 @@
 #include "Compensator.h"
 
 
-
-
 //Initalize the Structure of the Compensator
 void Compensator_InitStruct(struct sCompensator* s, struct sTMP117 *t, struct sDAC_Channel *c){
+  s->Sensor = *t;
+  s->Channel = *c;
   //is the Channel enabled
-	s->Enable = false;
-  //Should we be tryying to Compensate to a specific Wavelength
+  s->Enable = false;
+  //Should we be trying to compensate to a specific wavelength
   s->compensate = false;
   //Use the Average stored in the TMP117 struct or the last temperature
   s->useAverage = false;
-
   //Wavelength to Compensate to
   s->wavelength =  0;
   //if we are not using the auto compensation what should this be outputting
   s->voltage = 0;
-
-	s->Channel = *c;
-	s->Sensor = *t;
-
 	return;
 }
 
@@ -36,7 +31,6 @@ void Compensator_SetChannel(struct sCompensator* s){
 	Set_Voltage_Peak_to_Peak(&s->Channel, &s->voltage);
 	return;
 }
-
 
 
 //@brief this will set whether or not the Compensator will use the average temperature or the last temperature
@@ -60,7 +54,6 @@ void Compensator_AutoCompensate(struct sCompensator* s){
 	}
 	s->voltage = Wavelength_to_Voltage(&s->wavelength, temperature);
 	return;
-
 }
 
 
@@ -88,5 +81,4 @@ void Compensator_Update(struct sCompensator* s){
 
 	Set_Voltage_Peak_to_Peak(&s->Channel, &s->voltage);
 	return;
-
 }

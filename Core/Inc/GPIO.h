@@ -2,17 +2,7 @@
 #include "stm32f4xx_hal.h"
 #include "defs.h"
 
-//Define the Ports and Pins for later Use
-#define GPIO1_PORT GPIOD
-#define GPIO1_PIN GPIO_PIN_10
-#define GPIO2_PORT GPIOD
-#define GPIO2_PIN GPIO_PIN_11
-#define GPIO3_PORT GPIOD
-#define GPIO3_PIN GPIO_PIN_12
-#define GPIO4_PORT GPIOD
-#define GPIO4_PIN GPIO_PIN_13
-#define GPIO5_PORT GPIOD
-#define GPIO5_PIN GPIO_PIN_14
+
 
 
 struct sGPIO{

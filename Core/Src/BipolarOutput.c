@@ -7,6 +7,8 @@ void BipolarOutput_InitStruct(struct sBipolarOutput* s, uint8_t BipolarOutputNum
     s->Frequency = 0;
     s->Pulses = 0;
     s->Enabled = false;
+    s->Timer = 0;
+    s->Voltage = 0;
 }
 
 //This sets the frequency of the output
@@ -31,6 +33,6 @@ void BipolarOutput_TimerReload(struct sBipolarOutput* s){
 }
 
 void BipolarOutput_SetVoltage(struct sBipolarOutput* s, float voltage){
-	s->voltage = voltage;
-	Set_Voltage_Peak_to_Peak(&s->Channel, &s->voltage);
+	s->Voltage = voltage;
+	Set_Voltage_Peak_to_Peak(&s->Channel, &s->Voltage);
 }

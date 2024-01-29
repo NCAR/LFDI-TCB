@@ -82,10 +82,6 @@ volatile uint8_t Ticks_TMP117 = 0;
 volatile uint8_t Ticks_CalculatePWM = 0;
 volatile uint8_t ClockTick = 0;
 volatile uint16_t ElapsedSeconds = 0;
-volatile uint8_t ADCChannel = 0;
-volatile uint8_t ADCSampleNumber = 0;
-volatile uint32_t ADCChannelSamples[4][8] = {0};
-volatile uint16_t ADCTick = 0;
 //End Damons Code-----------------------------------
 struct sTuningControlBoard TCB;
 
@@ -108,12 +104,12 @@ static void MX_TIM9_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-//This Intterupot is called every .25ms Will Toggle the State of the Dac Channels
+//This Interrupt is called every .25ms Will Toggle the State of the Dac Channels
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
   // Check which version of the timer triggered this callback and toggle LED
   //This is the Timer for the DAC Compensator. Should happen 4000 times a second
 	if (htim == &htim2 ){
-		//Syncronous Update of the DACs
+		//Synchronous Update of the DACs
 		for (int i = 0; i < NUMOFCOMPENSATORS; i++){
 		  if(TCB.Compensator[i].Channel.enabled){
 			if(TCB.Compensator[i].Channel.state_high){
@@ -123,7 +119,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 			}else{
 			  Set_DAC_Value(&TCB.DAC8718, TCB.Compensator[i].Channel.DAC_number, TCB.Compensator[i].Channel.upper_bound);
 			  TCB.Compensator[i].Channel.state_high = true;
-
 			}
 		  }
 		}//End For
@@ -176,7 +171,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
   
 
 
-  //Removed ADC stuff
   //Clock Tick for Sampling TMP117 
   if (htim == &htim4)
   {
@@ -196,7 +190,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
       Ticks_CalculatePWM = 0;
       DoCalculatePWM = true;
     }
-
   }
 }
 
@@ -228,9 +221,7 @@ int main(void)
 
   /* USER CODE BEGIN SysInit */
 
-
   InitDWTTimer(); // we need this for delay_us
-
 
   /* USER CODE END SysInit */
 
@@ -269,11 +260,7 @@ int main(void)
   // if you rearrange the PID.CONFIG struct, you should force rewriting defaults
   // over the EEPROM on next startup. This will *probably* be caught by checking
   // the address of the last controller rather than the first.
-  //Welcome to OOP hell
-  if (!(TCB.Controller[0].Sensor.Address & 0b1001000)) // if the stored address is not valid, we probably have invalid data.
-  {
-    printf("The configuration is invalid. Rewriting defaults.");
-  }
+
   for(uint8_t i = 0; i< NUMOFCONTROLLERS; i++){
     TMP117_Configure(&TCB.Controller[i].Sensor);
   }
@@ -284,8 +271,6 @@ int main(void)
   HAL_TIM_Base_Start_IT(&htim2); //DAC Timer
   HAL_TIM_Base_Start_IT(&htim6); // Heater Timer
   HAL_TIM_Base_Start_IT(&htim4); // Main Timer
-
-
 
 
   /* USER CODE END 2 */
@@ -319,62 +304,62 @@ int main(void)
     //Set the heater to the opposite state its currently in
 	  //Just to Test. Here is the
 
-  Compensator_Update(&TCB.Compensator[0]);
-  Compensator_Update(&TCB.Compensator[1]);
-  Compensator_Update(&TCB.Compensator[2]);
-  Compensator_Update(&TCB.Compensator[3]);
-  Compensator_Update(&TCB.Compensator[4]);
-  Compensator_Update(&TCB.Compensator[5]);
-    // we keep a global copy of this for the timer interrupt
-    HeaterFrequency = TCB.Controller[0].PID.Config.Frequency;
+		Compensator_Update(&TCB.Compensator[0]);
+		Compensator_Update(&TCB.Compensator[1]);
+		Compensator_Update(&TCB.Compensator[2]);
+		Compensator_Update(&TCB.Compensator[3]);
+		Compensator_Update(&TCB.Compensator[4]);
+		Compensator_Update(&TCB.Compensator[5]);
+		// we keep a global copy of this for the timer interrupt
+		HeaterFrequency = TCB.Controller[0].PID.Config.Frequency;
 
 
-	//This is set by an interrupt timer. When this is true the system will go through an  take a sample
-	if (DoSampleTMP117){
-		//If there are a ton of error restart the I2C bus to see if that helps
-		DoSampleTMP117 = false;
-		//For each of the compensators
-		for(uint8_t i = 0; i<NUMOFCOMPENSATORS;i++){
-			//If there are errors Restart the Buses
-			if (TCB.Compensator[i].Sensor.Errors > 10){
-				MX_I2C1_Init();
-				MX_I2C2_Init();
-			}
-			if (TCB.Compensator[i].Sensor.Configured){
-				TMP117_GetTemperature(&TCB.Compensator[i].Sensor);
-			}else{
-				TMP117_Configure(&TCB.Compensator[i].Sensor);
-			}
-		}//End Compensator For loop
-		//For all of the Controllers
-		for (int i = 0; i < NUMOFCONTROLLERS; i++){
-			if (TCB.Controller[i].Sensor.Errors > 10){
-				MX_I2C1_Init();
-				MX_I2C2_Init();
-			}
-			if (TCB.Controller[i].Sensor.Configured){
-				TMP117_GetTemperature(&TCB.Controller[i].Sensor);
-			}else{
-				TMP117_Configure(&TCB.Controller[i].Sensor);
-			}
-		}//End Controller For loop
-      }//End do Sample
+		//This is set by an interrupt timer. When this is true the system will go through and take a sample
+		if (DoSampleTMP117){
+			//If there are a ton of error restart the I2C bus to see if that helps
+			DoSampleTMP117 = false;
+			//For each of the compensators
+			for(uint8_t i = 0; i<NUMOFCOMPENSATORS;i++){
+				//If there are errors Restart the Buses
+				if (TCB.Compensator[i].Sensor.Errors > 10){
+					MX_I2C1_Init();
+					MX_I2C2_Init();
+				}
+				if (TCB.Compensator[i].Sensor.Configured){
+					TMP117_GetTemperature(&TCB.Compensator[i].Sensor);
+				}else{
+					TMP117_Configure(&TCB.Compensator[i].Sensor);
+				}
+			}//End Compensator For loop
+			//For all of the Controllers
+			for (int i = 0; i < NUMOFCONTROLLERS; i++){
+				if (TCB.Controller[i].Sensor.Errors > 10){
+					MX_I2C1_Init();
+					MX_I2C2_Init();
+				}
+				if (TCB.Controller[i].Sensor.Configured){
+					TMP117_GetTemperature(&TCB.Controller[i].Sensor);
+				}else{
+					TMP117_Configure(&TCB.Controller[i].Sensor);
+				}
+			}//End Controller For loop
+		  }//End do Sample
 
 
-    if (DoCalculatePWM)
-    {
-      DoCalculatePWM = false;
-      for (int i = 0; i < NUMOFCONTROLLERS; i++){
-        Controller_Step(&TCB.Controller[i]);
-      }
-    }
+		if (DoCalculatePWM)
+		{
+		  DoCalculatePWM = false;
+		  for (int i = 0; i < NUMOFCONTROLLERS; i++){
+			Controller_Step(&TCB.Controller[i]);
+		  }
+		}
 
-    if (StringFIFORemove(&USBFIFO, buffer) == 0)
-    {
-      ProcessUserInput(&TCB, buffer);
-    }
+		if (StringFIFORemove(&USBFIFO, buffer) == 0)
+		{
+		  ProcessUserInput(&TCB, buffer);
+		}
 
-  }
+	}
   /* USER CODE END 3 */
 }
 

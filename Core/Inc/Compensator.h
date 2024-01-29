@@ -26,7 +26,7 @@ struct sCompensator
   struct sDAC_Channel Channel;
   //is the Channel enabled
   bool Enable;
-  //Should we be tryying to Compensate to a specific Wavelength
+  //Should we be trying to compensate to a specific wavelength
   bool compensate;
   //Use the Average stored in the TMP117 struct or the last temperature
   bool useAverage;

@@ -9,6 +9,7 @@
 #ifndef INC_DAC_UNIT_TEST_H_
 #define INC_DAC_UNIT_TEST_H_
 #include "DAC.h"
+#include "DAC_Defines.h"
 
 uint8_t unit_test_Default_Values(struct sDAC *s, uint8_t *Register, uint8_t *Default_Value);
 uint8_t unit_test_Config_Register_Default(struct sDAC *s);

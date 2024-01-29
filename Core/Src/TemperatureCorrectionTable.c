@@ -9,6 +9,8 @@
 
 //This Will translate a nm Tuning request to a position at 25C
 //The Range Should Cover 600nm to 700nm in 0.01 nm intervals or 10000 entries
+
+/* This is broken and unused.
 uint16_t NM_to_Position(float * nm)
 {
 	uint16_t index = (uint16_t)*nm*100;
@@ -19,12 +21,12 @@ uint16_t NM_to_Position(float * nm)
 	uint16_t pos = lookup[index];
 	return pos;
 }
-
+*/
 
 //Lookup Table to convert a pixel position to a voltage at the base Temperature. 25C
 float BaseT_Position_to_BaseT_Voltage(uint16_t position){
 	if(position > 982){
-		return 0.0;
+		return 0.0f;
 	}
 	//This look up will convert a pixel position to a voltage at 25C
 	//The Index is the pixel position and the value is the voltage in mV
@@ -65,14 +67,13 @@ float BaseT_Position_to_BaseT_Voltage(uint16_t position){
 	2647,2643,2639,2635,2631,2627,2624,2620,2616,2612,2608,2604,2600,2600,2600,2599,2595,2591,2587,2583,2579,2575,2572,
 	2565,2557,2550,2546,2542,2538,2534,2530,2527,2523,2519,2515,2511,2507,2503,2500,2500,2500,2498,2494,2490,2486,2482,
 	2478,2474,2470,2466,2462,2457,2449,2441,2437,2433,2429,2425,2421,2417,2413,2409};
-	float volts = lookup[position]/1000.0;
+	float volts = lookup[position]/1000.0f;
 	return volts;
 }
 
 //This Function Will Convert the temperature to a positional offset
 //This is based on the Found relation ship between Position and Temperature
 uint16_t temperature_position_offset(double* temp){
-
 	uint16_t offset =(uint16_t)(46.09*(*temp)-978.1);
 	return offset;
 }
@@ -83,7 +84,7 @@ float Wavelength_to_Voltage(float* wavelength, double* temp){
 	//Skip this For now we need a translation table
 	//uint16_t base_position = NM_to_Position(wavelength);
 	
-	//Because we dont have a Conversion from Pixel to Wave
+	//Because we don't have a Conversion from Pixel to Wave
 	//Convert the float wavelength to a uint16_t position
 	//Therefore wavelength needs to be between 570 and 0 and 
 	uint16_t base_position = (uint16_t)(*wavelength);

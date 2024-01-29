@@ -10,7 +10,6 @@
 
 #include "defs.h"
 
-
 void USBSendString(char* buf);
 void InitDWTTimer(void);
 void Delay_us(uint32_t us);

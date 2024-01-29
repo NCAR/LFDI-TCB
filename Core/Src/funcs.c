@@ -55,7 +55,6 @@ void Delay_us(uint32_t us)
   } while((DWT->CYCCNT - start) < cycles);
 }
 
-
 int32_t UIntToInt(uint32_t x) {
     union { uint32_t u; int32_t i; } un;
     un.u = x;

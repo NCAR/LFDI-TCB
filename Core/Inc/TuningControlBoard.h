@@ -9,13 +9,13 @@
 #define INC_TUNINGCONTROLBOARD_H_
 
 
-#define NUMOFCONTROLLERS 3
-#define NUMOFCOMPENSATORS 6
-#define NUMOFSENSORS 8
-#define NUMOFSENSORSBUS1 4
-#define NUMOFSENSORSBUS2 4
-#define NUMOFGPIO 5
-#define NUMOFBipolarOutputs 2
+#define NUMOFCONTROLLERS (3)
+#define NUMOFCOMPENSATORS (6)
+#define NUMOFSENSORS (8)
+#define NUMOFSENSORSBUS1 (4)
+#define NUMOFSENSORSBUS2 (4)
+#define NUMOFGPIO (5)
+#define NUMOFBipolarOutputs (2)
 
 #include "defs.h"
 #include "TMP117.h"
@@ -29,15 +29,14 @@
 #include "BipolarOutput.h"
 //#include "CameraController.h"
 
-
 //The Tuning Control Board Contains 8 DACs and 7 TMP117 Temp Sensors as well as One Heater Controller
-//Currently the TCB will be set up to Drive the DAC independant of any other input
+//Currently the TCB will be set up to Drive the DAC independent of any other input
 //The TCB will be set up such that the User can choose which TMP117 to use as the input for the PID Controller along with the heater
 struct sTuningControlBoard
 {
   struct sDAC DAC8718;
   struct sTMP117 Sensor[NUMOFSENSORS];
-  struct sController Controller[NUMOFCONTROLLERS];//INcrease this as we get more controllers
+  struct sController Controller[NUMOFCONTROLLERS];//Increase this as we get more controllers
   struct sCompensator Compensator[NUMOFCOMPENSATORS];
   struct sGPIO GPIO[NUMOFGPIO];
   struct sBipolarOutput BipolarOutput[NUMOFBipolarOutputs];
