@@ -10,6 +10,7 @@
 
 #define FIFO_BUFFER_SIZE 600
 #include <stdio.h>
+#include "defs.h"
 
 struct sStringFIFO
 {
@@ -22,7 +23,7 @@ void StringFIFOInit(struct sStringFIFO* fifo);
 //Add a string to the FIFO
 uint8_t StringFIFOAdd(struct sStringFIFO* fifo, uint8_t* item, size_t size);
 //Remove a string from the FIFO
-uint8_t StringFIFORemove(struct sStringFIFO* fifo, uint8_t* string);
+uint8_t StringFIFORemove(struct sStringFIFO* fifo, char* string);
 
 uint16_t StringFIFOUsed(struct sStringFIFO* fifo);
 uint16_t StringFIFOAvailable(struct sStringFIFO* fifo);

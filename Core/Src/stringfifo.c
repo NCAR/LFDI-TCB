@@ -13,6 +13,7 @@
 
 #include <stringfifo.h>
 #include "string.h"
+#include <stdint.h>
 
 
 //Initalize the Fifo Structure
@@ -67,7 +68,7 @@ uint8_t StringFIFOAdd(struct sStringFIFO* fifo, uint8_t* item, size_t size)
 }
 
 //Go through the FIFO and remove the Characters until the first \n or \r is found
-uint8_t StringFIFORemove(struct sStringFIFO* fifo, uint8_t* string)
+uint8_t StringFIFORemove(struct sStringFIFO* fifo, char* string)
 {
 
   uint16_t i, pos;

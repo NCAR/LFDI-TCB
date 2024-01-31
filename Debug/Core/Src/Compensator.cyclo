@@ -1,8 +1,8 @@
-Compensator.c:7:6:Compensator_InitStruct	1
-Compensator.c:27:6:Compensator_enableChannel	2
-Compensator.c:35:6:Compensator_SetChannel	1
-Compensator.c:46:6:Compensator_UseAverage	1
-Compensator.c:53:6:Compensator_AutoCompensate	2
-Compensator.c:68:6:Compensator_SetWavelength	1
-Compensator.c:75:6:Compensator_SetVoltage	1
-Compensator.c:82:6:Compensator_Update	2
+../Core/Src/Compensator.c:5:6:Compensator_InitStruct	1
+../Core/Src/Compensator.c:22:6:Compensator_enableChannel	2
+../Core/Src/Compensator.c:30:6:Compensator_SetChannel	1
+../Core/Src/Compensator.c:40:6:Compensator_UseAverage	1
+../Core/Src/Compensator.c:47:6:Compensator_AutoCompensate	2
+../Core/Src/Compensator.c:61:6:Compensator_SetWavelength	1
+../Core/Src/Compensator.c:68:6:Compensator_SetVoltage	1
+../Core/Src/Compensator.c:75:6:Compensator_Update	2

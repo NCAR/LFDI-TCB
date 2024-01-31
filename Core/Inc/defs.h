@@ -13,9 +13,18 @@
 #include "stm32f4xx_hal.h"
 #include <string.h>
 #include "TMP117.h"
+#include <stdint.h>
 
 #define UART_BUFFER_SIZE (50)
 #define UART_SENTENCE_QUEUE_SIZE (4)
+
+#define NUMOFHEATERCONTROLLERS (3)
+#define NUMOFCOMPENSATORS (6)
+#define NUMOFSENSORS (8)
+#define NUMOFSENSORSBUS1 (4)
+#define NUMOFSENSORSBUS2 (4)
+#define NUMOFGPIO (5)
+#define NUMOFBipolarOutputs (2)
 
 extern I2C_HandleTypeDef hi2c2;
 

@@ -1,4 +1,3 @@
-TemperatureCorrectionTable.c:12:10:NM_to_Position	1
-TemperatureCorrectionTable.c:25:7:BaseT_Position_to_BaseT_Voltage	2
-TemperatureCorrectionTable.c:74:10:temperature_position_offset	1
-TemperatureCorrectionTable.c:82:7:Wavelength_to_Voltage	1
+../Core/Src/TemperatureCorrectionTable.c:27:7:BaseT_Position_to_BaseT_Voltage	2
+../Core/Src/TemperatureCorrectionTable.c:76:10:temperature_position_offset	1
+../Core/Src/TemperatureCorrectionTable.c:83:7:Wavelength_to_Voltage	1

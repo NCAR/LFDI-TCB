@@ -46,13 +46,13 @@ void Compensator_UseAverage(struct sCompensator* s, bool useAverage){
 //This will set the DAC to Compensate Based on the Temperature
 void Compensator_AutoCompensate(struct sCompensator* s){
 	//Get the Temperature from the Sensor
-	double * temperature;
+	float * temperature;
 	if(s->useAverage){
 		temperature = &s->Sensor.Average;
 	}else{
-		temperature = &s->Sensor.LastTemperature;
+		temperature = &s->Sensor.Temperature[0];
 	}
-	s->voltage = Wavelength_to_Voltage(&s->wavelength, temperature);
+	s->voltage = Wavelength_to_Voltage(&s->wavelength, (double*)temperature);
 	return;
 }
 

@@ -1,6 +1,6 @@
-BipolarOutput.c:4:6:BipolarOutput_InitStruct	1
-BipolarOutput.c:16:6:BipolarOutput_SetFrequency	1
-BipolarOutput.c:21:6:BipolarOutput_SetPulses	1
-BipolarOutput.c:25:6:BipolarOutput_Enable	1
-BipolarOutput.c:29:6:BipolarOutput_TimerReload	1
-BipolarOutput.c:33:6:BipolarOutput_SetVoltage	1
+../Core/Src/BipolarOutput.c:4:6:BipolarOutput_InitStruct	1
+../Core/Src/BipolarOutput.c:18:6:BipolarOutput_SetFrequency	1
+../Core/Src/BipolarOutput.c:23:6:BipolarOutput_SetPulses	1
+../Core/Src/BipolarOutput.c:27:6:BipolarOutput_Enable	1
+../Core/Src/BipolarOutput.c:31:6:BipolarOutput_TimerReload	1
+../Core/Src/BipolarOutput.c:35:6:BipolarOutput_SetVoltage	1

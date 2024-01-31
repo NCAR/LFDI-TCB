@@ -25,8 +25,8 @@ void TCB_InitStruct(struct sTuningControlBoard* s, I2C_HandleTypeDef* hi2c1,I2C_
     
     //Initialize the Controller
     //All of these are set up to use the first sensor this will need to be changed as we get more sensors
-    for (int i = 0; i < NUMOFCONTROLLERS; i++){
-        Controller_InitStruct(&s->Controller[i], &s->Sensor[4], i+1);
+    for (int i = 0; i < NUMOFHEATERCONTROLLERS; i++){
+        HeaterController_InitStruct(&s->HeaterControllers[i], &s->Sensor[4], i+1);
     }
     
     //Initialize the Compensator

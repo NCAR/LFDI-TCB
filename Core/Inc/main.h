@@ -73,8 +73,6 @@ void Error_Handler(void);
 #define DAC_nLDAC_GPIO_Port GPIOB
 #define DAC_nCS_Pin GPIO_PIN_14
 #define DAC_nCS_GPIO_Port GPIOB
-#define nLDAC_Pin GPIO_PIN_9
-#define nLDAC_GPIO_Port GPIOD
 
 /* USER CODE BEGIN Private defines */
 

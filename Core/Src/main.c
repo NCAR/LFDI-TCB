@@ -23,7 +23,6 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "PID.h"
-#include "Controller.h"
 #include "TuningControlBoard.h"
 #include "stringfifo.h"
 #include "UI.h"
@@ -70,18 +69,21 @@ TIM_HandleTypeDef htim9;
 
 //These are all from Damons Code----------------------------
 volatile bool DoSampleTMP117 = false;
-volatile bool DoCalculatePWM = false;
+volatile bool DoCalculateOffsetCorrection = false;
 
 // we keep our own local copy of these
 // we put this here for quick interrupt access
-volatile uint16_t HeaterTick = 0;
-volatile uint16_t HeaterSubtick = 0;
-volatile uint16_t HeaterFrequency = 200;
+volatile uint16_t HeaterTick[NUMOFHEATERCONTROLLERS] = {0};
+volatile uint16_t HeaterSubtick[NUMOFHEATERCONTROLLERS] = {0};
+volatile uint16_t HeaterTickDivider[NUMOFHEATERCONTROLLERS] = {0};
+volatile uint8_t HeaterDwell[NUMOFHEATERCONTROLLERS] = {0};
 
+volatile uint16_t Ticks_OffsetCalculation = 0;
 volatile uint8_t Ticks_TMP117 = 0;
-volatile uint8_t Ticks_CalculatePWM = 0;
-volatile uint8_t ClockTick = 0;
+volatile uint16_t Tick_ms = 0;
 volatile uint16_t ElapsedSeconds = 0;
+
+volatile bool AutoFlood = false;
 //End Damons Code-----------------------------------
 struct sTuningControlBoard TCB;
 
@@ -106,11 +108,12 @@ static void MX_TIM9_Init(void);
 /* USER CODE BEGIN 0 */
 //This Interrupt is called every .25ms Will Toggle the State of the Dac Channels
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
+  uint16_t i;
   // Check which version of the timer triggered this callback and toggle LED
   //This is the Timer for the DAC Compensator. Should happen 4000 times a second
 	if (htim == &htim2 ){
 		//Synchronous Update of the DACs
-		for (int i = 0; i < NUMOFCOMPENSATORS; i++){
+		for (i = 0; i < NUMOFCOMPENSATORS; i++){
 		  if(TCB.Compensator[i].Channel.enabled){
 			if(TCB.Compensator[i].Channel.state_high){
 
@@ -124,7 +127,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 		}//End For
 		//This is a General Purpose Timer for Bipolar Output
 		//Go Through Every Bipolar Output
-		for (int i = 0; i < NUMOFBipolarOutputs; i++){
+		for (i = 0; i < NUMOFBipolarOutputs; i++){
 		  //If the Bipolar Output is enabled
 		  if(TCB.BipolarOutput[i].Enabled && TCB.BipolarOutput[i].Pulses > 0){
 			//If the Timer is 0 then toggle the output
@@ -150,46 +153,58 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 		Syncronous_Update();
   }//End Timer 2
 
+
+
+
+
   //Timer For Heaters  
   if (htim == &htim6)
   {
-    HeaterSubtick += HeaterFrequency;
-    if (HeaterSubtick > 1000){
-        HeaterTick = (HeaterTick + 1) % 200;
-        HeaterSubtick = 0;
-    }
-  }//End Timer 3
+    for (i=0; i<NUMOFHEATERCONTROLLERS; i++)
+    {
+      HeaterSubtick[i] += 1;
 
-  // Check to See if the Heaters should be on or off
-  for (int i = 0; i < NUMOFCONTROLLERS; i++){
-    if ((HeaterTick > TCB.Controller[i].HeaterDwell)&& (HeaterTick < (200 - TCB.Controller[i].HeaterDwell))){
-    	set_HeaterEnable(&TCB.Controller[i].Heater, true);
-    }else{
-	    set_HeaterEnable(&TCB.Controller[i].Heater, false);
-    }//Dictates If heater is on or off
-  }
-  
+      if (HeaterSubtick[i] >= HeaterTickDivider[i])
+      {
+        HeaterTick[i] = (HeaterTick[i] + 1) % 200;
+        HeaterSubtick[i] = 0;
+      }
+    }
+
+    for (i=0; i<NUMOFHEATERCONTROLLERS; i++)
+      if ((HeaterTick[i] > HeaterDwell[i])
+        && (HeaterTick[i] < (200 - HeaterDwell[i])))
+        HeaterController_SetHeater(i, true);
+      else
+        HeaterController_SetHeater(i, false);
+
+
+  }//End Timer 3
 
 
   //Clock Tick for Sampling TMP117 
   if (htim == &htim4)
   {
-    ClockTick = (ClockTick + 1) % 100;
+    Tick_ms = (Tick_ms + 1) % 1000;
     // this should be after the ClockTick increment
-    if (ClockTick == 0)
+    if (Tick_ms == 0)
+    {
       ElapsedSeconds++;
+      Ticks_OffsetCalculation++;
+    }
 
-    if (++Ticks_TMP117 >= 13)
+    if (++Ticks_TMP117 >= 130)
     {
       Ticks_TMP117 = 0;
       DoSampleTMP117 = true;
     }
 
-    if (++Ticks_CalculatePWM >= 100)
+    if (Ticks_OffsetCalculation > 60)
     {
-      Ticks_CalculatePWM = 0;
-      DoCalculatePWM = true;
+      Ticks_OffsetCalculation = 0;
+      DoCalculateOffsetCorrection = true;
     }
+
   }
 }
 
@@ -203,6 +218,7 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
   char buffer[50];
+  int i;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -237,7 +253,7 @@ int main(void)
   MX_TIM9_Init();
   /* USER CODE BEGIN 2 */
   TCB_InitStruct(&TCB, &hi2c1, &hi2c2, &hspi4);
-  for (int i = 0; i < 6; i++){
+  for (i = 0; i < 6; i++){
     TCB.DAC8718.DAC_Channels[i].enabled = true;
     TCB.DAC8718.DAC_Channels[i].DAC_number = i;
     TCB.DAC8718.DAC_Channels[i].lower_bound = 0x7FFF;
@@ -249,22 +265,16 @@ int main(void)
 
  // HAL_TIM_Base_Start_IT(&htim2);
   
-  set_HeaterEnable(&TCB.Controller[0].Heater, true);
-  set_HeaterEnable(&TCB.Controller[1].Heater, true);
-  set_HeaterEnable(&TCB.Controller[2].Heater, true);
-  set_HeaterEnable(&TCB.Controller[0].Heater, false);
-  set_HeaterEnable(&TCB.Controller[1].Heater, false);
-  set_HeaterEnable(&TCB.Controller[2].Heater, false);
+  for(i = 0; i< NUMOFHEATERCONTROLLERS; i++)
+      HeaterController_SetHeater(i, true);
+  for(i = 0; i< NUMOFHEATERCONTROLLERS; i++)
+      HeaterController_SetHeater(i, false);
 
 
-  // if you rearrange the PID.CONFIG struct, you should force rewriting defaults
-  // over the EEPROM on next startup. This will *probably* be caught by checking
-  // the address of the last controller rather than the first.
-
-  for(uint8_t i = 0; i< NUMOFCONTROLLERS; i++){
-    TMP117_Configure(&TCB.Controller[i].Sensor);
+  for(i = 0; i< NUMOFHEATERCONTROLLERS; i++){
+    TMP117_Configure(&TCB.HeaterControllers[i].Sensor);
   }
-  for(uint8_t i = 0; i< NUMOFCOMPENSATORS; i++){
+  for(i = 0; i< NUMOFCOMPENSATORS; i++){
 	  TMP117_Configure(&TCB.Compensator[i].Sensor);
   }
 
@@ -301,8 +311,18 @@ int main(void)
 //		   //HAL_Delay(100);
 //	   }
 
+
+
+    // we keep a global copy of this for the timer interrupt
+    for (i=0; i<NUMOFHEATERCONTROLLERS; i++)
+      HeaterTickDivider[i] = MAX(1, TCB.HeaterControllers[i].PwmPeriod_ms / 20);
+
+
     //Set the heater to the opposite state its currently in
 	  //Just to Test. Here is the
+
+
+
 
 		Compensator_Update(&TCB.Compensator[0]);
 		Compensator_Update(&TCB.Compensator[1]);
@@ -310,8 +330,6 @@ int main(void)
 		Compensator_Update(&TCB.Compensator[3]);
 		Compensator_Update(&TCB.Compensator[4]);
 		Compensator_Update(&TCB.Compensator[5]);
-		// we keep a global copy of this for the timer interrupt
-		HeaterFrequency = TCB.Controller[0].PID.Config.Frequency;
 
 
 		//This is set by an interrupt timer. When this is true the system will go through and take a sample
@@ -331,28 +349,29 @@ int main(void)
 					TMP117_Configure(&TCB.Compensator[i].Sensor);
 				}
 			}//End Compensator For loop
-			//For all of the Controllers
-			for (int i = 0; i < NUMOFCONTROLLERS; i++){
-				if (TCB.Controller[i].Sensor.Errors > 10){
+			//For all of the HeaterControllers
+			for (int i = 0; i < NUMOFHEATERCONTROLLERS; i++){
+				if (TCB.HeaterControllers[i].Sensor.Errors > 10){
 					MX_I2C1_Init();
 					MX_I2C2_Init();
 				}
-				if (TCB.Controller[i].Sensor.Configured){
-					TMP117_GetTemperature(&TCB.Controller[i].Sensor);
+				if (TCB.HeaterControllers[i].Sensor.Configured){
+					TMP117_GetTemperature(&TCB.HeaterControllers[i].Sensor);
 				}else{
-					TMP117_Configure(&TCB.Controller[i].Sensor);
+					TMP117_Configure(&TCB.HeaterControllers[i].Sensor);
 				}
+        HeaterController_Step(&TCB.HeaterControllers[i]);
 			}//End Controller For loop
 		  }//End do Sample
 
 
-		if (DoCalculatePWM)
-		{
-		  DoCalculatePWM = false;
-		  for (int i = 0; i < NUMOFCONTROLLERS; i++){
-			Controller_Step(&TCB.Controller[i]);
-		  }
-		}
+    if (DoCalculateOffsetCorrection)
+    {
+      DoCalculateOffsetCorrection = false;
+      for (i=0; i<4; i++)
+        if (TCB.HeaterControllers[i].HeaterEnabled)
+          PID_PerformOffsetCorrection(&TCB.HeaterControllers[i].PID);
+    }
 
 		if (StringFIFORemove(&USBFIFO, buffer) == 0)
 		{
@@ -716,6 +735,8 @@ static void MX_TIM9_Init(void)
 static void MX_GPIO_Init(void)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
+/* USER CODE BEGIN MX_GPIO_Init_1 */
+/* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOE_CLK_ENABLE();
@@ -818,6 +839,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Alternate = GPIO_AF12_SDIO;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
+/* USER CODE BEGIN MX_GPIO_Init_2 */
+/* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
