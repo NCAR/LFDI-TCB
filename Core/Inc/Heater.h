@@ -14,7 +14,7 @@
 #define HEATER_2_READ_PIN
 #define HEATER_2_READ_PORT
 
-//Heater2 definitions
+//Heater3 definitions
 #define HEATER_3_ENABLE_PORT GPIOE
 #define HEATER_3_ENABLE_PIN GPIO_PIN_9
 #define HEATER_3_READ_PIN

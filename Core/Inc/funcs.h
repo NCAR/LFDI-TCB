@@ -2,7 +2,7 @@
  * funcs.h
  *
  *  Created on: Apr 14, 2021
- *      Author: damonb
+ *
  */
 
 #ifndef INC_FUNCS_H_

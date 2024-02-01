@@ -2,7 +2,7 @@
  * funcs.c
  *
  *  Created on: Apr 14, 2021
- *      Author: damonb
+ *
  */
 
 #include "funcs.h"

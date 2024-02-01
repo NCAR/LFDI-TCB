@@ -2,7 +2,7 @@
  * controller.c
  *
  *  Created on: Nov 11, 2021
- *      Author: damonb
+ * 
  */
 
 #include "HeaterController.h"

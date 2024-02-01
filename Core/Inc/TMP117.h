@@ -2,7 +2,7 @@
  * TMP117.h
  *
  *  Created on: Nov 11, 2021
- *      Author: damonb
+ *  
  */
 
 #ifndef INC_TMP117_H_

@@ -2,7 +2,7 @@
  * controller.h
  *
  *  Created on: Nov 11, 2021
- *      Author: damonb
+ * 
  */
 
 #ifndef INC_HEATERCONTROLLER_H_

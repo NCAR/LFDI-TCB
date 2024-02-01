@@ -2,7 +2,7 @@
  * defs.h
  *
  *  Created on: Apr 14, 2021
- *      Author: damonb
+ *
  */
 
 #ifndef INC_DEFS_H_
@@ -18,13 +18,7 @@
 #define UART_BUFFER_SIZE (50)
 #define UART_SENTENCE_QUEUE_SIZE (4)
 
-#define NUMOFHEATERCONTROLLERS (3)
-#define NUMOFCOMPENSATORS (6)
-#define NUMOFSENSORS (8)
-#define NUMOFSENSORSBUS1 (4)
-#define NUMOFSENSORSBUS2 (4)
-#define NUMOFGPIO (5)
-#define NUMOFBipolarOutputs (2)
+
 
 extern I2C_HandleTypeDef hi2c2;
 

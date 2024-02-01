@@ -2,7 +2,6 @@
  * stringfifo.c
  *
  *  Created on: Nov 15, 2021
- *      Author: damonb
  *      Edited: mjeffers
  *      This file contains the functions for the string FIFO
  *      The FIFO is used to store strings that are to be sent over USB

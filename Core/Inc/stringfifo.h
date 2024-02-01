@@ -2,7 +2,7 @@
  * stringfifo.h
  *
  *  Created on: Nov 15, 2021
- *      Author: damonb
+ * 
  */
 
 #ifndef FIFO_H_

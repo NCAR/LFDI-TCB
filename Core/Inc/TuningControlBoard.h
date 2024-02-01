@@ -7,7 +7,13 @@
 
 #ifndef INC_TUNINGCONTROLBOARD_H_
 #define INC_TUNINGCONTROLBOARD_H_
-
+#define NUMOFHEATERCONTROLLERS (3)
+#define NUMOFCOMPENSATORS (6)
+#define NUMOFSENSORS (8)
+#define NUMOFSENSORSBUS1 (4)
+#define NUMOFSENSORSBUS2 (4)
+#define NUMOFGPIO (5)
+#define NUMOFBipolarOutputs (2)
 
 #include "defs.h"
 #include "TMP117.h"
@@ -26,8 +32,7 @@
 struct sTuningControlBoard
 {
   struct sDAC DAC8718;
-//  struct sHeaterController HeaterControllers[NUMOFHEATERCONTROLLERS]; //Increase this as we get more controllers
-  struct sHeaterController HeaterControllers[4]; //Increase this as we get more controllers
+  struct sHeaterController HeaterControllers[NUMOFHEATERCONTROLLERS]; //Increase this as we get more controllers
   struct sTMP117 Sensor[NUMOFSENSORS];
   struct sCompensator Compensator[NUMOFCOMPENSATORS];
   struct sGPIO GPIO[NUMOFGPIO];
