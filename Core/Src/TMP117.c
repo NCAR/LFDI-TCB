@@ -8,7 +8,11 @@
 
 #include "TMP117.h"
 #include "funcs.h"
-
+//@brief Initialize the TMP117 structure
+//@param s Pointer to the structure to initialize
+//@param interface Pointer to the I2C interface to use
+//@param addpin Value of the address pin
+//@return None
 void TMP117_InitStruct(struct sTMP117* s, I2C_HandleTypeDef* interface, uint8_t addpin)
 {
   /* addpin values define what the address pin is tied to:
@@ -29,6 +33,9 @@ void TMP117_InitStruct(struct sTMP117* s, I2C_HandleTypeDef* interface, uint8_t 
   s->Errors = 0;
 }
 
+//@brief Configure the TMP117
+//@param s Pointer to the structure to configure
+//@return None
 void TMP117_Configure(struct sTMP117* s)
 {
   HAL_StatusTypeDef res;
