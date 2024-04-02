@@ -427,73 +427,47 @@ void SendAutoFlood(struct sHeaterController Controllers[4])
 //=================================================================================================
 //Parse the input from the main Menu
 //Top Level Commands
-// SET_Temp_[Temp]  -- Sets the target temperature for all controllers
-// SET_TEMP_ON -- Turns on the temperature controllers
-// SET_TEMP_OFF -- Turns off the temperature controllers
+// SET_Heater_[Temp]  -- Sets the target temperature for all controllers
+// SET_HEATER_ON -- Turns on the temperature controllers
+// SET_HEATER_OFF -- Turns off the temperature controllers
 // SET_WAVE_[Wavelength] -- Sets the wavelength for all compensators
-// SET_CONT_[Controller]_KP_[KP] -- Sets the controller to be configured
-// SET_CONT_[Controller]_KD_[KD] -- Sets the controller to be configured
-// SET_CONT_[Controller]_KI_[KI] -- Sets the controller to be configured
+// SET_HEATER_[Controller]_KP_[KP] -- Sets the controller to be configured
+// SET_HEATER_[Controller]_KD_[KD] -- Sets the controller to be configured
+// SET_HEATER_[Controller]_KI_[KI] -- Sets the controller to be configured
 // SET_TUNE_ON -- Turns on the tuning for all controllers
 // SET_TUNE_OFF -- Turns off the tuning for all controllers
 // GET_HK -- Gets the housekeeping data
-// GET_TEMP -- Gets the temperature data
-// GET_WAVE -- Gets the wavelength data
-// GET_TUNE -- Gets the tuning data
-// GET_CONT_[Controller] -- Gets the controller data
-
-void SET_TEMP(struct sTuningControlBoard * s, char* input){
-    if (strcmp(input, "set_temp_on") == 0){
-      for (uint8_t i = 0; i < NUMOFHEATERCONTROLLERS; i++)
-      {
-        s->HeaterControllers[i].HeaterEnabled = true;
-      }
-      return;
-    }
-    //SET_TEMP_OFF
-    if (strcmp(input, "set_temp_off") == 0)
-    {
-      for (uint8_t i = 0; i < NUMOFHEATERCONTROLLERS; i++)
-      {
-        s->HeaterControllers[i].HeaterEnabled = false;
-      }
-      return;
-    }
-    //SET_TEMP_[Temp] check if the input is a valid temperature
-    float f = 0;
-    if (sscanf(input, "set_temp_%f", &f) == 1)
-    {
-      for (uint8_t i = 0; i < NUMOFHEATERCONTROLLERS; i++)
-      {
-        s->HeaterControllers[i].PID.Config.Target = f;
-      }
-      return;
-    }
-    USBSendString("Invalid Command\n");   
-}
 
 void SET_WAVE(struct sTuningControlBoard * s, char* input){
     //SET_WAVE_[Wavelength] check if the input is a valid wavelength
     float f = 0;
+    char output[250];
     if (sscanf(input, "set_wave_%f", &f) == 1)
     {
       for (uint8_t i = 0; i < NUMOFCOMPENSATORS; i++)
       {
         s->Compensator[i].wavelength = f;
+        //Float should be rounded to 2 decimal places
+        sprintf(output, "Compensator %u Wavelength set to %f\n", i, f);
+        USBSendString(output);
       }
       return;
     }
-    USBSendString("Invalid Command\n");
+    sprintf(output, 250, "Invalid Command: %s\n", input);
+    USBSendString(output);
 }
 
 void SET_TUNE(struct sTuningControlBoard * s, char* input){
     //SET_TUNE_ON
+    char output[250];
     if (strcmp(input, "set_tune_on") == 0)
     {
       for (uint8_t i = 0; i < NUMOFCOMPENSATORS; i++)
       {
     	s->Compensator[i].compensate = true;
         s->Compensator[i].Enable = true;
+        sprintf(output, "Compensator %u Tuning Enabled\n", i);
+        USBSendString(output);
       }
       return;
     }
@@ -504,23 +478,49 @@ void SET_TUNE(struct sTuningControlBoard * s, char* input){
       {
     	s->Compensator[i].compensate = false;
         s->Compensator[i].Enable = false;
+        sprintf(output, "Compensator %u Tuning Disabled\n", i);
+        USBSendString(output);
       }
       return;
     }
-    USBSendString("Invalid Command\n");
+    sprintf(output, "Invalid Command: %s\n", input);
+    USBSendString(output);
 }
 
 void SET_HEATER(struct  sTuningControlBoard *s, char* input){
-    //SET_HEATER_[Controller]_KP_[KP]
-    uint8_t u = 0;
-    char output[250];
-    float f = 0;
+    
+	uint8_t u = 0;
+  char output[250];
+  float f = 0;
+  //Turn on the Temperature Controllers
+  if (strcmp(input, "set_heater_on") == 0){
+      for (uint8_t i = 0; i < NUMOFHEATERCONTROLLERS; i++)
+      {
+        s->HeaterControllers[i].HeaterEnabled = true;
+        sprintf(output, "Heater %u Enabled\n", i);
+        USBSendString(output);
+      }
+      return;
+    }
+  //SET_TEMP_OFF
+  if (strcmp(input, "set_heater_off") == 0)
+  {
+    for (uint8_t i = 0; i < NUMOFHEATERCONTROLLERS; i++)
+    {
+      s->HeaterControllers[i].HeaterEnabled = false;
+      sprintf(output, "Heater %u Disabled\n", i);
+      USBSendString(output);
+    }
+    return;
+  }
+
+
     if (sscanf(input, "set_heater_%u_kp_%f", &u, &f) == 2)
     {
       if (u < NUMOFHEATERCONTROLLERS)
       {
         s->HeaterControllers[u].PID.Config.Kp = f;
-        sprintf(output, "Controller %u Kp set to %f\n", u, f);
+        sprintf(output, "Heater %u Kp set to %f\n", u, f);
         USBSendString(output);
       }
       return;
@@ -531,7 +531,7 @@ void SET_HEATER(struct  sTuningControlBoard *s, char* input){
       if (u < NUMOFHEATERCONTROLLERS)
       {
         s->HeaterControllers[u].PID.Config.Kd = f;
-        sprintf(output, "Controller %u Kd set to %f\n", u, f);
+        sprintf(output, "Heater %u Kd set to %f\n", u, f);
         USBSendString(output);
       }
       return;
@@ -542,42 +542,104 @@ void SET_HEATER(struct  sTuningControlBoard *s, char* input){
       if (u < NUMOFHEATERCONTROLLERS)
       {
         s->HeaterControllers[u].PID.Config.Ki = f;
-        sprintf(output, "Controller %u Ki set to %f\n", u, f);
+        sprintf(output, "Heater %u Ki set to %f\n", u, f);
         USBSendString(output);
       }
       return;
     }
-    USBSendString("Invalid Command\n");
+    //SET_heater_[Temp] check if the input is a valid temperature
+    if (sscanf(input, "set_heater_%f", &f) == 1)
+    {
+      for (uint8_t i = 0; i < NUMOFHEATERCONTROLLERS; i++)
+      {
+        s->HeaterControllers[i].PID.Config.Target = f;
+        sprintf(output, "Heater %u Target set to %f\n", i, f);
+        USBSendString(output);
+      }
+      return;
+    }
+    sprintf(output, "Invalid Command: %s\n", input);
+    USBSendString(output);
+}
+//Any Command with SET_ Prefix will be parsed here
+void SET_Processing_Tree(struct sTuningControlBoard * s, char* input){
+  char output[250];
+  //SET_WAVE_[Wavelength]
+  if (strncmp(input, "set_wave_", 9) == 0)
+  {
+    SET_WAVE(s, input);
+    return;
+  }
+  //SET_TUNE_[ON/OFF]
+  if (strncmp(input, "set_tune_", 9) == 0)
+  {
+    SET_TUNE(s, input);
+    return;
+  }
+  //SET_HEATER_[Controller]_KP_[KP]
+  if (strncmp(input, "set_heater_", 9) == 0)
+  {
+    SET_HEATER(s, input);
+    return;
+  }
+  sprintf(output, "Invalid Command: %s\n", input);
+  USBSendString(output);
+
+}
+
+//Parse the Get Commands
+void GET_Processing_Tree(struct sTuningControlBoard * s, char* input){
+  //GET_HK
+  if (strcmp(input, "get_hk") == 0)
+  {
+    ShowAllTCB(s);
+    return;
+  }
+  //GET_TEMP
+  if (strcmp(input, "get_temp") == 0)
+  {
+    //ShowTemperature();
+    return;
+  }
+  //GET_WAVE
+  if (strcmp(input, "get_wave") == 0)
+  {
+    //ShowWavelength();
+    return;
+  }
+  //GET_TUNE
+  if (strcmp(input, "get_tune") == 0)
+  {
+    //ShowTuning();
+    return;
+  }
+  //GET_CONT_[Controller]
+  uint8_t u = 0;
+  if (sscanf(input, "get_cont_%u", &u) == 1)
+  {
+    if (u < NUMOFHEATERCONTROLLERS)
+    {
+      ShowAllHeaterController(&s->HeaterControllers[u], true, false);
+    }
+    return;
+  }
+  USBSendString("Invalid Command\n");
 }
 
 void ProcessUserInput_MainMenu(struct sTuningControlBoard * s,char* input){
   //SET Commands
   if (strncmp(input, "set_", 4) == 0)
   {
-    //SET_TEMP_[Temp]
-    if (strncmp(input, "set_temp_", 9) == 0)
-    {
-      SET_TEMP(s, input);
-      return;
-    }
-    //SET_WAVE_[Wavelength]
-    if (strncmp(input, "set_wave_", 9) == 0)
-    {
-      SET_WAVE(s, input);
-      return;
-    }
-    //SET_TUNE_[ON/OFF]
-    if (strncmp(input, "set_tune_", 9) == 0)
-    {
-      SET_TUNE(s, input);
-      return;
-    }
-    //SET_HEATER_[Controller]_KP_[KP]
-    if (strncmp(input, "set_heater_", 9) == 0)
-    {
-      SET_HEATER(s, input);
-      return;
-    }
+    SET_Processing_Tree(s, input);
+    return;
+    
+  }
+
+  //GET Commands
+  if (strncmp(input, "get_", 4) == 0)
+  {
+    GET_Processing_Tree(s, input);
+    return;
   }
 
   //Pull up the Controller Sub menu
@@ -642,6 +704,8 @@ void ProcessUserInput_MainMenu(struct sTuningControlBoard * s,char* input){
   }
   else
   {
+    char output[250];
+    sprintf(output, "Unknown Command: %s\n", input);
     USBSendString("Unknown Command\n");
   }
 }
