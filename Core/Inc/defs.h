@@ -2,7 +2,7 @@
  * defs.h
  *
  *  Created on: Apr 14, 2021
- *      Author: damonb
+ *
  */
 
 #ifndef INC_DEFS_H_
@@ -13,9 +13,12 @@
 #include "stm32f4xx_hal.h"
 #include <string.h>
 #include "TMP117.h"
+#include <stdint.h>
 
 #define UART_BUFFER_SIZE (50)
 #define UART_SENTENCE_QUEUE_SIZE (4)
+
+
 
 extern I2C_HandleTypeDef hi2c2;
 

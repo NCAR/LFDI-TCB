@@ -2,7 +2,7 @@
  * UI.c
  *
  *  Created on: Nov 15, 2021
- *      Author: damonb
+ * 
  */
 
 #include "UI.h"
@@ -18,7 +18,7 @@
 #define GPIO_MENU 3
 #define BIPOLAROUTPUT_MENU 4
 #define MAIN_MENU 0
-uint8_t UI_Controller = 9;
+uint8_t SelectedHeaterController = 0;
 uint8_t UI_Compensator = 9;
 uint8_t UI_GPIO = 9;
 uint8_t UI_BipolarOutput = 9;
@@ -47,7 +47,7 @@ void ProcessUserInput(struct sTuningControlBoard* TCB, char* buffer){
       break;
     default:
       SUB_MENU = MAIN_MENU;
-      USBSendString("\nAn Error Occured\n");
+      USBSendString("\nAn Error Occurred\n");
       break;
   }
 
@@ -81,43 +81,60 @@ void ShowBipolarOutputConfig(struct sBipolarOutput* BipolarOutput, uint8_t index
 
 //Show the configuration of the Mechanisms
 //=================================================================================================
-//Show the Configuration of a Controller
-void ShowControllerConfig(struct sController* Controller, uint8_t index){
+//Show the Configuration of a Controllers
+void ShowHeaterControllerConfig(struct sHeaterController* Controller)
+{
   char s1[12];
-  char buffer[250];
-  FormatTemperature(s1, Controller->PID.Config.TargetP);
-  snprintf(buffer, 200, "Cont%u: kp=%6.2f  kd=%6.2f  ki=%6.2f  li=%6.2f  target=%8s  history= %3u  frequency= %04u  address=", index+1,
-      Controller->PID.Config.Kp, Controller->PID.Config.Kd, Controller->PID.Config.Ki, Controller->PID.Config.Li, s1, Controller->PID.Config.History, Controller->PID.Config.Frequency);
-  USBSendString(buffer);
+  static char buf[250] = {0};
+
+  snprintf(buf, sizeof(buf), "C%u: kp=%5.2f kd=%5.2f ki=%5.2f il=%4.2f",
+           Controller->HeaterNumber, Controller->PID.Config.Kp, Controller->PID.Config.Kd,
+       Controller->PID.Config.Ki, Controller->PID.Config.Il);
+
+  FormatTemperature(s1, Controller->PID.Config.Target);
+  snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
+           " target=%8s PwmPeriod=%5.3fs SlewLimit=%4.1f",
+           s1, Controller->PwmPeriod_ms / 1000.0f, Controller->PID.Config.SlewLimit_degpermin);
+
+  switch (Controller->PID.Config.OffsetCorrectionEnabled)
+  {
+    case true:
+      snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), " offsetcor=enabled");
+      break;
+    case false:
+      snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), " offsetcor=disabled");
+      break;
+  }
   switch (Controller->Sensor.Address & 0x03)
   {
     case 0:
-      USBSendString("00");
+      snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), " address=00");
       break;
     case 1:
-      USBSendString("01");
+      snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), " address=01");
       break;
     case 2:
-      USBSendString("10");
+      snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), " address=10");
       break;
     case 3:
-      USBSendString("11");
-      break;
-    default:
+      snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), " address=11");
       break;
   }
-  if (Controller->PID.Config.Enabled)
-    USBSendString("  ENABLED\n");
+  if (Controller->HeaterEnabled)
+    snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), " heater=enabled\r");
   else
-    USBSendString("  DISABLED\n");
+    snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), " heater=disabled\r");
+
+  USBSendString(buf);
 }
 
-//Show the Configuration of a Controller
+
+//Show the Configuration of a Controllers
 void ShowCompensatorConfig(struct sCompensator* Compensator, uint8_t index){
   char s1[12];
   char s2[12];
   char buffer[300];
-  FormatTemperature(s1, Compensator->Sensor.LastTemperature);
+  FormatTemperature(s1, Compensator->Sensor.Temperature[0]);
   FormatTemperature(s2, Compensator->Sensor.Average);
   snprintf(buffer, 200, "Comp%u: Peak2Peak=%6.2f  Wave=%6.2f  Temp=%8s Avg=%8s address=",index+1, Compensator->voltage,
        Compensator->wavelength, s1, s2);
@@ -148,56 +165,7 @@ void ShowCompensatorConfig(struct sCompensator* Compensator, uint8_t index){
 
 
 
-//Show an individual sensor
-void ShowSensor(struct sController* Controller)
-{
-  char buffer[250];
-  char s1[12], s2[12], s3[12];
-  FormatTemperature(s1, Controller->Sensor.Average);
-  FormatTemperature(s2, Controller->Sensor.LastTemperature);
-  FormatTemperature(s3, Controller->PID.Config.TargetP);
 
-  snprintf(buffer, 200, "C%u: temp=%8s  avg=%8s  target=%8s  sensor: ", Controller->Heater.HeaterNum, s2, s1, s3);
-  USBSendString(buffer);
-
-  switch (Controller->Sensor.State)
-  {
-    case TMP117_STATE_UNKNOWN:
-      USBSendString("Unknown\n");
-      break;
-    case TMP117_STATE_INITFAILED:
-      USBSendString("Config failed\n");
-      break;
-    case TMP117_STATE_REQUESTNOACK:
-      USBSendString("Req failed\n");
-      break;
-    case TMP117_STATE_RECEIVEFAIL:
-      USBSendString("No response\n");
-      break;
-    case TMP117_STATE_VALIDTEMP:
-      USBSendString("OK\n");
-      break;
-    default:
-      break;
-  }
-}
-
-
-//Show the Effort of a Controller
-void ShowEffort(struct sController* Controller)
-{
-  char buffer[250];
-  char s1[12], s2[12], s3[12];
-  FormatTemperature(s1, Controller->Sensor.Average);
-  FormatTemperature(s2, Controller->Sensor.LastTemperature);
-  FormatTemperature(s3, Controller->PID.Config.TargetP);
-
-  snprintf(buffer, 200, "C%u: Effort p=% 6.1f  d=% 6.1f  i=% 6.1f  total=% 6.1f%%\n", Controller->Heater.HeaterNum,
-      100 * Controller->PID.Ep, 100 * Controller->PID.Ed,
-      100 * Controller->PID.Ei, 100 * Controller->PID.Effort);
-  USBSendString(buffer);
-
-}
 
 //Show All the information for the Bipolar Output
 void ShowAllBipolarOutput(struct sBipolarOutput* BipolarOutput, bool readable, uint8_t index){
@@ -229,19 +197,16 @@ void ShowAllGPIO(struct sGPIO* GPIO, bool readable){
 
 
 
-//Show all the information for one of the mechanisims
+//Show all the information for one of the mechanisms
 //=============================================================================
 //Show the Status of a Controller
 //@brief Show the Status of a Controller
 //@param Controller The Controller to show
 //@param readable If true, show the status in human readable form
-void ShowAllController(struct sController* Controller, bool readable)
-{
 
-    char target[12];
-    FormatTemperature(target, Controller->PID.Config.TargetP);
+void ShowAllHeaterController(struct sHeaterController* Controller, bool readable, bool autoflood)
+{
     char address[3];
-    //Get the Address
     switch (Controller->Sensor.Address & 0x03)
     {
       case 0: strcpy(address, "00"); break;
@@ -250,20 +215,23 @@ void ShowAllController(struct sController* Controller, bool readable)
       case 3: strcpy(address, "11"); break;
       default: break;
     }
-    //Get whether it is enabled
-    char enabled[10];
-    if (Controller->PID.Config.Enabled)
-      strcpy(enabled, "ENABLED ");
+    char heat_on[4];
+    if (Controller->HeaterEnabled)
+      strcpy(heat_on, "on ");
     else
-      strcpy(enabled, "DISABLED");
-    //Get Temperatures
-    char average[12], last[12], targetp[12];
+      strcpy(heat_on, "off");
+    char oc_on[7];
+    if (Controller->PID.Config.OffsetCorrectionEnabled)
+      snprintf(oc_on, 7, "%5.3f", Controller->PID.OffsetCorrection);
+    else
+      strcpy(oc_on, "off  ");
+    char average[12], last[12], target[12], sltarget[12];
     FormatTemperature(average, Controller->Sensor.Average);
-    FormatTemperature(last, Controller->Sensor.LastTemperature);
-    FormatTemperature(targetp, Controller->PID.Config.TargetP);
+    FormatTemperature(last, Controller->Sensor.Temperature[0]);
+    FormatTemperature(target, Controller->PID.Config.Target);
+    FormatTemperature(sltarget, Controller->PID.SlewLimitedTarget);
 
     char sensor[15];
-    //Get the Sensor State
     switch (Controller->Sensor.State)
     {
       case TMP117_STATE_UNKNOWN:      strcpy(sensor, "Unknown");       break;
@@ -274,30 +242,45 @@ void ShowAllController(struct sController* Controller, bool readable)
       default: break;
     }
 
-    static char buffer[250];
+    static char buf[500];
 
     if (readable)
     {
-      snprintf(buffer, 200, "C%u: kp=%5.2f   ep=% 7.1f    temp=%8s  freq: %04u  %s\n", Controller->Heater.HeaterNum, Controller->PID.Config.Kp, 100 * Controller->PID.Ep, last, Controller->PID.Config.Frequency, enabled);
-      USBSendString(buffer);
-      snprintf(buffer, 200,  "  : kd=%5.2f   ed=% 7.1f     avg=%8s  i2c: %2s\n", Controller->PID.Config.Kd, 100 * Controller->PID.Ed, average, address);
-      USBSendString(buffer);
-      snprintf(buffer, 200,  "  : ki=%5.2f   ei=% 7.1f  target=%8s  history=%3u\n", Controller->PID.Config.Ki, 100 * Controller->PID.Ei, target, Controller->PID.Config.History);
-      USBSendString(buffer);
-      snprintf(buffer, 200,  "  : li=%5.2f  eff=% 7.1f  sensor: %s\n\n", Controller->PID.Config.Li, 100 * Controller->PID.Effort, sensor);
-      USBSendString(buffer);
+      snprintf(buf, sizeof(buf),
+               "\rC%u: address: %2s   offsetcor:%7s   heater:%3s   sensor:%s\r",
+               Controller->HeaterNumber, address, oc_on, heat_on, sensor);
+      snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
+               "C%u: kp=%5.2f   ep=% 6.1f    temp=%8s  PwmPeriod=%5.3fs\r",
+               Controller->HeaterNumber, Controller->PID.Config.Kp, 100 * Controller->PID.Ep, last, Controller->PwmPeriod_ms/1000.0f);
+      snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
+               "C%u: kd=%5.2f   ed=% 6.1f     avg=%8s    \r",
+               Controller->HeaterNumber, Controller->PID.Config.Kd, 100 * Controller->PID.Ed, average);
+      snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
+               "C%u: ki=%5.2f   ei=% 6.1f slewtar=%8s    SlewLim=%4.2f d/m\r",
+               Controller->HeaterNumber, Controller->PID.Config.Ki, 100 * Controller->PID.Ei, sltarget, Controller->PID.Config.SlewLimit_degpermin);
+      snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
+               "C%u: il=%5.2f  eff=% 6.1f  target=%8s\r",
+               Controller->HeaterNumber, Controller->PID.Config.Il, 100 * Controller->PID.Effort, target);
+      USBSendString(buf);
     }
     else
     {
-      //if (Controller->Heater == 1){
-      snprintf(buffer, 200, "Cont%u\t%5.2f\t%5.2f\t%5.2f\t%7.1f\t%7.1f\t%7.1f\t%7.1f\t%8s\t%8s\t%8s\t%2s\t%03u\t%04u\t%s\t%s\n",
-          Controller->Heater.HeaterNum, Controller->PID.Config.Kp, Controller->PID.Config.Kd, Controller->PID.Config.Ki,
-          100 * Controller->PID.Ep, 100 * Controller->PID.Ed, 100 * Controller->PID.Ei, 100 * Controller->PID.Effort,
-          last, average, target, address, Controller->PID.Config.History, Controller->PID.Config.Frequency, enabled, sensor);
-      USBSendString(buffer);
-      //}
-
-//      HAL_Delay(1); // don't butcher our buffer before we're done with it
+      if ((Controller->HeaterNumber == 1) && (autoflood == false))
+        ShowRawHeaderHeaterController();
+      if (autoflood)
+        snprintf(buf, sizeof(buf), "!C");
+      else
+        snprintf(buf, sizeof(buf), "C");
+      snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
+               "%u\t%5.2f\t%5.2f\t%5.2f\t%4.2f\t",
+               Controller->HeaterNumber, Controller->PID.Config.Kp, Controller->PID.Config.Kd, Controller->PID.Config.Ki, Controller->PID.Config.Il);
+      snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
+               "%7.1f\t%7.1f\t%7.1f\t%7.1f\t",
+               100 * Controller->PID.Ep, 100 * Controller->PID.Ed, 100 * Controller->PID.Ei, 100 * Controller->PID.Effort);
+      snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
+               "%7.3f\t%8s\t%8s\t%8s\t%8s\t%2s\t%5.3f\t%s\t%s\t%s\r",
+               0.0, last, average, sltarget, target, address, Controller->PwmPeriod_ms/1000.0f, oc_on, heat_on, sensor);
+      USBSendString(buf);
     }
 }
 
@@ -318,7 +301,7 @@ void ShowAllCompensator(struct sCompensator* Compensator, bool readable, uint8_t
 
     char average[12], last[12];
     FormatTemperature(average, Compensator->Sensor.Average);
-    FormatTemperature(last, Compensator->Sensor.LastTemperature);
+    FormatTemperature(last, Compensator->Sensor.Temperature[0]);
 
     char sensor[15];
     switch (Compensator->Sensor.State)
@@ -354,16 +337,16 @@ void ShowAllCompensator(struct sCompensator* Compensator, bool readable, uint8_t
     static char buffer[250];
 
     
-    snprintf(buffer, 200, "Comp%u\t%5.2f\t%5.2f\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+    snprintf(buffer, sizeof(buffer), "Comp%u\t%5.2f\t%5.2f\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
         index+1, Compensator->voltage, Compensator->wavelength, last, average, compensating, useaverage, address, enabled, sensor);
     USBSendString(buffer);
 }
 
 //Show Everything for the TCB
 void ShowAllTCB(struct sTuningControlBoard* sTCB){
-  ShowRawHeaderController();
-  for(uint8_t i = 0; i < NUMOFCONTROLLERS; i++){
-    ShowAllController(&sTCB->Controller[i], false);
+  ShowRawHeaderHeaterController();
+  for(uint8_t i = 0; i < NUMOFHEATERCONTROLLERS; i++){
+    ShowAllHeaterController(&sTCB->HeaterControllers[i], false, AutoFlood);
   }
   ShowRawHeaderCompensator();
   for(uint8_t i = 0; i < NUMOFCOMPENSATORS; i++){
@@ -378,60 +361,286 @@ void ShowAllTCB(struct sTuningControlBoard* sTCB){
     ShowAllBipolarOutput(&sTCB->BipolarOutput[i], false, i);
   }
 }
-//Show the Hearders for the Raw Data
+//Show the Headers for the Raw Data
 //=================================================================================================
 //Prints the header for the raw data
-void ShowRawHeaderController(void)
+void ShowRawHeaderHeaterController(void)
 {
-  static char buffer[250];
-  snprintf(buffer, 200,  "Cont\tkp\tkd\tki\tep\ted\tei\teffort\ttemp\taverage\ttarget\ti2c\thist\tfreq\tenabled\tsensor\n");
-  USBSendString(buffer);
-//  HAL_Delay(1); // don't butcher our buffer before we're done with it
+  static char buf[200];
+  snprintf(buf, sizeof(buf), "\tkp\tkd\tki\tli\tep\ted\tei\teffort\tcurr\tinstant_temp\taverage_temp\tslew_target\tfinal_target\ti2c\tperiod\toffset\theater\tsensor\r");
+  USBSendString(buf);
 }
 
 //Show the Raw Header for the Compensator
 void ShowRawHeaderCompensator(void)
 {
-  static char buffer[250];
-  snprintf(buffer, 200,  "Comp\tPeak2Peak\tWave\tTemp\tAvg\tAuto\tUseAverage\ti2c\tenabled\tsensor\n");
-  USBSendString(buffer);
-//  HAL_Delay(1); // don't butcher our buffer before we're done with it
+  static char buf[100];
+  snprintf(buf, sizeof(buf), "Comp\tPeak2Peak\tWave\tTemp\tAvg\tAuto\tUseAverage\ti2c\tenabled\tsensor\n");
+  USBSendString(buf);
 }
 
 
 //Show the Raw GPIO header
 void ShowRawHeaderGPIO(void)
 {
-  static char buffer[250];
-  snprintf(buffer, 200,  "GPIO\tEnabled\n");
-  USBSendString(buffer);
+  static char buf[100];
+  snprintf(buf, sizeof(buf),  "GPIO\tEnabled\n");
+  USBSendString(buf);
 }
 
 //Show the Raw Header for the Bipolar Output
 void ShowRawHeaderBipolarOutput(void)
 {
-  static char buffer[250];
-  snprintf(buffer, 200,  "Bipolar\tfrequency\tpulses\tPeak2Peak\tEnabled\n");
-  USBSendString(buffer);
+  static char buf[100];
+  snprintf(buf, sizeof(buf),  "Bipolar\tfrequency\tpulses\tPeak2Peak\tEnabled\n");
+  USBSendString(buf);
 }
 
-//Formath the Temperature for the Display
+//Format the Temperature for the Display
 //=================================================================================================
 //Formats the Float to fit into the Temperature Display
 void FormatTemperature(char* buffer, double temp)
 {
   if (temp > -100)
-    snprintf(buffer, 10, "% 7.3fC", temp);
+  snprintf(buffer, 12, "% 7.3fC", temp);
   else
-    snprintf(buffer, 10, "  error ");
+  snprintf(buffer, 12, "  error ");
 }
 
+void SendAutoFlood(struct sHeaterController Controllers[4])
+{
+  char buf[50] = {0};
+  snprintf(buf, sizeof(buf), "!T%.4f\t%.4f\t%.4f\t%.4f\r",
+     Controllers[0].Sensor.Temperature[0],
+     Controllers[1].Sensor.Temperature[0],
+     Controllers[2].Sensor.Temperature[0],
+     Controllers[3].Sensor.Temperature[0]);
+  USBSendString(buf);
+  ShowAllHeaterController(&Controllers[0], false, true);
+  ShowAllHeaterController(&Controllers[1], false, true);
+  ShowAllHeaterController(&Controllers[2], false, true);
+  ShowAllHeaterController(&Controllers[3], false, true);
+}
 
 
 //Case Switched to Process the User Input
 //=================================================================================================
 //Parse the input from the main Menu
+//Top Level Commands
+// SET_Heater_[Temp]  -- Sets the target temperature for all controllers
+// SET_HEATER_ON -- Turns on the temperature controllers
+// SET_HEATER_OFF -- Turns off the temperature controllers
+// SET_WAVE_[Wavelength] -- Sets the wavelength for all compensators
+// SET_HEATER_[Controller]_KP_[KP] -- Sets the controller to be configured
+// SET_HEATER_[Controller]_KD_[KD] -- Sets the controller to be configured
+// SET_HEATER_[Controller]_KI_[KI] -- Sets the controller to be configured
+// SET_TUNE_ON -- Turns on the tuning for all controllers
+// SET_TUNE_OFF -- Turns off the tuning for all controllers
+// GET_HK -- Gets the housekeeping data
+
+void SET_WAVE(struct sTuningControlBoard * s, char* input){
+    //SET_WAVE_[Wavelength] check if the input is a valid wavelength
+    float f = 0;
+    char output[250];
+    if (sscanf(input, "set_wave_%f", &f) == 1)
+    {
+      for (uint8_t i = 0; i < NUMOFCOMPENSATORS; i++)
+      {
+        s->Compensator[i].wavelength = f;
+        //Float should be rounded to 2 decimal places
+        sprintf(output, "Compensator %u Wavelength set to %f\n", i, f);
+        USBSendString(output);
+      }
+      return;
+    }
+    sprintf(output, 250, "Invalid Command: %s\n", input);
+    USBSendString(output);
+}
+
+void SET_TUNE(struct sTuningControlBoard * s, char* input){
+    //SET_TUNE_ON
+    char output[250];
+    if (strcmp(input, "set_tune_on") == 0)
+    {
+      for (uint8_t i = 0; i < NUMOFCOMPENSATORS; i++)
+      {
+    	s->Compensator[i].compensate = true;
+        s->Compensator[i].Enable = true;
+        sprintf(output, "Compensator %u Tuning Enabled\n", i);
+        USBSendString(output);
+      }
+      return;
+    }
+    //SET_TUNE_OFF
+    if (strcmp(input, "set_tune_off") == 0)
+    {
+      for (uint8_t i = 0; i < NUMOFCOMPENSATORS; i++)
+      {
+    	s->Compensator[i].compensate = false;
+        s->Compensator[i].Enable = false;
+        sprintf(output, "Compensator %u Tuning Disabled\n", i);
+        USBSendString(output);
+      }
+      return;
+    }
+    sprintf(output, "Invalid Command: %s\n", input);
+    USBSendString(output);
+}
+
+void SET_HEATER(struct  sTuningControlBoard *s, char* input){
+    
+	uint8_t u = 0;
+  char output[250];
+  float f = 0;
+  //Turn on the Temperature Controllers
+  if (strcmp(input, "set_heater_on") == 0){
+      for (uint8_t i = 0; i < NUMOFHEATERCONTROLLERS; i++)
+      {
+        s->HeaterControllers[i].HeaterEnabled = true;
+        sprintf(output, "Heater %u Enabled\n", i);
+        USBSendString(output);
+      }
+      return;
+    }
+  //SET_TEMP_OFF
+  if (strcmp(input, "set_heater_off") == 0)
+  {
+    for (uint8_t i = 0; i < NUMOFHEATERCONTROLLERS; i++)
+    {
+      s->HeaterControllers[i].HeaterEnabled = false;
+      sprintf(output, "Heater %u Disabled\n", i);
+      USBSendString(output);
+    }
+    return;
+  }
+
+
+    if (sscanf(input, "set_heater_%u_kp_%f", &u, &f) == 2)
+    {
+      if (u < NUMOFHEATERCONTROLLERS)
+      {
+        s->HeaterControllers[u].PID.Config.Kp = f;
+        sprintf(output, "Heater %u Kp set to %f\n", u, f);
+        USBSendString(output);
+      }
+      return;
+    }
+    //SET_HEATER_[Controller]_KD_[KD]
+    if (sscanf(input, "set_heater_%u_kd_%f", &u, &f) == 2)
+    {
+      if (u < NUMOFHEATERCONTROLLERS)
+      {
+        s->HeaterControllers[u].PID.Config.Kd = f;
+        sprintf(output, "Heater %u Kd set to %f\n", u, f);
+        USBSendString(output);
+      }
+      return;
+    }
+    //SET_HEATER_[Controller]_KI_[KI]
+    if (sscanf(input, "set_heater_%u_ki_%f", &u, &f) == 2)
+    {
+      if (u < NUMOFHEATERCONTROLLERS)
+      {
+        s->HeaterControllers[u].PID.Config.Ki = f;
+        sprintf(output, "Heater %u Ki set to %f\n", u, f);
+        USBSendString(output);
+      }
+      return;
+    }
+    //SET_heater_[Temp] check if the input is a valid temperature
+    if (sscanf(input, "set_heater_%f", &f) == 1)
+    {
+      for (uint8_t i = 0; i < NUMOFHEATERCONTROLLERS; i++)
+      {
+        s->HeaterControllers[i].PID.Config.Target = f;
+        sprintf(output, "Heater %u Target set to %f\n", i, f);
+        USBSendString(output);
+      }
+      return;
+    }
+    sprintf(output, "Invalid Command: %s\n", input);
+    USBSendString(output);
+}
+//Any Command with SET_ Prefix will be parsed here
+void SET_Processing_Tree(struct sTuningControlBoard * s, char* input){
+  char output[250];
+  //SET_WAVE_[Wavelength]
+  if (strncmp(input, "set_wave_", 9) == 0)
+  {
+    SET_WAVE(s, input);
+    return;
+  }
+  //SET_TUNE_[ON/OFF]
+  if (strncmp(input, "set_tune_", 9) == 0)
+  {
+    SET_TUNE(s, input);
+    return;
+  }
+  //SET_HEATER_[Controller]_KP_[KP]
+  if (strncmp(input, "set_heater_", 9) == 0)
+  {
+    SET_HEATER(s, input);
+    return;
+  }
+  sprintf(output, "Invalid Command: %s\n", input);
+  USBSendString(output);
+
+}
+
+//Parse the Get Commands
+void GET_Processing_Tree(struct sTuningControlBoard * s, char* input){
+  //GET_HK
+  if (strcmp(input, "get_hk") == 0)
+  {
+    ShowAllTCB(s);
+    return;
+  }
+  //GET_TEMP
+  if (strcmp(input, "get_temp") == 0)
+  {
+    //ShowTemperature();
+    return;
+  }
+  //GET_WAVE
+  if (strcmp(input, "get_wave") == 0)
+  {
+    //ShowWavelength();
+    return;
+  }
+  //GET_TUNE
+  if (strcmp(input, "get_tune") == 0)
+  {
+    //ShowTuning();
+    return;
+  }
+  //GET_CONT_[Controller]
+  uint8_t u = 0;
+  if (sscanf(input, "get_cont_%u", &u) == 1)
+  {
+    if (u < NUMOFHEATERCONTROLLERS)
+    {
+      ShowAllHeaterController(&s->HeaterControllers[u], true, false);
+    }
+    return;
+  }
+  USBSendString("Invalid Command\n");
+}
+
 void ProcessUserInput_MainMenu(struct sTuningControlBoard * s,char* input){
+  //SET Commands
+  if (strncmp(input, "set_", 4) == 0)
+  {
+    SET_Processing_Tree(s, input);
+    return;
+    
+  }
+
+  //GET Commands
+  if (strncmp(input, "get_", 4) == 0)
+  {
+    GET_Processing_Tree(s, input);
+    return;
+  }
 
   //Pull up the Controller Sub menu
   if (strcmp(input, "cont") == 0)
@@ -453,17 +662,17 @@ void ProcessUserInput_MainMenu(struct sTuningControlBoard * s,char* input){
 	  return;
   }
 
-  //TODO This Should print all of the interesting Values fromthe TCB
-  else if (strcmp(input, "update") == 0 || strcmp(input, "u") == 0)
+  //TODO This Should print all of the interesting Values from the TCB
+  else if ((strcmp(input, "update") == 0) || (strcmp(input, "u") == 0))
   {
     //ShowUpdate();
   }
-  else if (strcmp(input, "raw") == 0 || strcmp(input, "r") == 0)
+  else if ((strcmp(input, "raw") == 0) || (strcmp(input, "r") == 0))
   {
     ShowAllTCB(s);
   }
   //This Should reset the TCB  to the default values
-  else if (strcmp(input, "wipe") == 0 || strcmp(input, "w") == 0)
+  else if ((strcmp(input, "wipe") == 0) || (strcmp(input, "w") == 0))
   {
     //WipeConfig();
     USBSendString("Wiped Configuration\n");
@@ -495,9 +704,10 @@ void ProcessUserInput_MainMenu(struct sTuningControlBoard * s,char* input){
   }
   else
   {
+    char output[250];
+    sprintf(output, "Unknown Command: %s\n", input);
     USBSendString("Unknown Command\n");
   }
-
 }
 
 //Parse the input from the Compensator Context Menu
@@ -579,7 +789,7 @@ void ProcessUserInput_CompensatorMenu(struct sTuningControlBoard * s,char* input
     return;
   }
 
-  //Turn on the Temperature Controller
+  //Turn on the Temperature Controllers
   if (strcmp((char*) input, "e") == 0)
   {
 
@@ -589,7 +799,7 @@ void ProcessUserInput_CompensatorMenu(struct sTuningControlBoard * s,char* input
       return;
    }
 
-  //Turn off the Temperature Controller
+  //Turn off the Temperature Controllers
   if (strcmp((char*) input, "d") == 0)
   {
     //Check to see if the controller is a Compensator
@@ -648,7 +858,7 @@ void ProcessUserInput_CompensatorMenu(struct sTuningControlBoard * s,char* input
       case 'w':
         //Set the wavelength
         //Check that the wavelength is greater than 0 and less than 500
-        if (f > 0 && f < 500){
+        if (f > 656 && f < 657){
           s->Compensator[UI_Compensator].wavelength = f;
           sprintf(output, "Compensator %d Wavelength Set to %f.\n", UI_Compensator+1, f);
           USBSendString(output);
@@ -659,6 +869,31 @@ void ProcessUserInput_CompensatorMenu(struct sTuningControlBoard * s,char* input
           break;
           return;
         }
+        //Stage Setting Selected
+      case 's':
+        //round the float to one decimal place
+        f = roundf(f * 10) / 10;
+        int i = (int)(f*1000);
+              //Set the wavelength
+              //Check that stage is defined
+        if (i == (int)(STAGE1*1000)){
+        	Compensator_SetStage(&s->Compensator[UI_Compensator], STAGE1);
+		}else if(i == (int)(STAGE2*1000)){
+			Compensator_SetStage(&s->Compensator[UI_Compensator], STAGE2);
+		}else if(i == (int)(STAGE3*1000)){
+			Compensator_SetStage(&s->Compensator[UI_Compensator], STAGE3);
+		}else if(i == (int)(STAGE4*1000)){
+			Compensator_SetStage(&s->Compensator[UI_Compensator], STAGE4);
+		}else if(i == (int)(STAGE5*1000)){
+			Compensator_SetStage(&s->Compensator[UI_Compensator], STAGE5);
+		}else if(i == (int)(STAGE6*1000)){
+			Compensator_SetStage(&s->Compensator[UI_Compensator], STAGE6);
+		}else{
+			USBSendString("Invalid Stage.\n");
+			break;
+		}
+		sprintf(output, "Compensator %d Stage Set to %f.\n", UI_Compensator+1, f);
+		break;
 
       default:
         USBSendString("Unknown Command.\n");
@@ -669,218 +904,233 @@ void ProcessUserInput_CompensatorMenu(struct sTuningControlBoard * s,char* input
 }
 
 //Parse the input from the Controller Context Menu
-void ProcessUserInput_ControllerMenu(struct sTuningControlBoard * s,char* buffer)
+void ProcessUserInput_HeaterControllerMenu(struct sTuningControlBoard * tcb, char* input)
 {
-  uint8_t u = 0;
+  uint16_t i = 0;
+  uint16_t u = 0;
   char output[250];
-  char c;
+  char c1, c2;
   float f = 0;
 
-  //Send  to main menu
-  if (strcmp(buffer, "m") == 0)
+  if ((strcmp(input, "u") == 0) || (strcmp(input, "/") == 0))
   {
-    SUB_MENU = MAIN_MENU;
-    UI_Controller = 9;
-
+    for (i=0; i<4; i++)
+      ShowAllHeaterController(&tcb->HeaterControllers[i], true, false);
     return;
   }
-   if ((strcmp((char*) buffer, "?") == 0) || (strcmp((char*) buffer, "help") == 0))
+
+  if (strcmp(input, "*") == 0)
   {
-    ShowControllerHelp();
-    if (UI_Controller == 9)
-      USBSendString("No controller selected.\n");
+    if (AutoFlood)
+      AutoFlood = false;
     else
+      AutoFlood = true;
+    return;
+  }
+
+  if (strcmp(input, "r") == 0)
+  {
+    ShowRawHeaderHeaterController();
+    for (i=0; i<4; i++)
+      ShowAllHeaterController(&tcb->HeaterControllers[i], false, false);
+    return;
+  }
+
+  if (strcmp(input, "bounce") == 0)
+  {
+    NVIC_SystemReset();
+  }
+
+
+  if ((strcmp(input, "1") == 0) || (strcmp(input, "c1") == 0))
+  {
+    SelectedHeaterController = 0;
+    ShowHeaterControllerConfig(&tcb->HeaterControllers[SelectedHeaterController]);
+    return;
+  }
+
+  if ((strcmp(input, "2") == 0) || (strcmp(input, "c2") == 0))
+  {
+    SelectedHeaterController = 1;
+    ShowHeaterControllerConfig(&tcb->HeaterControllers[SelectedHeaterController]);
+    return;
+  }
+
+  if ((strcmp(input, "3") == 0) || (strcmp(input, "c3") == 0))
+  {
+    SelectedHeaterController = 2;
+    ShowHeaterControllerConfig(&tcb->HeaterControllers[SelectedHeaterController]);
+    return;
+  }
+
+  if ((strcmp(input, "4") == 0) || (strcmp(input, "c4") == 0))
+  {
+    SelectedHeaterController = 3;
+    ShowHeaterControllerConfig(&tcb->HeaterControllers[SelectedHeaterController]);
+    return;
+  }
+  if (strcmp(input, "ec") == 0)
+  {
+	snprintf(output, sizeof(output), "Controller %i heater output enabled.\r", SelectedHeaterController + 1);
+    USBSendString(output);
+    tcb->HeaterControllers[SelectedHeaterController].HeaterEnabled = true;
+    tcb->HeaterControllers[SelectedHeaterController].PID.NeedRefresh = true;
+    return;
+  }
+
+  if (strcmp(input, "dc") == 0)
+  {
+	snprintf(output, sizeof(output), "Controller %i heater output disabled.\r", SelectedHeaterController + 1);
+    USBSendString(output);
+    tcb->HeaterControllers[SelectedHeaterController].HeaterEnabled = false;
+    return;
+  }
+
+  if (strcmp(input, "eo") == 0)
+  {
+    USBSendString("Offset correction enabled.\r");
+    tcb->HeaterControllers[SelectedHeaterController].PID.Config.OffsetCorrectionEnabled = true;
+    return;
+  }
+
+  if (strcmp(input, "do") == 0)
+  {
+    USBSendString("Offset correction disabled.\r");
+    tcb->HeaterControllers[SelectedHeaterController].PID.Config.OffsetCorrectionEnabled = false;
+    tcb->HeaterControllers[SelectedHeaterController].PID.OffsetCorrection = 0.0f;
+    return;
+  }
+
+  if (sscanf(input, "%c%c%f", &c1, &c2, &f) == 3)
+  {
+    u = (uint16_t) f;
+    if ((c1 == 'a') && (c2 == 'd'))
     {
-      /*
-      ShowSensor(&TCB.Controller);
-      ShowControllerConfig(&TCB.Controller);
-      ShowEffort(&TCB.Controller);
-      USBSendString("\n");
-      */
-      ShowAllController(&s->Controller[UI_Controller], true);
+      switch (u)
+      {
+        case 0:
+          USBSendString("Address set to 0b 10 01 00 0x.\r");
+          tcb->HeaterControllers[SelectedHeaterController].Sensor.Address = 0b1001000;
+          tcb->HeaterControllers[SelectedHeaterController].PID.NeedRefresh = true;
+          return;
+          break;
+        case 10:
+          USBSendString("Address set to 0b 10 01 01 0x.\r");
+          tcb->HeaterControllers[SelectedHeaterController].Sensor.Address = 0b1001010;
+          tcb->HeaterControllers[SelectedHeaterController].PID.NeedRefresh = true;
+          return;
+          break;
+        case 1:
+          USBSendString("Address set to 0b 10 01 00 1x.\r");
+          tcb->HeaterControllers[SelectedHeaterController].Sensor.Address = 0b1001001;
+          tcb->HeaterControllers[SelectedHeaterController].PID.NeedRefresh = true;
+          return;
+          break;
+        case 11:
+          USBSendString("Address set to 0b 10 01 01 1x.\r");
+          tcb->HeaterControllers[SelectedHeaterController].Sensor.Address = 0b1001011;
+          tcb->HeaterControllers[SelectedHeaterController].PID.NeedRefresh = true;
+          return;
+          break;
+        default:
+          USBSendString("Invalid Address.\r");
+          return;
+          break;
+      }
     }
-    return;
-  }
-  //Select the controller
-  if ((strcmp((char*) buffer, "1") == 0) || (strcmp((char*) buffer, "c1") == 0))
-  {
-    UI_Controller = 0;
-    ShowControllerConfig(&s->Controller[UI_Controller], UI_Controller);
-    return;
-  }
-  if ((strcmp((char*) buffer, "2") == 0) || (strcmp((char*) buffer, "c2") == 0))
-  {
-    UI_Controller = 1;
-    ShowControllerConfig(&s->Controller[UI_Controller], UI_Controller);
-    //USBSendString("Controller 2 not implemented.\n");
-    //ShowControllerConfig(Controller);
-    return;
-  }
-  if ((strcmp((char*) buffer, "3") == 0) || (strcmp((char*) buffer, "c3") == 0))
-  {
-    UI_Controller = 2;
-    ShowControllerConfig(&s->Controller[UI_Controller], UI_Controller);
-    //USBSendString("Controller 3 not implemented.\n");
-    //ShowControllerConfig(Controller);
-    return;
-  }
-  if ((strcmp((char*) buffer, "4") == 0) || (strcmp((char*) buffer, "c4") == 0))
-  {
-    UI_Controller = 9;
-    USBSendString("Controller 4 not implemented.\n");
-    //ShowControllerConfig(Controller);
-    return;
-  }
-  //If there is no valid Controller Selected
-  if (UI_Controller == 9)
-  {
-    USBSendString("No controller selected.\n");
-    return;
-  }
-  //Print the Status all the Controllers
-  if ((strcmp((char*) buffer, "u") == 0) || (strcmp((char*) buffer, "/") == 0))
-  {
-    ShowAllController(&s->Controller[UI_Controller], true);
-    return;
-  }
-  //Print the Status all the Controllers in non readable format
-  if (strcmp((char*) buffer, "r") == 0)
-  {
-    ShowRawHeaderController();
-    ShowAllController(&s->Controller[UI_Controller], false);//Todo Implement this
-    return;
-  }
-
-  //Enable the Controller
-  if (strcmp((char*) buffer, "e") == 0)
-  {
-    USBSendString("Controller enabled.\n");
-    s->Controller[UI_Controller].PID.Config.Enabled = true;
-    return;
-  }
-  //Disable the Controller
-  if (strcmp((char*) buffer, "d") == 0)
-  {
-    USBSendString("Controller disabled.\n");
-    s->Controller[UI_Controller].PID.Config.Enabled = false;
-    return;
-  }
-
-
-  if (sscanf((char*) buffer, "%c%f", &c, &f) == 2)
-  {
-    //Convert the float to an integer
-    u = (uint8_t) f;
-    //Switch on the character
-    switch (c)
+    if ((c1 == 'k') && (c2 == 'p'))
     {
-      //User is trying to set the Channel
-      case 'c':
-        // we shouldn't get here if a valid number was used
-        USBSendString("Invalid controller number.\n");
-        return;
-        break;
-      //User is trying to set the Sensor Address
-      case 'a':
-        SetSensor(&s->Controller[UI_Controller].Sensor, u);
-        sprintf(output, "Controller %d Sensor Address Set to %d.\n", UI_Controller+1, u);
-        // reset our history since we're changing temperature sensors
-        s->Controller[UI_Controller].PID.IntegratorCount = 0;
-        break;
-      //Set P Constant Valuse
-      case 'p':
-        if (f < 0)
-          USBSendString("Invalid value.");
-        else
-        {
-          snprintf(output, 200, "kp set to %f.\n", f);
-          USBSendString(output);
-          s->Controller[UI_Controller].PID.Config.Kp = f;
-        }
-        return;
-        break;
-      //Set I Constant Value
-      case 'i':
-        if (f < 0)
-          USBSendString("Invalid value.");
-        else
-        {
-          snprintf(output, 200, "ki set to %f.\n", f);
-          USBSendString(output);
-          s->Controller[UI_Controller].PID.Config.Ki = f;
-        }
-        return;
-        break;
-      //Set D Constant Value
-      case 'd':
-        if (f < 0)
-          USBSendString("Invalid value.");
-        else
-        {
-          snprintf(output, 200, "kd set to %f.\n", f);
-          USBSendString(output);
-          s->Controller[UI_Controller].PID.Config.Kd = f;
-        }
-        return;
-        break;
-      //Set the Frequency
-      case 'f':
-        if ((f < 0) || (f > 600))
-          USBSendString("Invalid value.");
-        else
-        {
-          snprintf(output, 200, "Frequency set to %.0f (%.2f Hz).\n", f, f/40);
-          USBSendString(output);
-          s->Controller[UI_Controller].PID.Config.Frequency = f;
-        }
-        return;
-        break;
-      //Set the limit on the Integral
-      case 'l':
-        if (f < 0)
-          USBSendString("Invalid value.");
-        else
-        {
-          snprintf(output, 200, "Li set to %f.\n", f);
-          USBSendString(output);
-          s->Controller[UI_Controller].PID.Config.Li = f;
-        }
-        return;
-        break;
-      //Set the History Length
-      case 'h':
-        if (u == 0)
-          USBSendString("Invalid value.");
-        else
-        {
-          snprintf(output, 200, "History set to %u.\n", u);
-          USBSendString(output);
-          s->Controller[UI_Controller].PID.Config.History = u;
-        }
-        return;
-        break;
-      //Set the Target Temperature
-      case 't':
-        snprintf(output, 200, "Target temperature set to %f.\n", f);
+      if (f < 0)
+        USBSendString("Invalid value.\r");
+      else
+      {
+    	snprintf(output, sizeof(output), "kp set to %f.\r", f);
         USBSendString(output);
-        s->Controller[UI_Controller].PID.Config.TargetP = f;
-        return;
-        break;
-      default:
-        break;
+        tcb->HeaterControllers[SelectedHeaterController].PID.Config.Kp = f;
+      }
+      return;
+    }
+    if ((c1 == 'k') && (c2 == 'i'))
+    {
+      if (f < 0)
+        USBSendString("Invalid value.\r");
+      else
+      {
+    	snprintf(output, sizeof(output), "ki set to %f.\r", f);
+        USBSendString(output);
+        tcb->HeaterControllers[SelectedHeaterController].PID.Config.Ki = f;
+      }
+      return;
+    }
+    if ((c1 == 'k') && (c2 == 'd'))
+    {
+      if (f < 0)
+        USBSendString("Invalid value.\r");
+      else
+      {
+    	snprintf(output, sizeof(output), "kd set to %f.\r", f);
+        USBSendString(output);
+        tcb->HeaterControllers[SelectedHeaterController].PID.Config.Kd = f;
+      }
+      return;
+    }
+/*    if ((c1 == 't') && (c2 == 'o'))
+    {
+      snprintf(output, sizeof(output), "Watchdog timeout set to %u seconds.\r", u);
+      USBSendString(output);
+      WatchdogTimeout = u;
+      return;
+    }
+    */
+    if ((c1 == 'p') && (c2 == 'p'))
+    {
+      if ((f < 20) || (f > 1000))
+        USBSendString("Invalid value.\r");
+      else
+      {
+    	snprintf(output, sizeof(output), "PWM period is %.3fs (~ %.1f Hz).\r", (f/1000), (1000/f));
+        USBSendString(output);
+        tcb->HeaterControllers[SelectedHeaterController].PwmPeriod_ms = f;
+      }
+      return;
+    }
+    if ((c1 == 'i') && (c2 == 'l'))
+    {
+      if (f < 0)
+        USBSendString("Invalid value.\r");
+      else
+      {
+    	snprintf(output, sizeof(output), "Integrator limit set to %f.\r", f);
+        USBSendString(output);
+        tcb->HeaterControllers[SelectedHeaterController].PID.Config.Il = f;
+      }
+      return;
+    }
+    if ((c1 == 't') && (c2 == 'g'))
+    {
+      snprintf(output, sizeof(output), "Target temperature set to %f.\r", f);
+      USBSendString(output);
+      tcb->HeaterControllers[SelectedHeaterController].PID.Config.Target = f;
+      tcb->HeaterControllers[SelectedHeaterController].PID.NeedRefresh = true;
+      return;
+    }
+    if ((c1 == 's') && (c2 == 'l'))
+    {
+      snprintf(output, sizeof(output), "Slew limit set to %.2f deg/min.\r", f);
+      USBSendString(output);
+      tcb->HeaterControllers[SelectedHeaterController].PID.Config.SlewLimit_degpermin = f;
+      return;
     }
   }
-  USBSendString("Unknown command.\n");
+  USBSendString("Unknown command: ");
+  USBSendString((char*) input);
+  USBSendString("\r");
   return;
-
 }
 
 
 //Parse the input from the GPIO Context Menu
 void ProcessUserInput_GPIOMenu(struct sTuningControlBoard * s, char * buffer){
-	uint8_t u = 0;
-	char output[250];
-
   char c;
   float f = 0;
 
@@ -892,7 +1142,7 @@ void ProcessUserInput_GPIOMenu(struct sTuningControlBoard * s, char * buffer){
 
     return;
   }
-   if ((strcmp((char*) buffer, "?") == 0) || (strcmp((char*) buffer, "help") == 0))
+   if ((strcmp(buffer, "?") == 0) || (strcmp(buffer, "help") == 0))
   {
     ShowGPIOHelp();
     if (UI_GPIO == 9)
@@ -910,40 +1160,40 @@ void ProcessUserInput_GPIOMenu(struct sTuningControlBoard * s, char * buffer){
     return;
   }
   //Select the controller
-  if ((strcmp((char*) buffer, "1") == 0) || (strcmp((char*) buffer, "g1") == 0))
+  if ((strcmp(buffer, "1") == 0) || (strcmp(buffer, "g1") == 0))
   {
     UI_GPIO = 0;
     ShowGPIOConfig(&s->GPIO[UI_GPIO], UI_GPIO);
     return;
   }
-  if ((strcmp((char*) buffer, "2") == 0) || (strcmp((char*) buffer, "g2") == 0))
+  if ((strcmp(buffer, "2") == 0) || (strcmp(buffer, "g2") == 0))
   {
     UI_GPIO = 1;
     ShowGPIOConfig(&s->GPIO[UI_GPIO], UI_GPIO);
     //USBSendString("Controller 2 not implemented.\n");
-    //ShowControllerConfig(Controller);
+    //ShowControllerConfig(Controllers);
     return;
   }
-  if ((strcmp((char*) buffer, "3") == 0) || (strcmp((char*) buffer, "g3") == 0))
+  if ((strcmp(buffer, "3") == 0) || (strcmp(buffer, "g3") == 0))
   {
     UI_GPIO = 2;
     ShowGPIOConfig(&s->GPIO[UI_GPIO], UI_GPIO);
     //USBSendString("Controller 3 not implemented.\n");
-    //ShowControllerConfig(Controller);
+    //ShowControllerConfig(Controllers);
     return;
   }
-  if ((strcmp((char*) buffer, "4") == 0) || (strcmp((char*) buffer, "g4") == 0))
+  if ((strcmp(buffer, "4") == 0) || (strcmp(buffer, "g4") == 0))
   {
     UI_GPIO = 3;
     ShowGPIOConfig(&s->GPIO[UI_GPIO], UI_GPIO);
-    //ShowControllerConfig(Controller);
+    //ShowControllerConfig(Controllers);
     return;
   }
-  if ((strcmp((char*) buffer, "5") == 0) || (strcmp((char*) buffer, "g5") == 0))
+  if ((strcmp(buffer, "5") == 0) || (strcmp(buffer, "g5") == 0))
   {
     UI_GPIO = 4;
     ShowGPIOConfig(&s->GPIO[UI_GPIO], UI_GPIO);
-    //ShowControllerConfig(Controller);
+    //ShowControllerConfig(Controllers);
     return;
   }
   //If there is no valid Controller Selected
@@ -954,28 +1204,28 @@ void ProcessUserInput_GPIOMenu(struct sTuningControlBoard * s, char * buffer){
   }
 
   //Print the Status all the Controllers
-  if ((strcmp((char*) buffer, "u") == 0) || (strcmp((char*) buffer, "/") == 0))
+  if ((strcmp(buffer, "u") == 0) || (strcmp(buffer, "/") == 0))
   {
     ShowAllGPIO(&s->GPIO[UI_GPIO], true);
     return;
   }
   //Print the Status all the Controllers in non readable format
-  if (strcmp((char*) buffer, "r") == 0)
+  if (strcmp(buffer, "r") == 0)
   {
     ShowRawHeaderGPIO();
     ShowAllGPIO(&s->GPIO[UI_GPIO], false);//Todo Implement this
     return;
   }
 
-  //Enable the Controller
-  if (strcmp((char*) buffer, "e") == 0)
+  //Enable the Controllers
+  if (strcmp(buffer, "e") == 0)
   {
     USBSendString("GPIO enabled.\n");
     GPIO_SetState(&s->GPIO[UI_GPIO], true);
     return;
   }
-  //Disable the Controller
-  if (strcmp((char*) buffer, "d") == 0)
+  //Disable the Controllers
+  if (strcmp(buffer, "d") == 0)
   {
     USBSendString("GPIO disabled.\n");
     GPIO_SetState(&s->GPIO[UI_GPIO], true);
@@ -983,10 +1233,8 @@ void ProcessUserInput_GPIOMenu(struct sTuningControlBoard * s, char * buffer){
   }
 
 
-  if (sscanf((char*) buffer, "%c%f", &c, &f) == 2)
+  if (sscanf(buffer, "%c%f", &c, &f) == 2)
   {
-    //Convert the float to an integer
-    u = (uint8_t) f;
     //Switch on the character
     switch (c)
     {
@@ -1074,14 +1322,14 @@ void ProcessUserInput_BipolarOutputMenu(struct sTuningControlBoard * s, char * b
     return;
   }
 
-  //Enable the Controller
+  //Enable the Controllers
   if (strcmp((char*) buffer, "e") == 0)
   {
     USBSendString("BipolarOutput enabled.\n");
     BipolarOutput_Enable(&s->BipolarOutput[UI_BipolarOutput], true);
     return;
   }
-  //Disable the Controller
+  //Disable the Controllers
   if (strcmp((char*) buffer, "d") == 0)
   {
     USBSendString("BipolarOutput disabled.\n");
@@ -1146,9 +1394,8 @@ void ProcessUserInput_BipolarOutputMenu(struct sTuningControlBoard * s, char * b
   }
   USBSendString("Unknown command.\n");
   return;
-
-
 }
+
 
 
 void TranslateUserInput_BipolarOutputMenu(struct sTuningControlBoard * s, char * buffer){
@@ -1172,7 +1419,7 @@ void TranslateUserInput_BipolarOutputMenu(struct sTuningControlBoard * s, char *
 
 }
 
-void TranslateUserInput_GPIOMenu(struct sTuningControlBoard * s,char * buffer){
+void TranslateUserInput_GPIOMenu(struct sTuningControlBoard * s, char * buffer){
   //Make everything lowercase
   for (int i=0; buffer[i]; i++){
     buffer[i] = tolower(buffer[i]);
@@ -1198,7 +1445,7 @@ void TranslateUserInput_GPIOMenu(struct sTuningControlBoard * s,char * buffer){
 //format the User input
 //=================================================================================================
 //Trranslate the input buffers to be one letter commands pass onto the case switch menu
-void TranslateUserInput_MainMenu(struct sTuningControlBoard * s,char* buffer)
+void TranslateUserInput_MainMenu(struct sTuningControlBoard * s, char* buffer)
 {
   //Make everything lowercase
   for (int i=0; buffer[i]; i++){
@@ -1225,7 +1472,7 @@ void TranslateUserInput_MainMenu(struct sTuningControlBoard * s,char* buffer)
 }
 
 //Trranslate the input buffers to be one letter commands pass onto the case switch menu
-void TranslateUserInput_CompensatorMenu(struct sTuningControlBoard * s,char * buffer)
+void TranslateUserInput_CompensatorMenu(struct sTuningControlBoard * s, char * buffer)
 {
   //Make everything lowercase
   for (int i=0; buffer[i]; i++){
@@ -1238,6 +1485,7 @@ void TranslateUserInput_CompensatorMenu(struct sTuningControlBoard * s,char * bu
   replacestr(buffer, "volt", "v");
   replacestr(buffer, "comp", "co");
   replacestr(buffer, "wave", "w");
+  replacestr(buffer, "stage", "s");
   replacestr(buffer, "enable", "e");
   replacestr(buffer, "disable", "d");
   replacestr(buffer, "address", "a");
@@ -1249,7 +1497,7 @@ void TranslateUserInput_CompensatorMenu(struct sTuningControlBoard * s,char * bu
 }
 
 //Trranslate the input buffers to be one letter commands pass onto the case switch menu
-void TranslateUserInput_ControllerMenu(struct sTuningControlBoard * s,char * buffer){
+void TranslateUserInput_ControllerMenu(struct sTuningControlBoard * s, char * buffer){
   //Make everything lowercase
   for (int i=0; buffer[i]; i++){
     buffer[i] = tolower(buffer[i]);
@@ -1260,28 +1508,7 @@ void TranslateUserInput_ControllerMenu(struct sTuningControlBoard * s,char * buf
   replacestr(buffer, " ", "");
   replacestr(buffer, " ", "");
   replacestr(buffer, " ", "");
-  replacestr(buffer, "channel", "c");
-//  replacestr(buffer, "controller", "c");
-  replacestr(buffer, "chan", "c");
-//  replacestr(buffer, "con", "c");
-  replacestr(buffer, "address", "a");
-  replacestr(buffer, "kp", "p");
-  replacestr(buffer, "kd", "d");
-  replacestr(buffer, "ki", "i");
-  replacestr(buffer, "li", "l");
-  replacestr(buffer, "target", "t");
-  replacestr(buffer, "temperature", "t");
-  replacestr(buffer, "temp", "t");
-  replacestr(buffer, "frequency", "f");
-  replacestr(buffer, "freq", "f");
-  replacestr(buffer, "enable", "n");
-  replacestr(buffer, "disable", "f");
-  replacestr(buffer, "history", "h");
-  replacestr(buffer, "update", "u");
-  replacestr(buffer, "raw", "r");
-  replacestr(buffer, "main", "m");
-  ProcessUserInput_ControllerMenu(s, buffer);
-  
+  ProcessUserInput_HeaterControllerMenu(s, buffer);
 }
 
 
@@ -1339,24 +1566,28 @@ void ShowMainHelp(void)
 }
 
 //Show the Controller Context Menu
-void ShowControllerHelp(void){
+void ShowHeaterControllerHelp(void){
     ShowControllerMenuHeader();
-    USBSendString("Commands can be upper or lower case. Variables can be set with an equals sign or space or nothing.\n");
-    USBSendString("\"channel=1\", \"channel 1\", \"channel1\", \"c1\" are all treated the same.\n");
-    USBSendString("\n");
-    USBSendString("kp              -- proportional gain\n");
-    USBSendString("kd              -- derivative gain\n");
-    USBSendString("ki              -- integral gain\n");
-    USBSendString("li              -- integral limit\n");
-    USBSendString("target          -- target temperature\n");
-    USBSendString("history         -- number of samples to average\n");
-    USBSendString("frequency       -- number of times per second to update the heater\n");
-    USBSendString("enable          -- enable or disable the controller\n");
-    USBSendString("disable         -- disable the controller\n");
-    USBSendString("address         -- i2c address of the sensor\n");
-    USBSendString("raw             -- shows an easily parsable version of the Information\n");
-    USBSendString("main            -- return to the main menu\n");
-    USBSendString("\n");
+    USBSendString("\rQHC Firmware v2.0\r");
+    USBSendString("Commands can be upper or lower case. Spaces are ignored.\r\r");
+    USBSendString("C n     -- selects a controller to configure (and show configuration)\r");
+    USBSendString("AD nn    -- sets the address of the temperature sensor (00, 01, 10, or 11)\r");
+    USBSendString("KP n.nn  -- sets the proportional gain\r");
+    USBSendString("KD n.nn  -- sets the derivative gain\r");
+    USBSendString("KI n.nn  -- sets the integral gain\r");
+    USBSendString("IL n.nn  -- sets the integral limit (0-1)\r");
+    USBSendString("TG n.nn  -- sets the target temperature\r");
+    USBSendString("PP n     -- sets the PWM period (in milliseconds, 20ms resolution, 1000ms max)\r");
+    USBSendString("TO n     -- sets the watchdog timeout in seconds\r");
+    USBSendString("SL n.nn  -- sets the slew limit in degrees per minute\r");
+    USBSendString("EC       -- enable controller (heater output)\r");
+    USBSendString("DC       -- disable controller (heater output)\r");
+    USBSendString("EO       -- enable offset correction\r");
+    USBSendString("DO       -- disable offset correction\r");
+    USBSendString("U        -- shows the status of all of the controllers\r");
+    USBSendString("R        -- shows an easily parsable version of Update\r");
+    USBSendString("Bounce   -- performs a power-cycle / reboot on the system\r");
+    USBSendString("*        -- toggle automatic data flood\r\r");
 }
 
 //Show the Compensator Context Menu
@@ -1369,6 +1600,7 @@ void ShowCompensatorHelp(void){
     USBSendString("comp            -- Toggle Auto Compensation output\n");
     USBSendString("wave            -- Set the Wavelength to Compensation to\n");
     USBSendString("enable          -- enable or disable the controller\n");
+    USBSendString("stage		   -- Set Stage Size 2.6/5.4/10.8");
     USBSendString("disable         -- disable the controller\n");
     USBSendString("address         -- i2c address of the sensor\n");
     USBSendString("raw             -- shows an easily parsable version of the Information\n");
@@ -1408,7 +1640,6 @@ void ShowBipolarOutputHelp(void){
   USBSendString("raw             -- shows an easily parsable version of the Information\n");
   USBSendString("main            -- return to the main menu\n");
   USBSendString("\n");
-  
 }
 
 
@@ -1439,9 +1670,10 @@ void SetSensor(struct sTMP117 * sSensor, uint8_t u){
       break;
   }
   
-  sSensor->Ready = false;
-  sSensor->Average = -273;
-  sSensor->LastTemperature = -273;
+
+  sSensor->Average = -273.0f;
+  sSensor->Temperature[0] = -273.0f;
+  sSensor->Temperature[1] = -273.0f;
   sSensor->Configured = false;
   sSensor->State = 0;
   return;

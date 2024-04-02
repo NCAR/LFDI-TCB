@@ -2,7 +2,7 @@
  * funcs.c
  *
  *  Created on: Apr 14, 2021
- *      Author: damonb
+ *
  */
 
 #include "funcs.h"
@@ -68,7 +68,7 @@ uint32_t IntToUInt(int32_t x) {
 }
 
 // in-place string replacement which only works if the new string is smaller than the old string
-void replacestr(uint8_t *buffer, const char *search, const char *replace)
+void replacestr(char *buffer, const char *search, const char *replace)
 {
      char *sp;
      char* line = (char*) buffer;

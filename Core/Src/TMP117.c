@@ -2,16 +2,12 @@
  * TMP117.c
  *
  *  Created on: Nov 11, 2021
- *      Author: damonb
- *  Edited on : Dec 15, 2022: MJ
- *  
+ *
  */
 
 
 #include "TMP117.h"
 #include "funcs.h"
-
-
 //@brief Initialize the TMP117 structure
 //@param s Pointer to the structure to initialize
 //@param interface Pointer to the I2C interface to use
@@ -28,18 +24,14 @@ void TMP117_InitStruct(struct sTMP117* s, I2C_HandleTypeDef* interface, uint8_t 
   uint8_t i;
   s->Address = 0b1001000 | addpin;
   s->Interface = interface;
-  s->Average = -273;
+  s->Average = -273.0f;
   s->Configured = false;
   s->SamplesInAverage = 16;
-  s->Index = 0;
   s->State = TMP117_STATE_UNKNOWN;
   for (i=0;i<64;i++)
-    s->Temperature[i] = -273;
-  s->LastTemperature = -273;
-  s->Ready = false;
+    s->Temperature[i] = -273.0f;
   s->Errors = 0;
 }
-
 
 //@brief Configure the TMP117
 //@param s Pointer to the structure to configure
@@ -50,7 +42,8 @@ void TMP117_Configure(struct sTMP117* s)
   printf("Attempting to init... ");
   uint8_t buffer[3] = {0};
   buffer[0] = 1;
-  buffer[2] = 1 << 5;
+  buffer[2] = 1 << 5; // average 8 temperatures
+
   res = HAL_I2C_Master_Transmit(s->Interface, (s->Address) << 1, buffer, 3, 10); // 8 samples averaged
   if (res == HAL_OK)
   {
@@ -65,14 +58,11 @@ void TMP117_Configure(struct sTMP117* s)
   }
 }
 
-//@brief Get the temperature from the TMP117
-//@param s Pointer to the structure to get the temperature from
-//@return None
 void TMP117_GetTemperature(struct sTMP117* s)
 {
-  uint16_t u;
-  double t = 0;
-  //setup an empty Buffer to request the temperature
+  uint8_t i;
+  int16_t cast_int;
+  float t = 0;
   uint8_t buffer[2] = {0};
   uint16_t data = 0;
   HAL_StatusTypeDef res;
@@ -81,7 +71,6 @@ void TMP117_GetTemperature(struct sTMP117* s)
   {
     s->State = TMP117_STATE_REQUESTNOACK;
     s->Errors++;
-    //If this temperature sensor gets more than 100 errors in a row, it's probably not connected
     if (s->Errors > 100)
     {
       s->Configured = false;
@@ -89,7 +78,6 @@ void TMP117_GetTemperature(struct sTMP117* s)
     }
     return;
   }
-
   res = HAL_I2C_Master_Receive(s->Interface, (s->Address << 1), buffer, 2, 10); // receive temperature
   if (res != HAL_OK)
   {
@@ -103,33 +91,24 @@ void TMP117_GetTemperature(struct sTMP117* s)
     return;
   }
 
-  
-  s->State = TMP117_STATE_VALIDTEMP;
-  data = (buffer[0] << 8) | buffer[1];
-  u = *(&(data));
-  //Conver the Temp as per documentation
-  s->Temperature[s->Index] = ((double)u) * 0.0078125;
-  s->LastTemperature = s->Temperature[s->Index];
-  s->Index++;
-  //If we finally have enough Temperatures to average, set the Ready flag
-  //if we have engough samples, set the flags
-  if (s->Index >= s->SamplesInAverage)
   {
-    s->Ready = true;
-    s->Index = 0;
-  }
-  
-  //average the Temperatures
-  if (s->Ready)
-  {
-    for (int i=0;i<(s->SamplesInAverage); i++)
+    s->State = TMP117_STATE_VALIDTEMP;
+    // shuffle all the temperature values in the array by 1
+    memmove(s->Temperature + 1, s->Temperature, (s->SamplesInAverage-1)*sizeof(float));
+
+    data = (buffer[0] << 8) | buffer[1];
+    cast_int = *(&(data));
+    s->Temperature[0] = ((double)cast_int) * 0.0078125;
+
+    if (s->Temperature[1] < -200.0f) // this is our first temperature? init full array
+      for (i=1; i<(s->SamplesInAverage); i++)
+        s->Temperature[i] = s->Temperature[0];
+
+    for (i=0;i<(s->SamplesInAverage); i++)
     {
       t += s->Temperature[i];
     }
     s->Average = t / s->SamplesInAverage;
   }
-
-
 }
-
 

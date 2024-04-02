@@ -2,7 +2,7 @@
  * TMP117.h
  *
  *  Created on: Nov 11, 2021
- *      Author: damonb
+ *  
  */
 
 #ifndef INC_TMP117_H_
@@ -20,14 +20,11 @@ struct sTMP117
 {
   uint8_t Address;
   I2C_HandleTypeDef* Interface;
-  double Temperature[64];
-  double Average;
+  float Temperature[64];
+  float Average;
   bool Configured;
-  uint8_t Index;
   uint8_t SamplesInAverage;
   uint8_t State;
-  double LastTemperature;
-  bool Ready;
   uint16_t Errors;
 };
 

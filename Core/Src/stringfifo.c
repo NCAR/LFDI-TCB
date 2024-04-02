@@ -2,7 +2,6 @@
  * stringfifo.c
  *
  *  Created on: Nov 15, 2021
- *      Author: damonb
  *      Edited: mjeffers
  *      This file contains the functions for the string FIFO
  *      The FIFO is used to store strings that are to be sent over USB
@@ -13,6 +12,7 @@
 
 #include <stringfifo.h>
 #include "string.h"
+#include <stdint.h>
 
 
 //Initalize the Fifo Structure
@@ -67,7 +67,7 @@ uint8_t StringFIFOAdd(struct sStringFIFO* fifo, uint8_t* item, size_t size)
 }
 
 //Go through the FIFO and remove the Characters until the first \n or \r is found
-uint8_t StringFIFORemove(struct sStringFIFO* fifo, uint8_t* string)
+uint8_t StringFIFORemove(struct sStringFIFO* fifo, char* string)
 {
 
   uint16_t i, pos;
