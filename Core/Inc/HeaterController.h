@@ -12,6 +12,8 @@
 #include "TMP117.h"
 #include "PID.h"
 
+#define NUMOFHEATERCONTROLLERS (3)
+
 extern volatile uint8_t HeaterDwell[NUMOFHEATERCONTROLLERS];
 
 struct sHeaterController

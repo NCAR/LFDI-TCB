@@ -426,7 +426,159 @@ void SendAutoFlood(struct sHeaterController Controllers[4])
 //Case Switched to Process the User Input
 //=================================================================================================
 //Parse the input from the main Menu
+//Top Level Commands
+// SET_Temp_[Temp]  -- Sets the target temperature for all controllers
+// SET_TEMP_ON -- Turns on the temperature controllers
+// SET_TEMP_OFF -- Turns off the temperature controllers
+// SET_WAVE_[Wavelength] -- Sets the wavelength for all compensators
+// SET_CONT_[Controller]_KP_[KP] -- Sets the controller to be configured
+// SET_CONT_[Controller]_KD_[KD] -- Sets the controller to be configured
+// SET_CONT_[Controller]_KI_[KI] -- Sets the controller to be configured
+// SET_TUNE_ON -- Turns on the tuning for all controllers
+// SET_TUNE_OFF -- Turns off the tuning for all controllers
+// GET_HK -- Gets the housekeeping data
+// GET_TEMP -- Gets the temperature data
+// GET_WAVE -- Gets the wavelength data
+// GET_TUNE -- Gets the tuning data
+// GET_CONT_[Controller] -- Gets the controller data
+
+void SET_TEMP(struct sTuningControlBoard * s, char* input){
+    if (strcmp(input, "set_temp_on") == 0){
+      for (uint8_t i = 0; i < NUMOFHEATERCONTROLLERS; i++)
+      {
+        s->HeaterControllers[i].HeaterEnabled = true;
+      }
+      return;
+    }
+    //SET_TEMP_OFF
+    if (strcmp(input, "set_temp_off") == 0)
+    {
+      for (uint8_t i = 0; i < NUMOFHEATERCONTROLLERS; i++)
+      {
+        s->HeaterControllers[i].HeaterEnabled = false;
+      }
+      return;
+    }
+    //SET_TEMP_[Temp] check if the input is a valid temperature
+    float f = 0;
+    if (sscanf(input, "set_temp_%f", &f) == 1)
+    {
+      for (uint8_t i = 0; i < NUMOFHEATERCONTROLLERS; i++)
+      {
+        s->HeaterControllers[i].PID.Config.Target = f;
+      }
+      return;
+    }
+    USBSendString("Invalid Command\n");   
+}
+
+void SET_WAVE(struct sTuningControlBoard * s, char* input){
+    //SET_WAVE_[Wavelength] check if the input is a valid wavelength
+    float f = 0;
+    if (sscanf(input, "set_wave_%f", &f) == 1)
+    {
+      for (uint8_t i = 0; i < NUMOFCOMPENSATORS; i++)
+      {
+        s->Compensator[i].wavelength = f;
+      }
+      return;
+    }
+    USBSendString("Invalid Command\n");
+}
+
+void SET_TUNE(struct sTuningControlBoard * s, char* input){
+    //SET_TUNE_ON
+    if (strcmp(input, "set_tune_on") == 0)
+    {
+      for (uint8_t i = 0; i < NUMOFCOMPENSATORS; i++)
+      {
+    	s->Compensator[i].compensate = true;
+        s->Compensator[i].Enable = true;
+      }
+      return;
+    }
+    //SET_TUNE_OFF
+    if (strcmp(input, "set_tune_off") == 0)
+    {
+      for (uint8_t i = 0; i < NUMOFCOMPENSATORS; i++)
+      {
+    	s->Compensator[i].compensate = false;
+        s->Compensator[i].Enable = false;
+      }
+      return;
+    }
+    USBSendString("Invalid Command\n");
+}
+
+void SET_HEATER(struct  sTuningControlBoard *s, char* input){
+    //SET_HEATER_[Controller]_KP_[KP]
+    uint8_t u = 0;
+    char output[250];
+    float f = 0;
+    if (sscanf(input, "set_heater_%u_kp_%f", &u, &f) == 2)
+    {
+      if (u < NUMOFHEATERCONTROLLERS)
+      {
+        s->HeaterControllers[u].PID.Config.Kp = f;
+        sprintf(output, "Controller %u Kp set to %f\n", u, f);
+        USBSendString(output);
+      }
+      return;
+    }
+    //SET_HEATER_[Controller]_KD_[KD]
+    if (sscanf(input, "set_heater_%u_kd_%f", &u, &f) == 2)
+    {
+      if (u < NUMOFHEATERCONTROLLERS)
+      {
+        s->HeaterControllers[u].PID.Config.Kd = f;
+        sprintf(output, "Controller %u Kd set to %f\n", u, f);
+        USBSendString(output);
+      }
+      return;
+    }
+    //SET_HEATER_[Controller]_KI_[KI]
+    if (sscanf(input, "set_heater_%u_ki_%f", &u, &f) == 2)
+    {
+      if (u < NUMOFHEATERCONTROLLERS)
+      {
+        s->HeaterControllers[u].PID.Config.Ki = f;
+        sprintf(output, "Controller %u Ki set to %f\n", u, f);
+        USBSendString(output);
+      }
+      return;
+    }
+    USBSendString("Invalid Command\n");
+}
+
 void ProcessUserInput_MainMenu(struct sTuningControlBoard * s,char* input){
+  //SET Commands
+  if (strncmp(input, "set_", 4) == 0)
+  {
+    //SET_TEMP_[Temp]
+    if (strncmp(input, "set_temp_", 9) == 0)
+    {
+      SET_TEMP(s, input);
+      return;
+    }
+    //SET_WAVE_[Wavelength]
+    if (strncmp(input, "set_wave_", 9) == 0)
+    {
+      SET_WAVE(s, input);
+      return;
+    }
+    //SET_TUNE_[ON/OFF]
+    if (strncmp(input, "set_tune_", 9) == 0)
+    {
+      SET_TUNE(s, input);
+      return;
+    }
+    //SET_HEATER_[Controller]_KP_[KP]
+    if (strncmp(input, "set_heater_", 9) == 0)
+    {
+      SET_HEATER(s, input);
+      return;
+    }
+  }
 
   //Pull up the Controller Sub menu
   if (strcmp(input, "cont") == 0)
@@ -642,7 +794,7 @@ void ProcessUserInput_CompensatorMenu(struct sTuningControlBoard * s,char* input
       case 'w':
         //Set the wavelength
         //Check that the wavelength is greater than 0 and less than 500
-        if (f > 0 && f < 500){
+        if (f > 656 && f < 657){
           s->Compensator[UI_Compensator].wavelength = f;
           sprintf(output, "Compensator %d Wavelength Set to %f.\n", UI_Compensator+1, f);
           USBSendString(output);
@@ -653,6 +805,31 @@ void ProcessUserInput_CompensatorMenu(struct sTuningControlBoard * s,char* input
           break;
           return;
         }
+        //Stage Setting Selected
+      case 's':
+        //round the float to one decimal place
+        f = roundf(f * 10) / 10;
+        int i = (int)(f*1000);
+              //Set the wavelength
+              //Check that stage is defined
+        if (i == (int)(STAGE1*1000)){
+        	Compensator_SetStage(&s->Compensator[UI_Compensator], STAGE1);
+		}else if(i == (int)(STAGE2*1000)){
+			Compensator_SetStage(&s->Compensator[UI_Compensator], STAGE2);
+		}else if(i == (int)(STAGE3*1000)){
+			Compensator_SetStage(&s->Compensator[UI_Compensator], STAGE3);
+		}else if(i == (int)(STAGE4*1000)){
+			Compensator_SetStage(&s->Compensator[UI_Compensator], STAGE4);
+		}else if(i == (int)(STAGE5*1000)){
+			Compensator_SetStage(&s->Compensator[UI_Compensator], STAGE5);
+		}else if(i == (int)(STAGE6*1000)){
+			Compensator_SetStage(&s->Compensator[UI_Compensator], STAGE6);
+		}else{
+			USBSendString("Invalid Stage.\n");
+			break;
+		}
+		sprintf(output, "Compensator %d Stage Set to %f.\n", UI_Compensator+1, f);
+		break;
 
       default:
         USBSendString("Unknown Command.\n");
@@ -994,8 +1171,6 @@ void ProcessUserInput_GPIOMenu(struct sTuningControlBoard * s, char * buffer){
 
   if (sscanf(buffer, "%c%f", &c, &f) == 2)
   {
-    //Convert the float to an integer
-    uint8_t u = (uint8_t) f;
     //Switch on the character
     switch (c)
     {
@@ -1246,6 +1421,7 @@ void TranslateUserInput_CompensatorMenu(struct sTuningControlBoard * s, char * b
   replacestr(buffer, "volt", "v");
   replacestr(buffer, "comp", "co");
   replacestr(buffer, "wave", "w");
+  replacestr(buffer, "stage", "s");
   replacestr(buffer, "enable", "e");
   replacestr(buffer, "disable", "d");
   replacestr(buffer, "address", "a");
@@ -1360,6 +1536,7 @@ void ShowCompensatorHelp(void){
     USBSendString("comp            -- Toggle Auto Compensation output\n");
     USBSendString("wave            -- Set the Wavelength to Compensation to\n");
     USBSendString("enable          -- enable or disable the controller\n");
+    USBSendString("stage		   -- Set Stage Size 2.6/5.4/10.8");
     USBSendString("disable         -- disable the controller\n");
     USBSendString("address         -- i2c address of the sensor\n");
     USBSendString("raw             -- shows an easily parsable version of the Information\n");

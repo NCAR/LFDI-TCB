@@ -31,8 +31,9 @@ void TCB_InitStruct(struct sTuningControlBoard* s, I2C_HandleTypeDef* hi2c1,I2C_
     
     //Initialize the Compensator
     //Todo this will need to have different sensors
+    float StageSizes[NUMOFCOMPENSATORS] = {STAGE1, STAGE2, STAGE3, STAGE4, STAGE5, STAGE6};
     for(int i = 0; i < NUMOFCOMPENSATORS; i++){
-        Compensator_InitStruct(&s->Compensator[i], &s->Sensor[4], &s->DAC8718.DAC_Channels[i]);
+        Compensator_InitStruct(&s->Compensator[i], &s->Sensor[4], &s->DAC8718.DAC_Channels[i], StageSizes[i]);
     }
 
     //Initialize the GPIO

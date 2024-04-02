@@ -1,5 +1,5 @@
-../Core/Src/stringfifo.c:20:6:StringFIFOInit	2
-../Core/Src/stringfifo.c:31:10:StringFIFOUsed	2
-../Core/Src/stringfifo.c:40:10:StringFIFOAvailable	1
-../Core/Src/stringfifo.c:48:9:StringFIFOAdd	3
-../Core/Src/stringfifo.c:71:9:StringFIFORemove	9
+../Core/Src/stringfifo.c:19:6:StringFIFOInit	2
+../Core/Src/stringfifo.c:30:10:StringFIFOUsed	2
+../Core/Src/stringfifo.c:39:10:StringFIFOAvailable	1
+../Core/Src/stringfifo.c:47:9:StringFIFOAdd	3
+../Core/Src/stringfifo.c:70:9:StringFIFORemove	9

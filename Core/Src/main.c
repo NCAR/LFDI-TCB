@@ -32,7 +32,6 @@
 #include "DAC_Unit_Test.h"
 #include "stm32f4xx_hal.h"
 #include "usbd_cdc_if.h"
-#include "TemperatureCorrectionTable.h"
 
 //#include "usbd_cdc_if.h"
 
