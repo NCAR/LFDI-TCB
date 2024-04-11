@@ -11,6 +11,7 @@
 #include "defs.h"
 #include "TMP117.h"
 #include "PID.h"
+#include "Heater.h"
 
 #define NUMOFHEATERCONTROLLERS (3)
 
