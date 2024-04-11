@@ -517,9 +517,9 @@ void SET_HEATER(struct  sTuningControlBoard *s, char* input){
 
     if (sscanf(input, "set_heater_%u_kp_%f", &u, &f) == 2)
     {
-      if (u < NUMOFHEATERCONTROLLERS)
+      if (u <= NUMOFHEATERCONTROLLERS)
       {
-        s->HeaterControllers[u].PID.Config.Kp = f;
+        s->HeaterControllers[u-1].PID.Config.Kp = f;
         sprintf(output, "Heater %u Kp set to %f\n", u, f);
         USBSendString(output);
       }
@@ -528,9 +528,9 @@ void SET_HEATER(struct  sTuningControlBoard *s, char* input){
     //SET_HEATER_[Controller]_KD_[KD]
     if (sscanf(input, "set_heater_%u_kd_%f", &u, &f) == 2)
     {
-      if (u < NUMOFHEATERCONTROLLERS)
+      if (u <= NUMOFHEATERCONTROLLERS)
       {
-        s->HeaterControllers[u].PID.Config.Kd = f;
+        s->HeaterControllers[u-1].PID.Config.Kd = f;
         sprintf(output, "Heater %u Kd set to %f\n", u, f);
         USBSendString(output);
       }
@@ -539,9 +539,9 @@ void SET_HEATER(struct  sTuningControlBoard *s, char* input){
     //SET_HEATER_[Controller]_KI_[KI]
     if (sscanf(input, "set_heater_%u_ki_%f", &u, &f) == 2)
     {
-      if (u < NUMOFHEATERCONTROLLERS)
+      if (u <= NUMOFHEATERCONTROLLERS)
       {
-        s->HeaterControllers[u].PID.Config.Ki = f;
+        s->HeaterControllers[u-1].PID.Config.Ki = f;
         sprintf(output, "Heater %u Ki set to %f\n", u, f);
         USBSendString(output);
       }
@@ -586,13 +586,52 @@ void SET_Processing_Tree(struct sTuningControlBoard * s, char* input){
   USBSendString(output);
 
 }
+//Prints Non-Readable Houskeeping data in the Following Format
+//H1\tH1.KP\H1.KI\tH1.KD\tH1.IL\tH1.EP\tH1.ED\tH1.EI\tH1.Effort\tH1.Current\tH1.Instant_Temp\tH1.Average_Temp\tH1.Slew_Target\tH1.Final_Target\tH1.I2C\tH1.Period\tH1.Offset\tH1.Heater\tH1.Sensor\t
+//H2 ""
+//H3 ""
+//C1\tC1.Peak2Peak\tC1.Wave\tC1.Temp\tC1.Avg\tC1.Auto\tC1.UseAverage\tC1.i2c\tC1.enabled\tC1.sensor\tC1.StageSize"
+//C2 ""
+//C3 ""
+//C4 ""
+//C5 ""
+//C6 ""
+void ShowHousKeeping(struct sTuningControlBoard * s){
+  char buffer[1000];
+  char heater[10];
+  for (uint8_t i = 0; i < NUMOFHEATERCONTROLLERS; i++)
+  {
+    if(s->HeaterControllers[i].HeaterEnabled){
+      strcpy(heater, "ENABLED");
+    }else{
+      strcpy(heater, "DISABLED");
+    }
+    snprintf(buffer, 1000, "H%u\t%3.2f\t%3.2f\t%3.2f\t%3.2f\t%3.2f\t%s\n", 
+    i+1, s->HeaterControllers[i].PID.Config.Kp, s->HeaterControllers[i].PID.Config.Ki, 
+    s->HeaterControllers[i].PID.Config.Kd, s->HeaterControllers[i].Sensor.Average, 
+    s->HeaterControllers[i].PID.Config.Target, heater);
+    USBSendString(buffer);
+  }
+  for(uint8_t i = 0; i < NUMOFCOMPENSATORS; i++){
+    if(s->Compensator[i].Enable){
+      strcpy(heater, "ENABLED");
+    }else{
+      strcpy(heater, "DISABLED");
+    }
+    snprintf(buffer, 1000, "C%u\t%3.2f\t%3.2f\t%2.2f\t%s\n",i+1, s->Compensator[i].wavelength, 
+    s->Compensator[i].voltage, s->Compensator[i].Stage.stageSize, heater);
+    USBSendString(buffer);
+  }
+  USBSendString(buffer);
+  
+}
 
 //Parse the Get Commands
 void GET_Processing_Tree(struct sTuningControlBoard * s, char* input){
   //GET_HK
   if (strcmp(input, "get_hk") == 0)
   {
-    ShowAllTCB(s);
+	  ShowHousKeeping(s);
     return;
   }
   //GET_TEMP
@@ -615,7 +654,7 @@ void GET_Processing_Tree(struct sTuningControlBoard * s, char* input){
   }
   //GET_CONT_[Controller]
   uint8_t u = 0;
-  if (sscanf(input, "get_cont_%u", &u) == 1)
+  if (sscanf(input, "get_cont_%hhu", &u) == 1)
   {
     if (u < NUMOFHEATERCONTROLLERS)
     {

@@ -29,20 +29,16 @@ void HeaterController_SetHeater(uint8_t heater, bool state)
   switch (heater)
   {
     case 0:
-      Port = GPIOA;
-      Pin = GPIO_PIN_2;
+      Port = GPIOB;
+      Pin = GPIO_PIN_1;
       break;
     case 1:
-      Port = GPIOA;
-      Pin = GPIO_PIN_4;
+      Port = GPIOE;
+      Pin = GPIO_PIN_8;
       break;
     case 2:
-      Port = GPIOA;
-      Pin = GPIO_PIN_6;
-      break;
-    case 3:
-      Port = GPIOB;
-      Pin = GPIO_PIN_0;
+      Port = GPIOE;
+      Pin = GPIO_PIN_9;
       break;
     default:
       return;
