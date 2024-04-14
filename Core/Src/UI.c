@@ -487,6 +487,36 @@ void SET_TUNE(struct sTuningControlBoard * s, char* input){
     USBSendString(output);
 }
 
+void SET_SLOPE(struct  sTuningControlBoard *s, char* input){
+	float f = 0.0;
+	char output[250];
+	if (sscanf(input, "set_slope_%f", &f) == 2){
+		for (uint8_t i = 0; i < NUMOFCOMPENSATORS; i++){
+			s->Compensator[i].Stage.slope = f;
+			sprintf(output, "Compensator %u Slope Set %f\n", i, f);
+			USBSendString(output);
+		}
+	    return;
+	}
+	sprintf(output, "Invalid Command: %s\n", input);
+	USBSendString(output);
+}
+
+void SET_INT(struct  sTuningControlBoard *s, char* input){
+	float f = 0.0;
+	char output[250];
+	if (sscanf(input, "set_INT_%f", &f) == 2){
+		for (uint8_t i = 0; i < NUMOFCOMPENSATORS; i++){
+			s->Compensator[i].Stage.slope = f;
+			sprintf(output, "Compensator %u INT Set %f\n", i, f);
+			USBSendString(output);
+		}
+	    return;
+	}
+	sprintf(output, "Invalid Command: %s\n", input);
+	USBSendString(output);
+}
+
 void SET_HEATER(struct  sTuningControlBoard *s, char* input){
     
 	uint8_t u = 0;
@@ -581,6 +611,14 @@ void SET_Processing_Tree(struct sTuningControlBoard * s, char* input){
   {
     SET_HEATER(s, input);
     return;
+  }
+  if (strncmp(input, "set_slope_", 9) == 0){
+	  SET_SLOPE(s, input);
+	  return;
+  }
+  if (strncmp(input, "set_int_", 9) == 0){
+  	  SET_INT(s, input);
+	  return;
   }
   sprintf(output, "Invalid Command: %s\n", input);
   USBSendString(output);

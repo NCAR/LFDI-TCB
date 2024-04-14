@@ -25,6 +25,8 @@
 #define STAGE4FSR (.42)
 #define STAGE5FSR (.21)
 #define STAGE6FSR (.105)
+#define DefaultSlope (0.04)
+#define DefaultIntercept (-655.27)
 
 struct sStage {
 	float stageSize;
@@ -32,6 +34,8 @@ struct sStage {
 	float stageLower;
 	float freeSpectralRange;
 	uint16_t *lookuptable;
+	float slope;
+	float intercept;
 };
 
 

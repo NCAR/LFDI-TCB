@@ -90,6 +90,8 @@ void Compensator_Update(struct sCompensator* s){
 void Compensator_SetStage(struct sCompensator* s, double stage){
 	//Do it this way because its quicker than choosing at runtime
 	int i = (int)(stage*1000);
+	s->Stage.slope = DefaultSlope;
+	s->Stage.intercept = DefaultIntercept;
 	if (i == (int)(STAGE1*1000)){
 		s->Stage.lookuptable = lookup27;
 		s->Stage.freeSpectralRange = STAGE1FSR;
@@ -145,8 +147,9 @@ float BaseT_Position_to_BaseT_Voltage(uint16_t position, struct sCompensator* s)
 
 //This Function Will Convert the temperature to a positional offset
 //This is based on the Found relation ship between Position and Temperature
-float temperature_position_offset(float* temp){
-	float offset = (float)(.04*(*temp)-655.27);
+float temperature_position_offset(float* temp, struct sCompensator* s){
+
+	float offset = (float)(s->Stage.slope*(*temp)+s->Stage.intercept);
 	return offset;
 }
 
@@ -156,8 +159,8 @@ float Wavelength_to_Voltage(float* base_wavelength, float* temp, struct sCompens
 
 
 	float base_temp = 25;
-	float absolute_BaseT_Offset = temperature_position_offset(&base_temp);
-	float absolute_Offset = temperature_position_offset(temp);
+	float absolute_BaseT_Offset = temperature_position_offset(&base_temp, s);
+	float absolute_Offset = temperature_position_offset(temp, s);
 	float wavelength = *base_wavelength + (absolute_BaseT_Offset - absolute_Offset);
 
 

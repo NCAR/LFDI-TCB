@@ -191,7 +191,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
       ElapsedSeconds++;
       Ticks_OffsetCalculation++;
     }
-
+    //Sampling @130ms
     if (++Ticks_TMP117 >= 130)
     {
       Ticks_TMP117 = 0;

@@ -55,7 +55,7 @@ void Compensator_SetStage(struct sCompensator* s, double stage);
 
 
 float BaseT_Position_to_BaseT_Voltage(uint16_t position, struct sCompensator* s);
-float temperature_position_offset(float* temp);
+float temperature_position_offset(float* temp, struct sCompensator * s);
 float Wavelength_to_Voltage(float* wavelength, float* temp, struct sCompensator* s);
 
 
