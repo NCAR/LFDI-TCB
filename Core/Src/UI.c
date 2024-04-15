@@ -490,7 +490,7 @@ void SET_TUNE(struct sTuningControlBoard * s, char* input){
 void SET_SLOPE(struct  sTuningControlBoard *s, char* input){
 	float f = 0.0;
 	char output[250];
-	if (sscanf(input, "set_slope_%f", &f) == 2){
+	if (sscanf(input, "set_slope_%f", &f) == 1){
 		for (uint8_t i = 0; i < NUMOFCOMPENSATORS; i++){
 			s->Compensator[i].Stage.slope = f;
 			sprintf(output, "Compensator %u Slope Set %f\n", i, f);
@@ -505,9 +505,9 @@ void SET_SLOPE(struct  sTuningControlBoard *s, char* input){
 void SET_INT(struct  sTuningControlBoard *s, char* input){
 	float f = 0.0;
 	char output[250];
-	if (sscanf(input, "set_INT_%f", &f) == 2){
+	if (sscanf(input, "set_INT_%f", &f) == 1){
 		for (uint8_t i = 0; i < NUMOFCOMPENSATORS; i++){
-			s->Compensator[i].Stage.slope = f;
+			s->Compensator[i].Stage.intercept = f;
 			sprintf(output, "Compensator %u INT Set %f\n", i, f);
 			USBSendString(output);
 		}
