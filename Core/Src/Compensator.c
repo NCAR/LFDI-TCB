@@ -158,7 +158,7 @@ float temperature_position_offset(float* temp, struct sCompensator* s){
 float Wavelength_to_Voltage(float* base_wavelength, float* temp, struct sCompensator* s){
 
 
-	float base_temp = 25;
+	float base_temp = 25.5;
 	float absolute_BaseT_Offset = temperature_position_offset(&base_temp, s);
 	float absolute_Offset = temperature_position_offset(temp, s);
 	float wavelength = *base_wavelength + (absolute_BaseT_Offset - absolute_Offset);
