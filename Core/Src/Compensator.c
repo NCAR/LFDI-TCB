@@ -10,7 +10,7 @@ void Compensator_InitStruct(struct sCompensator* s, struct sTMP117 *t, struct sD
   //Should we be trying to compensate to a specific wavelength
   s->compensate = false;
   //Use the Average stored in the TMP117 struct or the last temperature
-  s->useAverage = false;
+  s->useAverage = true;
   //Wavelength to Compensate to
   s->wavelength =  0;
   //if we are not using the auto compensation what should this be outputting
