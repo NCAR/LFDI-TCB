@@ -8,8 +8,8 @@
 #ifndef INC_UI_H_
 #define INC_UI_H_
 
-#include "HeaterController.h"
 #include "defs.h"
+#include "HeaterController.h"
 #include "TuningControlBoard.h"
 
 void ProcessUserInput(struct sTuningControlBoard* TCB, char* buffer);
@@ -42,7 +42,7 @@ void ShowBipolarOutputHelp(void);
 
 void ProcessUserInput_MainMenu(struct sTuningControlBoard* s, char* input);
 void ProcessUserInput_CompensatorMenu(struct sTuningControlBoard* s, char* input);
-void ProcessUserInput_HeaterControllerMenu(struct sTuningControlBoard* s, char* input);
+void ProcessUserInput_HeaterControllerMenu(struct sHeaterController HeaterControllers[NUMOFHEATERCONTROLLERS], char* input);
 void ProcessUserInput_GPIOMenu(struct sTuningControlBoard* s, char* input);
 void ProcessUserInput_BipolarOutputMenu(struct sTuningControlBoard * s, char * buffer);
 

@@ -25,7 +25,7 @@ void TMP117_InitStruct(struct sTMP117* s, I2C_HandleTypeDef* interface, uint8_t 
   s->Address = 0b1001000 | addpin;
   s->Interface = interface;
   s->Average = -273.0f;
-  s->Configured = false;
+  s->Configured = TMP117_CONFIG_NEEDED;
   s->SamplesInAverage = 16;
   s->State = TMP117_STATE_UNKNOWN;
   for (i=0;i<64;i++)
@@ -47,13 +47,15 @@ void TMP117_Configure(struct sTMP117* s)
   res = HAL_I2C_Master_Transmit(s->Interface, (s->Address) << 1, buffer, 3, 10); // 8 samples averaged
   if (res == HAL_OK)
   {
-    s->Configured = true;
+    s->Configured = TMP117_CONFIG_OK;
     printf("OK!\n");
   }
   else
   {
-    s->Errors++;
+	  // we no longer count errors if a config failed. We flag the configure failed and the system tries to restart later.
+//    s->Errors++;
     s->State = TMP117_STATE_INITFAILED;
+    s->Configured = TMP117_CONFIG_FAILED;
     printf("Failed!\n");
   }
 }
@@ -71,9 +73,9 @@ void TMP117_GetTemperature(struct sTMP117* s)
   {
     s->State = TMP117_STATE_REQUESTNOACK;
     s->Errors++;
-    if (s->Errors > 100)
+    if (s->Errors > 20)
     {
-      s->Configured = false;
+      s->Configured = TMP117_CONFIG_FAILED;
       s->Errors = 0;
     }
     return;
@@ -83,9 +85,9 @@ void TMP117_GetTemperature(struct sTMP117* s)
   {
     s->State = TMP117_STATE_RECEIVEFAIL;
     s->Errors++;
-    if (s->Errors > 100)
+    if (s->Errors > 20)
     {
-      s->Configured = false;
+      s->Configured = TMP117_CONFIG_FAILED;
       s->Errors = 0;
     }
     return;

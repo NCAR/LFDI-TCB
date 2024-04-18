@@ -10,10 +10,10 @@
 #include "usbd_cdc_if.h"
 #include "defs.h"
 #include <math.h>
-#include "stm32f4xx_hal.h"
-#include <stdint.h>
-#include <stdio.h>
-#include "core_cm4.h"
+//#include "stm32f4xx_hal.h"
+//#include <stdint.h>
+//#include <stdio.h>
+//#include "core_cm4.h"
 
 // found this online
 int parse_comma_delimited_str(char *string, char **fields, int max_fields)
@@ -25,19 +25,6 @@ int parse_comma_delimited_str(char *string, char **fields, int max_fields)
       fields[i++] = ++string;
    }
    return --i;
-}
-
-void USBSendString(char* buf)
-{
-  int i, res;
-  for (i=0;i<50; i++)
-  {
-    res = CDC_Transmit_FS((uint8_t *)buf, strlen(buf));
-    if (res == USBD_OK)
-      return;
-
-    HAL_Delay(1);
-  }
 }
 
 void InitDWTTimer(void)
@@ -54,6 +41,7 @@ void Delay_us(uint32_t us)
   do  {
   } while((DWT->CYCCNT - start) < cycles);
 }
+
 
 int32_t UIntToInt(uint32_t x) {
     union { uint32_t u; int32_t i; } un;

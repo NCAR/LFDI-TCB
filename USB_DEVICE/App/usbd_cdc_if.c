@@ -24,7 +24,7 @@
 
 /* USER CODE BEGIN INCLUDE */
 
-#include "stringfifo.h"
+#include "USB_VCP_Support.h"
 
 /* USER CODE END INCLUDE */
 
@@ -35,7 +35,7 @@
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 
-extern struct sStringFIFO USBFIFO;
+extern struct sStringFIFO FIFO_USB_In;
 
 /* USER CODE END PV */
 
@@ -266,12 +266,7 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
 static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 {
   /* USER CODE BEGIN 6 */
-  uint16_t len = (uint8_t) *Len;
-  if(StringFIFOAdd(&USBFIFO, Buf, len)){
-    printf("USB FIFO overflow\nReinitalizing FIFO");
-    StringFIFOInit(&USBFIFO);
-    return USBD_FAIL;
-  }
+  StringFIFOAdd(&FIFO_USB_In, Buf, (uint16_t) (*Len));
 
   USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0]);
   USBD_CDC_ReceivePacket(&hUsbDeviceFS);
