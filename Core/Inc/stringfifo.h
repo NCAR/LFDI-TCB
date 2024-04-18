@@ -8,22 +8,23 @@
 #ifndef FIFO_H_
 #define FIFO_H_
 
-#define FIFO_BUFFER_SIZE 600
+//#define FIFO_BUFFER_SIZE 250
 #include <stdio.h>
 #include "defs.h"
+#include <stdlib.h>
 
 struct sStringFIFO
 {
-    uint8_t buffer[FIFO_BUFFER_SIZE];
-    uint8_t head;
-    uint8_t tail;
+    char* buffer;
+    uint16_t head;
+    uint16_t tail;
+    uint16_t buffer_size;
 };
-//Initialize the FIFO
-void StringFIFOInit(struct sStringFIFO* fifo);
-//Add a string to the FIFO
+
+void StringFIFOInit(struct sStringFIFO* fifo, size_t size);
 uint8_t StringFIFOAdd(struct sStringFIFO* fifo, uint8_t* item, size_t size);
-//Remove a string from the FIFO
-uint8_t StringFIFORemove(struct sStringFIFO* fifo, char* string);
+uint8_t StringFIFORemove(struct sStringFIFO* fifo, uint16_t len, char* string, size_t size);
+uint8_t StringFIFORemoveLine(struct sStringFIFO* fifo, char* string, size_t buffer_size);
 
 uint16_t StringFIFOUsed(struct sStringFIFO* fifo);
 uint16_t StringFIFOAvailable(struct sStringFIFO* fifo);

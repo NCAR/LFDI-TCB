@@ -9,6 +9,7 @@
 #define INC_DEFS_H_
 
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include "stm32f4xx_hal.h"
 #include <string.h>

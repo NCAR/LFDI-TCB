@@ -57,23 +57,39 @@ void HeaterController_Step(struct sHeaterController* Controller)
   uint8_t i = Controller->HeaterNumber - 1;
   float eff;
 
-  if (Controller->HeaterEnabled)
-    eff = PID_CalculateEffort(&Controller->PID, Controller->Sensor.Average);
-  else
+  if (!Controller->HeaterEnabled)
   {
-    Controller->PID.Ep = -1;
-    Controller->PID.Ed = -1;
-    Controller->PID.Ei = -1;
-    Controller->PID.Effort = 0;
-  }
-
-  if (Controller->HeaterEnabled == false)
-  {
+    Controller->PID.Ep = -1.0f;
+    Controller->PID.Ed = -1.0f;
+    Controller->PID.Ei = -1.0f;
+    Controller->PID.Effort = 0.0f;
+    Controller->PID.OffsetCorrection = 0.0f;
+    Controller->PID.SlewLimitedTarget = Controller->Sensor.Average;
     HeaterDwell[i] = 100; // duty cycle of 0, disabled
     return;
   }
-  if (Controller->Sensor.State != TMP117_STATE_VALIDTEMP)
+
+
+  if (Controller->Sensor.Configured == TMP117_CONFIG_OK)
   {
+    eff = PID_CalculateEffort(&Controller->PID, Controller->Sensor.Average);
+    // dwell is a value between 0 and 100 which tells the heater controller how many
+    // heater ticks the heater spends off. A complete heater cycle is 200 ticks.
+    // For a 40% duty cycle (effort), dwell becomes 60, making the heater off for 60,
+    // on for 80, and off for another 60. This weird design causes heaters with
+    // different effort values to turn on and off at different times.
+    HeaterDwell[i] = 100 * (1 - eff);
+  }
+
+  if ((Controller->Sensor.Configured == TMP117_CONFIG_FAILED) ||
+      (Controller->Sensor.Configured == TMP117_CONFIG_NEEDED))
+  {
+    Controller->PID.Ep = -1.0f;
+    Controller->PID.Ed = -1.0f;
+    Controller->PID.Ei = -1.0f;
+    Controller->PID.Effort = 0.0f;
+    Controller->PID.OffsetCorrection = 0.0f;
+    Controller->PID.SlewLimitedTarget = Controller->Sensor.Average;
     HeaterDwell[i] = 100; // duty cycle of 0, disabled
     return;
   }

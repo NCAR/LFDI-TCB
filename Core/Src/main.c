@@ -24,16 +24,19 @@
 /* USER CODE BEGIN Includes */
 #include "PID.h"
 #include "TuningControlBoard.h"
-#include "stringfifo.h"
-#include "UI.h"
+
+
 #include "TMP117.h"
+#include "heatercontroller.h"
+#include "usbd_cdc_if.h"
 #include "DAC.h"
 #include "funcs.h"
 #include "DAC_Unit_Test.h"
 #include "stm32f4xx_hal.h"
-#include "usbd_cdc_if.h"
+#include "stringfifo.h"
+#include "UI.h"
+#include "USB_VCP_Support.h"
 
-//#include "usbd_cdc_if.h"
 
 /* USER CODE END Includes */
 
@@ -68,7 +71,9 @@ TIM_HandleTypeDef htim9;
 
 //These are all from Damons Code----------------------------
 volatile bool DoSampleTMP117 = false;
+volatile bool DoCalculatePWM = false;
 volatile bool DoCalculateOffsetCorrection = false;
+volatile bool TMP117_TryConfig = true;
 
 // we keep our own local copy of these
 // we put this here for quick interrupt access
@@ -79,8 +84,13 @@ volatile uint8_t HeaterDwell[NUMOFHEATERCONTROLLERS] = {0};
 
 volatile uint16_t Ticks_OffsetCalculation = 0;
 volatile uint8_t Ticks_TMP117 = 0;
+volatile uint8_t Ticks_CalculatePWM = 0;
 volatile uint16_t Tick_ms = 0;
 volatile uint16_t ElapsedSeconds = 0;
+volatile uint16_t Tick_s = 0;
+volatile uint16_t Ticks_TMP117_TryConfig = 0;
+
+char tick[3] = "t\r";
 
 volatile bool AutoFlood = false;
 //End Damons Code-----------------------------------
@@ -110,7 +120,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
   uint16_t i;
   // Check which version of the timer triggered this callback and toggle LED
   //This is the Timer for the DAC Compensator. Should happen 4000 times a second
-	if (htim == &htim2 ){
+	if (htim->Instance == htim2.Instance ){
 		//Synchronous Update of the DACs
 		for (i = 0; i < NUMOFCOMPENSATORS; i++){
 		  if(TCB.Compensator[i].Channel.enabled){
@@ -157,7 +167,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
 
   //Timer For Heaters  
-  if (htim == &htim6)
+  if (htim->Instance == htim6.Instance)
   {
     for (i=0; i<NUMOFHEATERCONTROLLERS; i++)
     {
@@ -182,14 +192,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
 
   //Clock Tick for Sampling TMP117 
-  if (htim == &htim4)
+  if (htim->Instance == htim4.Instance)
   {
     Tick_ms = (Tick_ms + 1) % 1000;
     // this should be after the ClockTick increment
     if (Tick_ms == 0)
     {
-      ElapsedSeconds++;
+      Tick_s++;
       Ticks_OffsetCalculation++;
+      Ticks_TMP117_TryConfig++;
     }
     //Sampling @130ms
     if (++Ticks_TMP117 >= 130)
@@ -198,7 +209,14 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
       DoSampleTMP117 = true;
     }
 
-    if (Ticks_OffsetCalculation > 60)
+      if (Ticks_TMP117_TryConfig > 10)
+      {
+    	  Ticks_TMP117_TryConfig = 0;
+    	  TMP117_TryConfig = true;
+      }
+
+
+    if (Ticks_OffsetCalculation > 240)
     {
       Ticks_OffsetCalculation = 0;
       DoCalculateOffsetCorrection = true;
@@ -216,8 +234,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-  char buffer[50];
+
   int i;
+  char buffer[50];
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -226,8 +245,7 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-  
-  StringFIFOInit(&USBFIFO);
+
 
   /* USER CODE END Init */
 
@@ -235,8 +253,8 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-
-  InitDWTTimer(); // we need this for delay_us
+  
+  InitDWTTimer(); // system clock timer for creating us delays for onewire
 
   /* USER CODE END SysInit */
 
@@ -260,8 +278,10 @@ int main(void)
     TCB.DAC8718.DAC_Channels[i].state_high = false;
   }
   HAL_Delay(500);
-  printf("-- REBOOT --\n");
+  printf("-- REBOOT --\r");
 
+
+  USB_FIFO_Init(20, 2000);
  // HAL_TIM_Base_Start_IT(&htim2);
   
   for(i = 0; i< NUMOFHEATERCONTROLLERS; i++)
@@ -320,6 +340,15 @@ int main(void)
     //Set the heater to the opposite state its currently in
 	  //Just to Test. Here is the
 
+    if (TMP117_TryConfig)
+    {
+      TMP117_TryConfig = false;
+      for (i=0; i<4; i++)
+      {
+        if (TCB.HeaterControllers[i].Sensor.Configured == TMP117_CONFIG_FAILED)
+          TCB.HeaterControllers[i].Sensor.Configured = TMP117_CONFIG_NEEDED;
+      }
+    }
 
 
 
@@ -333,30 +362,28 @@ int main(void)
 
 		//This is set by an interrupt timer. When this is true the system will go through and take a sample
 		if (DoSampleTMP117){
-			//If there are a ton of error restart the I2C bus to see if that helps
 			DoSampleTMP117 = false;
 			//For each of the compensators
-			for(uint8_t i = 0; i<NUMOFCOMPENSATORS;i++){
+			for(i = 0; i < NUMOFCOMPENSATORS; i++){
 				//If there are errors Restart the Buses
 				if (TCB.Compensator[i].Sensor.Errors > 10){
 					MX_I2C1_Init();
 					MX_I2C2_Init();
 				}
-				if (TCB.Compensator[i].Sensor.Configured){
+				if (TCB.Compensator[i].Sensor.Configured == TMP117_CONFIG_OK){
 					TMP117_GetTemperature(&TCB.Compensator[i].Sensor);
-				}else{
+				}
+				if (TCB.Compensator[i].Sensor.Configured == TMP117_CONFIG_NEEDED){
 					TMP117_Configure(&TCB.Compensator[i].Sensor);
 				}
 			}//End Compensator For loop
 			//For all of the HeaterControllers
 			for (int i = 0; i < NUMOFHEATERCONTROLLERS; i++){
-				if (TCB.HeaterControllers[i].Sensor.Errors > 10){
-					MX_I2C1_Init();
-					MX_I2C2_Init();
+
+				if (TCB.HeaterControllers[i].Sensor.Configured == TMP117_CONFIG_OK){
+					TMP117_GetTemperature(&TCB.HeaterControllers[i].Sensor); // stores current and average temperature
 				}
-				if (TCB.HeaterControllers[i].Sensor.Configured){
-					TMP117_GetTemperature(&TCB.HeaterControllers[i].Sensor);
-				}else{
+if (TCB.HeaterControllers[i].Sensor.Configured == TMP117_CONFIG_NEEDED){
 					TMP117_Configure(&TCB.HeaterControllers[i].Sensor);
 				}
         HeaterController_Step(&TCB.HeaterControllers[i]);
@@ -367,17 +394,22 @@ int main(void)
     if (DoCalculateOffsetCorrection)
     {
       DoCalculateOffsetCorrection = false;
-      for (i=0; i<4; i++)
+      for (i=0; i<NUMOFHEATERCONTROLLERS; i++)
         if (TCB.HeaterControllers[i].HeaterEnabled)
-          PID_PerformOffsetCorrection(&TCB.HeaterControllers[i].PID);
+          PID_PerformOffsetCorrection(&TCB.HeaterControllers[i].PID, i);
     }
 
-		if (StringFIFORemove(&USBFIFO, buffer) == 0)
+    if (StringFIFORemoveLine(&FIFO_USB_In, buffer, sizeof(buffer)) == 0)
 		{
 		  ProcessUserInput(&TCB, buffer);
 		}
 
 	}
+    for (i=0;i<NUMOFHEATERCONTROLLERS;i++)
+      if (TCB.HeaterControllers[i].PID.NeedRefresh == true)
+        PID_Refresh(&TCB.HeaterControllers[i].PID);
+
+USB_Try_Send();
   /* USER CODE END 3 */
 }
 
@@ -875,6 +907,10 @@ void Error_Handler(void)
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
   __disable_irq();
+  HeaterController_SetHeater(0, false);
+  HeaterController_SetHeater(1, false);
+  HeaterController_SetHeater(2, false);
+  HeaterController_SetHeater(3, false);
   while (1)
   {
   }

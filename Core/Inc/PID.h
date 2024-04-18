@@ -9,12 +9,17 @@
 #define INC_PID_H_
 
 #define SLOW_HISTORY_SIZE (64)
-#define FAST_HISTORY_SIZE (16)
+#define FAST_HISTORY_SIZE (64)
 #define INTEGRATOR_DECAY (500)
 
 //  a velocity_lookback of 4 was too noisy
 // 12 was not quite responsive enough
-#define VELOCITY_LOOKBACK (8)
+//8 worked
+// the above is based on a tiny thermal mass which is probably
+// never going to be used in a real application
+
+// This value needs to be smaller than FAST_HISTORY_SIZE
+#define VELOCITY_LOOKBACK (20)
 
 #include "defs.h"
 
@@ -50,7 +55,7 @@ void PID_SavePoint(struct sPID* s, float p);
 float PID_IntegratorValue(struct sPID* s);
 float PID_Velocity_degpersec(struct sPID* s);
 float PID_CalculateEffort(struct sPID* s, float p);
-void PID_PerformOffsetCorrection(struct sPID* s);
+void PID_PerformOffsetCorrection(struct sPID* s, uint8_t controller_number);
 bool PID_AtSteadyState(struct sPID* s);
 float PID_ApplySlewLimit(struct sPID* s, float eff);
 void PID_LimitSlewRate(struct sPID* s);

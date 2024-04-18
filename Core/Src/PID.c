@@ -5,8 +5,9 @@
  * 
  */
 
-#include "pid.h"
 #include <math.h>
+#include "USB_VCP_Support.h"
+#include "pid.h"
 uint8_t HistoryIndex = 0;
 
 #include "funcs.h" // this is for usbsendstring, which is just debugging the offset correction
@@ -77,6 +78,11 @@ void PID_SavePoint(struct sPID* s, float p)
 bool PID_AtSteadyState(struct sPID* s)
 {
   uint16_t i;
+
+  // if we're still slew limited, we're not at steady state
+  if (fabs(s->SlewLimitedTarget - s->Config.Target) > 0.1)
+	  return false;
+
   float tmax = s->SlowHistory[0];
   float tmin = tmax;
   for (i=1; i<SLOW_HISTORY_SIZE; i++)
@@ -84,7 +90,7 @@ bool PID_AtSteadyState(struct sPID* s)
     tmax = MAX(tmax, s->SlowHistory[i]);
     tmin = MIN(tmin, s->SlowHistory[i]);
   }
-  if ((tmax-tmin) < 0.1f)
+  if ((tmax-tmin) < 0.05f)
     return true;
   return false;
 }
@@ -92,7 +98,6 @@ bool PID_AtSteadyState(struct sPID* s)
 float PID_IntegratorValue(struct sPID* s)
 {
   float err = 0;
-//  err = (s->Config.Target + s->OffsetCorrection - s->ExpWeightedAvg) * s->Config.Ki;
   err = (s->SlewLimitedTarget + s->OffsetCorrection - s->ExpWeightedAvg) * s->Config.Ki;
   err = MAX(-(s->Config.Il),err);
   err = MIN(s->Config.Il,err);
@@ -112,40 +117,54 @@ float PID_Velocity_degpermin(struct sPID* s)
 float PID_SlewRate_degpermin(struct sPID* s) // returns degrees / min
 {
   uint8_t periods = 15;
-//  return (s->SlowHistory[0]-s->SlowHistory[periods])/(s->DeltaT*periods)*60;
   return (s->SlowHistory[0] - s->SlowHistory[periods]) * (60/periods);
 }
 
-void PID_PerformOffsetCorrection(struct sPID* s)
+void PID_PerformOffsetCorrection(struct sPID* s, uint8_t controller_number)
 {
-  char buffer[50];
   if (s->Config.OffsetCorrectionEnabled == false)
+  {
+    s->OffsetCorrection = 0;
     return;
+  }
+
   if (s->IntegratorCount < 500) // not enough history
     return;
-  if (PID_AtSteadyState(s) == false)
-    return;
-  if ((fabs(s->Ei - s->Config.Il) < 0.01f) || (fabs(s->Ei + s->Config.Il) < 0.01f)) // integrator saturated
-    return;
 
-  float offset = s->Config.Target - s->ExpWeightedAvg;
+  if (PID_AtSteadyState(s) == false)
+  {
+	  s->OffsetCorrection = 0;  //NOTE this could cause issues, testing now
+      return;
+  }
+
+  if (s->Config.Il > 0.01f) // if the integrator limit is non-zero
+  {
+    if ((fabs(s->Ei - s->Config.Il) < 0.01f) || (fabs(s->Ei + s->Config.Il) < 0.01f)) // and the integrator is saturated
+      return; // don't calculate a new offset_adjustment
+  }
+
+  float offset_adjustment = s->Config.Target - s->ExpWeightedAvg;
 
   // applying the full offset will cause an immediate jump in the Ei value
-  // so we only apply some of the offset correction
-  offset *= 0.7f;
+  // so we only apply some of the offset_adjustment correction
+  offset_adjustment *= 0.7f;
 
-  // limit the offset in case something is really wrong
+  // limit the offset_adjustment adjustment in case something is really wrong
+  offset_adjustment = MAX(offset_adjustment, -0.1f);
+  offset_adjustment = MIN(offset_adjustment, 0.1f);
 
-  offset = MAX(offset,-0.3f);
-  offset = MIN(offset,0.3f);
+  if ((offset_adjustment < 0) && (s->OffsetCorrection < .001)) // don't allow a negative offset correction
+    return;
 
-  snprintf(buffer, 50, "Applying offset of %.3f.\r", offset);
-  USBSendString(buffer);
-  s->OffsetCorrection += offset;
-  s->OffsetCorrection = MAX(s->OffsetCorrection, -1.5f);
-  s->OffsetCorrection = MIN(s->OffsetCorrection, 1.5f);
+  if (fabs(offset_adjustment) >= .001) // don't tell us if the correction is tiny
+    uprintf("C%u: Applying offset of %.3f.\r", controller_number + 1, offset_adjustment);
+
+  s->OffsetCorrection += offset_adjustment;
+  //  s->OffsetCorrection = MAX(s->OffsetCorrection, -1.5f);
+  //  s->OffsetCorrection = MIN(s->OffsetCorrection, 1.5f);
+  s->OffsetCorrection = MAX(s->OffsetCorrection, 0.0f);
+  s->OffsetCorrection = MIN(s->OffsetCorrection, 0.5f);
 }
-
 
 void PID_LimitSlewRate(struct sPID* s)
 {
@@ -154,15 +173,26 @@ void PID_LimitSlewRate(struct sPID* s)
   float CurrentTemperature = s->FastHistory[0];
   float MaximumSafeChange_degpermin = s->Config.SlewLimit_degpermin;
 
-  if (fabs(s->Config.Target - CurrentTemperature) < 0.3)
-  {
-    s->SlewLimitedTarget = s->Config.Target;
-    return;
-  }
 
-  // If the SlewLimitedTarget is far away from our current temperature, start over
-  if (fabs(CurrentTemperature - s->SlewLimitedTarget) > (0.5 * MaximumSafeChange_degpermin))
+  // deal with the slew target being in the wrong direction. This is frequently triggered on a new enable
+  if ((s->Config.Target > CurrentTemperature) && (s->SlewLimitedTarget < CurrentTemperature))
     s->SlewLimitedTarget = CurrentTemperature;
+
+  if ((s->Config.Target < CurrentTemperature) && (s->SlewLimitedTarget > CurrentTemperature))
+    s->SlewLimitedTarget = CurrentTemperature;
+
+  // If the SlewLimitedTarget is far away from our current temperature, limit the distance.
+  if (fabs(CurrentTemperature - s->SlewLimitedTarget) > (1/s->Config.Kp))
+  {
+    if (s->Config.Target > CurrentTemperature)
+    {
+      s->SlewLimitedTarget = CurrentTemperature + (1/s->Config.Kp);
+    }
+    else
+    {
+      s->SlewLimitedTarget = CurrentTemperature - (1/s->Config.Kp);
+    }
+  }
 
   if (s->SlewLimitedTarget < s->Config.Target)
       s->SlewLimitedTarget += MIN(MaximumSafeChange_degpermin / 60 * s->DeltaT, s->Config.Target - s->SlewLimitedTarget);
@@ -181,17 +211,17 @@ float PID_CalculateEffort(struct sPID* s, float p)
   float eff;
   if (s->Config.Target < -200.0f)
   {
-    s->Ep = -1;
-    s->Ed = -1;
-    s->Ei = -1;
-    s->Effort = 0;
-    return 0;
+    s->Ep = -1.0f;
+    s->Ed = -1.0f;
+    s->Ei = -1.0f;
+    s->Effort = 0.0f;
+    return 0.0f;
   }
 
   PID_LimitSlewRate(s);
 
   s->Ep = (s->SlewLimitedTarget + s->OffsetCorrection - p) * (s->Config.Kp);
-  s->Ed = (0 - PID_Velocity_degpersec(s)) * (s->Config.Kd);
+  s->Ed = (0.0f - PID_Velocity_degpersec(s)) * (s->Config.Kd);
   s->Ei = PID_IntegratorValue(s);
   eff = s->Ep + s->Ed + s->Ei;
 
