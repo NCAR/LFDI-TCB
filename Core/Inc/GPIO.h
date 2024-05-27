@@ -19,4 +19,5 @@ void GPIO_SetInput(struct sGPIO* s);
 void GPIO_SetOutput(struct sGPIO* s);
 void GPIO_SetState(struct sGPIO* s, bool high);
 
-
+void Set_Pos_15V(bool high);
+void Set_Neg_15V(bool high);

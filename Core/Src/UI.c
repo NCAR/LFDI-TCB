@@ -591,6 +591,56 @@ void SET_HEATER(struct  sTuningControlBoard *s, char* input){
     sprintf(output, "Invalid Command: %s\n", input);
     USBSendString(output);
 }
+
+//Set DAC Rails
+SET_RAIL(struct sTuningControlBoard * s, char* input){
+  //SET_RAIL check if the input is a valid voltage
+  char output[250];
+  if (sscanf(input, "set_rail_pos_on") == 0)
+  {
+    set_Pos_15V(true);
+    sprintf(output, "Rail Pos 15 Volt set on\n");
+    USBSendString(output);
+    return;
+  }else if(sscanf(input, "set_rail_neg_on") == 0){
+    set_Neg_15V(true);
+    sprintf(output, "Rail Neg 15 Volt set on\n");
+    USBSendString(output);
+    return;
+  }else if(sscanf(input, "set_rail_pos_off") == 0){
+    Set_Pos_15V(false);
+    sprintf(output, "Rail Pos 15 Volt Set off\n");
+    USBSendString(output);
+    return;
+  }else if(sscanf(input, "set_rail_neg_off") == 0){
+      set_Neg_15V(false);
+      sprintf(output, "Rail Neg 15 Volt Set off\n");
+      USBSendString(output);
+      return;
+    }
+  sprintf(output, 250, "Invalid Command: %s\n", input);
+  USBSendString(output);
+}
+
+//Set Scanning wavelengths
+SET_SCAN(struct sTuningControlBoard * s, char* input){
+  //SET_SCAN_[Wavelength] check if the input is a valid wavelength
+  float f = 0;
+  char output[250];
+  if (sscanf(input, "set_scan_%f", &f) == 1)
+  {
+    for (uint8_t i = 0; i < NUMOFCOMPENSATORS; i++)
+    {
+      s->Compensator[i].wavelength = f;
+      //Float should be rounded to 2 decimal places
+      sprintf(output, "Compensator %u Wavelength set to %f\n", i, f);
+      USBSendString(output);
+    }
+    return;
+  }
+  sprintf(output, 250, "Invalid Command: %s\n", input);
+  USBSendString(output);
+}
 //Any Command with SET_ Prefix will be parsed here
 void SET_Processing_Tree(struct sTuningControlBoard * s, char* input){
   char output[250];
@@ -614,11 +664,11 @@ void SET_Processing_Tree(struct sTuningControlBoard * s, char* input){
   }
   if (strncmp(input, "set_slope_", 9) == 0){
 	  SET_SLOPE(s, input);
-	  return;
+    return;
   }
   if (strncmp(input, "set_int_", 9) == 0){
   	  SET_INT(s, input);
-	  return;
+    return;
   }
   sprintf(output, "Invalid Command: %s\n", input);
   USBSendString(output);
@@ -661,7 +711,7 @@ void ShowHousKeeping(struct sTuningControlBoard * s){
     USBSendString(buffer);
   }
   USBSendString(buffer);
-  
+
 }
 
 //Parse the Get Commands

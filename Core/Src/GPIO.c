@@ -75,3 +75,17 @@ void GPIO_SetState(struct sGPIO* s, bool high){
 	}
 
 }
+
+//Set the Positive 15V Supply
+void Set_Pos_15V(bool high){
+	struct sGPIO s;
+	GPIO_InitStruct(&s, 1);
+	GPIO_SetState(&s, high);
+}
+
+//Set the Negative 15V Supply
+void Set_Neg_15V(bool high){
+	struct sGPIO s;
+	GPIO_InitStruct(&s, 2);
+	GPIO_SetState(&s, high);
+}

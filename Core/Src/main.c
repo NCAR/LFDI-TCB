@@ -281,6 +281,11 @@ int main(void)
   HAL_TIM_Base_Start_IT(&htim6); // Heater Timer
   HAL_TIM_Base_Start_IT(&htim4); // Main Timer
 
+  //Turn on the 15V rails
+  Set_Pos_15V(true);
+  //Delay to allow the 15V rails to stabilize
+  HAL_Delay(1000);
+  Set_Neg_15V(true);
 
   /* USER CODE END 2 */
 
