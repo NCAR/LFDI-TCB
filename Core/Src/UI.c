@@ -344,7 +344,7 @@ void ShowAllCompensator(struct sCompensator* Compensator, bool readable, uint8_t
 
 //Show Everything for the TCB
 void ShowAllTCB(struct sTuningControlBoard* sTCB){
-  ShowRawHeaderHeaterController();
+//ShowRawHeaderHeaterController();
   for(uint8_t i = 0; i < NUMOFHEATERCONTROLLERS; i++){
     ShowAllHeaterController(&sTCB->HeaterControllers[i], false, AutoFlood);
   }
@@ -367,7 +367,7 @@ void ShowAllTCB(struct sTuningControlBoard* sTCB){
 void ShowRawHeaderHeaterController(void)
 {
   static char buf[200];
-  snprintf(buf, sizeof(buf), "\tkp\tkd\tki\tli\tep\ted\tei\teffort\tcurr\tinstant_temp\taverage_temp\tslew_target\tfinal_target\ti2c\tperiod\toffset\theater\tsensor\r");
+  snprintf(buf, sizeof(buf), "Cont\tkp\tkd\tki\tli\tep\ted\tei\teffort\tcurr\tinstant_temp\taverage_temp\tslew_target\tfinal_target\ti2c\tperiod\toffset\theater\tsensor\r");
   USBSendString(buf);
 }
 
@@ -1039,6 +1039,17 @@ void ProcessUserInput_HeaterControllerMenu(struct sTuningControlBoard * tcb, cha
   char c1, c2;
   float f = 0;
 
+  if ((strcmp(input, "h") == 0) || (strcmp(input, "help") == 0)){
+	  ShowHeaterControllerHelp();
+
+  }
+  if (strcmp(input, "m") == 0)
+    {
+      SUB_MENU = MAIN_MENU;
+      SelectedHeaterController = 9;
+      return;
+    }
+
   if ((strcmp(input, "u") == 0) || (strcmp(input, "/") == 0))
   {
     for (i=0; i<4; i++)
@@ -1096,7 +1107,7 @@ void ProcessUserInput_HeaterControllerMenu(struct sTuningControlBoard * tcb, cha
     ShowHeaterControllerConfig(&tcb->HeaterControllers[SelectedHeaterController]);
     return;
   }
-  if (strcmp(input, "ec") == 0)
+  if ((strcmp(input, "ec") == 0) || (strcmp(input, "e") == 0))
   {
 	snprintf(output, sizeof(output), "Controller %i heater output enabled.\r", SelectedHeaterController + 1);
     USBSendString(output);
@@ -1105,7 +1116,7 @@ void ProcessUserInput_HeaterControllerMenu(struct sTuningControlBoard * tcb, cha
     return;
   }
 
-  if (strcmp(input, "dc") == 0)
+  if ((strcmp(input, "dc") == 0) || (strcmp(input, "d") == 0))
   {
 	snprintf(output, sizeof(output), "Controller %i heater output disabled.\r", SelectedHeaterController + 1);
     USBSendString(output);

@@ -2,3 +2,5 @@
 ../Core/Src/GPIO.c:57:6:GPIO_SetInput	1
 ../Core/Src/GPIO.c:63:6:GPIO_SetOutput	1
 ../Core/Src/GPIO.c:68:6:GPIO_SetState	2
+../Core/Src/GPIO.c:80:6:Set_Pos_15V	1
+../Core/Src/GPIO.c:87:6:Set_Neg_15V	1
