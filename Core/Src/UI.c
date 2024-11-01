@@ -517,6 +517,28 @@ void SET_INT(struct  sTuningControlBoard *s, char* input){
 	USBSendString(output);
 }
 
+void SET_VOLTAGE(struct  sTuningControlBoard *s, char* input){
+  uint8_t u = 0;
+  char output[250];
+  float f = 0;
+
+  if (sscanf(input, "set_voltage_%u_%f", &u, &f) == 2){
+    if (u <= NUMOFCOMPENSATORS){
+
+      s->Compensator[u-1].voltage = f;
+      s->Compensator[u-1].Enable = true;
+      sprintf(output, "Compensator %u Voltage set to %f\n", u, f);
+      USBSendString(output);
+      return;
+    }
+  }
+  sprintf(output, "Invalid Command: %s\n", input);
+  USBSendString(output);
+  return;
+}
+
+
+
 void SET_HEATER(struct  sTuningControlBoard *s, char* input){
     
 	uint8_t u = 0;
@@ -654,6 +676,12 @@ void SET_Processing_Tree(struct sTuningControlBoard * s, char* input){
   if (strncmp(input, "set_tune_", 9) == 0)
   {
     SET_TUNE(s, input);
+    return;
+  }
+  //SET_VOLTAGE_[Stage]_[Voltage]
+  if (strncmp(input, "set_voltage_", 12) == 0)
+  {
+    SET_VOLTAGE(s, input);
     return;
   }
   //SET_HEATER_[Controller]_KP_[KP]
