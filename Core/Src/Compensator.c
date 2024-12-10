@@ -157,12 +157,15 @@ float temperature_position_offset(float* temp, struct sCompensator* s){
 //This Function Will Convert a Wavelength and a temperature to a Voltage
 float Wavelength_to_Voltage(float* base_wavelength, float* temp, struct sCompensator* s){
 
-
+	float wavelength = 0;
 	float base_temp = 25.5;
-	float absolute_BaseT_Offset = temperature_position_offset(&base_temp, s);
+	float absolute_BaseT_Offset = temperature_position_offset(&base_temp, s); //This can be reduced to a constant
 	float absolute_Offset = temperature_position_offset(temp, s);
-	float wavelength = *base_wavelength + (absolute_BaseT_Offset - absolute_Offset);
-
+	if(s->Stage.stageSize == STAGE1){
+		wavelength = *base_wavelength + (absolute_BaseT_Offset - absolute_Offset);
+	}else{
+		wavelength = *base_wavelength - (absolute_BaseT_Offset - absolute_Offset);
+	}
 
 
 	while(wavelength < s->Stage.stageLower){
