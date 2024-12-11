@@ -18,6 +18,7 @@ void PID_InitStruct(struct sPID* s)
   s->Config.Kd = 0.0f;
   s->Config.Il = 1.0f;
   s->Config.SlewLimit_degpermin = 10.0f;
+  s->Config.SlewLimitDown_degpermin = 20.0f;
   s->Config.Target = -273.0f;
   s->Config.OffsetCorrectionEnabled = false;
   s->DeltaT = 0.13f;
@@ -153,6 +154,7 @@ void PID_LimitSlewRate(struct sPID* s)
   // if we're close to our target, skip the slew rate limiting
   float CurrentTemperature = s->FastHistory[0];
   float MaximumSafeChange_degpermin = s->Config.SlewLimit_degpermin;
+  float MaximumSafeChangeDown_degpermin = s->Config.SlewLimitDown_degpermin;
 
   if (fabs(s->Config.Target - CurrentTemperature) < 0.3)
   {
@@ -168,7 +170,7 @@ void PID_LimitSlewRate(struct sPID* s)
       s->SlewLimitedTarget += MIN(MaximumSafeChange_degpermin / 60 * s->DeltaT, s->Config.Target - s->SlewLimitedTarget);
 
   if (s->SlewLimitedTarget > s->Config.Target)
-      s->SlewLimitedTarget -= MAX(MaximumSafeChange_degpermin / 60 * s->DeltaT, s->Config.Target - s->SlewLimitedTarget);
+	  s->SlewLimitedTarget -= MAX(MaximumSafeChangeDown_degpermin / 60 * s->DeltaT, s->Config.Target - s->SlewLimitedTarget);
 
   return;
 }
@@ -199,6 +201,9 @@ float PID_CalculateEffort(struct sPID* s, float p)
   eff = MAX(0,eff);
 
   s->Effort = eff;
+  if(eff > 0.0){
+  	  char placeholder  = 0;
+  }
   return eff;
 }
 

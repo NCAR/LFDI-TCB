@@ -28,6 +28,7 @@ struct sPID_Config
   float Target;
   float Kp, Ki, Kd, Il;
   float SlewLimit_degpermin;
+  float SlewLimitDown_degpermin;
   bool OffsetCorrectionEnabled;
 };
 
