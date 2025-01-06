@@ -9,4 +9,4 @@
 ../Core/Src/Compensator.c:90:6:Compensator_SetStage	7
 ../Core/Src/Compensator.c:136:7:BaseT_Position_to_BaseT_Voltage	2
 ../Core/Src/Compensator.c:150:7:temperature_position_offset	1
-../Core/Src/Compensator.c:158:7:Wavelength_to_Voltage	4
+../Core/Src/Compensator.c:158:7:Wavelength_to_Voltage	3

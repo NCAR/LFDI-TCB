@@ -54,7 +54,9 @@ void TMP117_Configure(struct sTMP117* s)
   {
     s->Errors++;
     s->State = TMP117_STATE_INITFAILED;
-    printf("Failed!\n");
+    char output[30];
+    snprintf(output, sizeof(output), "Address %i", s->Address);
+    printf("Address %i Failed!\n", s->Address);
   }
 }
 

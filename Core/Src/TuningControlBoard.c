@@ -11,16 +11,16 @@
 //This Will Setup the TCB structer by initiallizing the DAC and the TMP117 and the Controller
 void TCB_InitStruct(struct sTuningControlBoard* s, I2C_HandleTypeDef* hi2c1,I2C_HandleTypeDef* hi2c2, SPI_HandleTypeDef* hspi){
 
-	uint8_t tmp_address[4] = {0x02, 0x01, 0x03, 0x03};
+	uint8_t tmp_address[4] = {0x02, 0x01, 0x03, 0x02, 0x01, 0x03};
     //For each of the Seven Temperature sensors initialize the struct
     for(int i = 0; i < NUMOFSENSORSBUS1; i++){
         //The Last parameter is the address of the sensor this will need to be changed as we get more sensors
         TMP117_InitStruct(&s->Sensor[i], hi2c1, tmp_address[i]);
     }
-    for(int i = 0; i < NUMOFSENSORSBUS2; i++){
-        //The Last parameter is the address of the sensor this will need to be changed as we get more sensors
-        TMP117_InitStruct(&s->Sensor[i+NUMOFSENSORSBUS1], hi2c2, 0x00+i);
-    }
+//    for(int i = 0; i < NUMOFSENSORSBUS2; i++){
+//        //The Last parameter is the address of the sensor this will need to be changed as we get more sensors
+//        TMP117_InitStruct(&s->Sensor[i+NUMOFSENSORSBUS1], hi2c2, 0x00+i);
+//    }
     //Initialize the DAC
     DAC_InitStruct(&s->DAC8718, hspi);
     

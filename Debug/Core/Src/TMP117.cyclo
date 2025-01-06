@@ -1,3 +1,3 @@
 ../Core/Src/TMP117.c:16:6:TMP117_InitStruct	2
 ../Core/Src/TMP117.c:39:6:TMP117_Configure	2
-../Core/Src/TMP117.c:61:6:TMP117_GetTemperature	8
+../Core/Src/TMP117.c:63:6:TMP117_GetTemperature	8

@@ -161,11 +161,8 @@ float Wavelength_to_Voltage(float* base_wavelength, float* temp, struct sCompens
 	float base_temp = 25.5;
 	float absolute_BaseT_Offset = temperature_position_offset(&base_temp, s); //This can be reduced to a constant
 	float absolute_Offset = temperature_position_offset(temp, s);
-	if(s->Stage.stageSize == STAGE1){
-		wavelength = *base_wavelength + (absolute_BaseT_Offset - absolute_Offset);
-	}else{
-		wavelength = *base_wavelength - (absolute_BaseT_Offset - absolute_Offset);
-	}
+	wavelength = *base_wavelength - (absolute_BaseT_Offset - absolute_Offset);
+
 
 
 	while(wavelength < s->Stage.stageLower){
