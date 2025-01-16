@@ -722,7 +722,7 @@ void ShowHousKeeping(struct sTuningControlBoard * s){
     }else{
       strcpy(heater, "DISABLED");
     }
-    snprintf(buffer, 1000, "H%u\t%3.2f\t%3.2f\t%3.2f\t%3.2f\t%3.2f\t%s\n", 
+    snprintf(buffer, 1000, "H%u\t%3.3f\t%3.3f\t%3.3f\t%3.3f\t%3.3f\t%s\n",
     i+1, s->HeaterControllers[i].PID.Config.Kp, s->HeaterControllers[i].PID.Config.Ki, 
     s->HeaterControllers[i].PID.Config.Kd, s->HeaterControllers[i].Sensor.Average, 
     s->HeaterControllers[i].PID.Config.Target, heater);
@@ -734,7 +734,7 @@ void ShowHousKeeping(struct sTuningControlBoard * s){
     }else{
       strcpy(heater, "DISABLED");
     }
-    snprintf(buffer, 1000, "C%u\t%3.2f\t%3.2f\t%2.2f\t%s\n",i+1, s->Compensator[i].wavelength, 
+    snprintf(buffer, 1000, "C%u\t%3.3f\t%3.3f\t%2.2f\t%s\n",i+1, s->Compensator[i].wavelength,
     s->Compensator[i].voltage, s->Compensator[i].Stage.stageSize, heater);
     USBSendString(buffer);
   }
