@@ -715,6 +715,8 @@ void SET_Processing_Tree(struct sTuningControlBoard * s, char* input){
 void ShowHousKeeping(struct sTuningControlBoard * s){
   char buffer[1000];
   char heater[10];
+  char compensator[10];
+  char tuning[10];
   for (uint8_t i = 0; i < NUMOFHEATERCONTROLLERS; i++)
   {
     if(s->HeaterControllers[i].HeaterEnabled){
@@ -730,12 +732,18 @@ void ShowHousKeeping(struct sTuningControlBoard * s){
   }
   for(uint8_t i = 0; i < NUMOFCOMPENSATORS; i++){
     if(s->Compensator[i].Enable){
-      strcpy(heater, "ENABLED");
+      strcpy(compensator, "ENABLED");
     }else{
-      strcpy(heater, "DISABLED");
+      strcpy(compensator, "DISABLED");
     }
-    snprintf(buffer, 1000, "C%u\t%3.3f\t%3.3f\t%2.2f\t%s\n",i+1, s->Compensator[i].wavelength,
-    s->Compensator[i].voltage, s->Compensator[i].Stage.stageSize, heater);
+    if(s->Compensator[i].compensate){
+    	strcpy(tuning, "ENABLED");
+    }else{
+    	strcpy(tuning, "DISABLED");
+    }
+
+    snprintf(buffer, 1000, "C%u\t%3.3f\t%3.3f\t%2.2f\t%s\t%s\n",i+1, s->Compensator[i].wavelength,
+    s->Compensator[i].voltage, s->Compensator[i].Stage.stageSize, compensator, tuning);
     USBSendString(buffer);
   }
   USBSendString(buffer);

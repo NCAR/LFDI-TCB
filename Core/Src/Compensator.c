@@ -173,7 +173,7 @@ float Wavelength_to_Voltage(float* base_wavelength, float* temp, struct sCompens
 	}
 	//Convert your float wavelength to an int so that we can use it as an index
 	//For instance 656.28 would turn into position 280
-	uint16_t position = (wavelength - 656.0) * 1000;
+	uint16_t position = (wavelength - 655.68) * 1000;
 	float Voltage = BaseT_Position_to_BaseT_Voltage(position, s);
 	return Voltage;
 }
