@@ -57,6 +57,12 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define H1_Current_Sensor_Pin GPIO_PIN_4
+#define H1_Current_Sensor_GPIO_Port GPIOC
+#define H2_Current_Sensor_Pin GPIO_PIN_5
+#define H2_Current_Sensor_GPIO_Port GPIOC
+#define H3_Current_Sensor_Pin GPIO_PIN_0
+#define H3_Current_Sensor_GPIO_Port GPIOB
 #define Heater_Enable_1_Pin GPIO_PIN_1
 #define Heater_Enable_1_GPIO_Port GPIOB
 #define Heater_Enable_2_Pin GPIO_PIN_8
@@ -73,6 +79,8 @@ void Error_Handler(void);
 #define DAC_nLDAC_GPIO_Port GPIOB
 #define DAC_nCS_Pin GPIO_PIN_14
 #define DAC_nCS_GPIO_Port GPIOB
+#define nLDAC_Pin GPIO_PIN_9
+#define nLDAC_GPIO_Port GPIOD
 
 /* USER CODE BEGIN Private defines */
 

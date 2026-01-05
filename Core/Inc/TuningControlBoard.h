@@ -14,6 +14,7 @@
 #define NUMOFSENSORSBUS2 (0)
 #define NUMOFGPIO (5)
 #define NUMOFBipolarOutputs (2)
+#define NUMOFCurrentSensors (3)
 
 
 
@@ -28,6 +29,7 @@
 #include "GPIO.h"
 #include "BipolarOutput.h"
 #include "CameraController.h"
+#include "CurrentSensor.h"
 
 
 
@@ -42,6 +44,7 @@ struct sTuningControlBoard
   struct sCompensator Compensator[6];
   struct sGPIO GPIO[NUMOFGPIO];
   struct sBipolarOutput BipolarOutput[NUMOFBipolarOutputs];
+  struct sCurrentSensor CurrentSensor[NUMOFCurrentSensors];
 
 };
 

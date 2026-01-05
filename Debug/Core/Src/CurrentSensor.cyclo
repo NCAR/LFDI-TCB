@@ -1,0 +1,4 @@
+../Core/Src/CurrentSensor.c:4:21:adc_to_volts	1
+../Core/Src/CurrentSensor.c:9:21:volts_to_amps	1
+../Core/Src/CurrentSensor.c:14:6:CurrentSensor_InitStruct	2
+../Core/Src/CurrentSensor.c:27:6:CurrentSensor_GetCurrent	9

@@ -46,4 +46,9 @@ void TCB_InitStruct(struct sTuningControlBoard* s, I2C_HandleTypeDef* hi2c1,I2C_
     for(int i = 0; i < NUMOFBipolarOutputs; i++){
         BipolarOutput_InitStruct(&s->BipolarOutput[i], i+1, &s->DAC8718.DAC_Channels[i+NUMOFCOMPENSATORS]);
     }
+
+    //Initialize the Current Sensors
+    for(int i = 0; i < NUMOFCurrentSensors; i++){
+        CurrentSensor_InitStruct(&s->CurrentSensor[i], &hadc1, i+1); // Channel is rank (1, 2, or 3)
+    }
 }
