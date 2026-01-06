@@ -615,7 +615,7 @@ void SET_HEATER(struct  sTuningControlBoard *s, char* input){
 }
 
 //Set DAC Rails
-SET_RAIL(struct sTuningControlBoard * s, char* input){
+void SET_RAIL(struct sTuningControlBoard * s, char* input){
   //SET_RAIL check if the input is a valid voltage
   char output[250];
   if (sscanf(input, "set_rail_pos_on") == 0)
@@ -645,7 +645,7 @@ SET_RAIL(struct sTuningControlBoard * s, char* input){
 }
 
 //Set Scanning wavelengths
-SET_SCAN(struct sTuningControlBoard * s, char* input){
+void SET_SCAN(struct sTuningControlBoard * s, char* input){
   //SET_SCAN_[Wavelength] check if the input is a valid wavelength
   float f = 0;
   char output[250];
@@ -724,10 +724,10 @@ void ShowHousKeeping(struct sTuningControlBoard * s){
     }else{
       strcpy(heater, "DISABLED");
     }
-    snprintf(buffer, 1000, "H%u\t%3.3f\t%3.3f\t%3.3f\t%3.3f\t%3.3f\t%s\n",
+    snprintf(buffer, 1000, "H%u\t%3.3f\t%3.3f\t%3.3f\t%3.3f\t%3.3f\t%s\t%4.0f\n",
     i+1, s->HeaterControllers[i].PID.Config.Kp, s->HeaterControllers[i].PID.Config.Ki, 
     s->HeaterControllers[i].PID.Config.Kd, s->HeaterControllers[i].Sensor.Average, 
-    s->HeaterControllers[i].PID.Config.Target, heater);
+    s->HeaterControllers[i].PID.Config.Target, heater, s->CurrentSensor[i].Current);
     USBSendString(buffer);
   }
   for(uint8_t i = 0; i < NUMOFCOMPENSATORS; i++){

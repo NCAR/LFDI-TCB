@@ -53,6 +53,8 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+ADC_HandleTypeDef hadc1;
+
 I2C_HandleTypeDef hi2c1;
 I2C_HandleTypeDef hi2c2;
 
@@ -69,6 +71,7 @@ TIM_HandleTypeDef htim9;
 //These are all from Damons Code----------------------------
 volatile bool DoSampleTMP117 = false;
 volatile bool DoCalculateOffsetCorrection = false;
+volatile bool DoSampleCurrentSensor = false;
 
 // we keep our own local copy of these
 // we put this here for quick interrupt access
@@ -79,6 +82,7 @@ volatile uint8_t HeaterDwell[NUMOFHEATERCONTROLLERS] = {0};
 
 volatile uint16_t Ticks_OffsetCalculation = 0;
 volatile uint8_t Ticks_TMP117 = 0;
+volatile uint8_t Ticks_CurrentSensor = 0;
 volatile uint16_t Tick_ms = 0;
 volatile uint16_t ElapsedSeconds = 0;
 
@@ -99,6 +103,7 @@ static void MX_TIM4_Init(void);
 static void MX_TIM6_Init(void);
 static void MX_I2C2_Init(void);
 static void MX_TIM9_Init(void);
+static void MX_ADC1_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -198,6 +203,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
       DoSampleTMP117 = true;
     }
 
+    //Sampling Current Sensors @130ms (same as TMP117)
+    if (++Ticks_CurrentSensor >= 130)
+    {
+      Ticks_CurrentSensor = 0;
+      DoSampleCurrentSensor = true;
+    }
+
     if (Ticks_OffsetCalculation > 60)
     {
       Ticks_OffsetCalculation = 0;
@@ -215,6 +227,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
   */
 int main(void)
 {
+
   /* USER CODE BEGIN 1 */
   char buffer[50];
   int i;
@@ -250,6 +263,7 @@ int main(void)
   MX_TIM6_Init();
   MX_I2C2_Init();
   MX_TIM9_Init();
+  MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
   TCB_InitStruct(&TCB, &hi2c1, &hi2c2, &hspi4);
   for (i = 0; i < 6; i++){
@@ -317,6 +331,7 @@ int main(void)
 
 
 
+
     // we keep a global copy of this for the timer interrupt
     for (i=0; i<NUMOFHEATERCONTROLLERS; i++)
       HeaterTickDivider[i] = MAX(1, TCB.HeaterControllers[i].PwmPeriod_ms / 20);
@@ -368,6 +383,13 @@ int main(void)
 			}//End Controller For loop
 		  }//End do Sample
 
+		//Sample Current Sensors
+		if (DoSampleCurrentSensor){
+			DoSampleCurrentSensor = false;
+			for(uint8_t i = 0; i < NUMOFCurrentSensors; i++){
+				CurrentSensor_GetCurrent(&TCB.CurrentSensor[i]);
+			}
+		}
 
     if (DoCalculateOffsetCorrection)
     {
@@ -429,6 +451,76 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+}
+
+/**
+  * @brief ADC1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_ADC1_Init(void)
+{
+
+  /* USER CODE BEGIN ADC1_Init 0 */
+
+  /* USER CODE END ADC1_Init 0 */
+
+  ADC_ChannelConfTypeDef sConfig = {0};
+
+  /* USER CODE BEGIN ADC1_Init 1 */
+
+  /* USER CODE END ADC1_Init 1 */
+
+  /** Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
+  */
+  hadc1.Instance = ADC1;
+  hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV2;
+  hadc1.Init.Resolution = ADC_RESOLUTION_12B;
+  hadc1.Init.ScanConvMode = ENABLE;
+  hadc1.Init.ContinuousConvMode = DISABLE;
+  hadc1.Init.DiscontinuousConvMode = DISABLE;
+  hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+  hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+  hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+  hadc1.Init.NbrOfConversion = 3;
+  hadc1.Init.DMAContinuousRequests = DISABLE;
+  hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+  if (HAL_ADC_Init(&hadc1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+  */
+  sConfig.Channel = ADC_CHANNEL_14;
+  sConfig.Rank = 1;
+  sConfig.SamplingTime = ADC_SAMPLETIME_56CYCLES;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+  */
+  sConfig.Channel = ADC_CHANNEL_15;
+  sConfig.Rank = 2;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+  */
+  sConfig.Channel = ADC_CHANNEL_8;
+  sConfig.Rank = 3;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN ADC1_Init 2 */
+
+  /* USER CODE END ADC1_Init 2 */
+
 }
 
 /**
@@ -739,8 +831,8 @@ static void MX_TIM9_Init(void)
 static void MX_GPIO_Init(void)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
-/* USER CODE BEGIN MX_GPIO_Init_1 */
-/* USER CODE END MX_GPIO_Init_1 */
+  /* USER CODE BEGIN MX_GPIO_Init_1 */
+  /* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOE_CLK_ENABLE();
@@ -788,12 +880,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   GPIO_InitStruct.Alternate = GPIO_AF5_SPI1;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : PC4 */
-  GPIO_InitStruct.Pin = GPIO_PIN_4;
-  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pins : Heater_Enable_1_Pin DAC_nWake_Pin DAC_nLDAC_Pin DAC_nCS_Pin */
   GPIO_InitStruct.Pin = Heater_Enable_1_Pin|DAC_nWake_Pin|DAC_nLDAC_Pin|DAC_nCS_Pin;
@@ -843,8 +929,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Alternate = GPIO_AF12_SDIO;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
-/* USER CODE BEGIN MX_GPIO_Init_2 */
-/* USER CODE END MX_GPIO_Init_2 */
+  /* USER CODE BEGIN MX_GPIO_Init_2 */
+  /* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
@@ -885,8 +971,7 @@ void Error_Handler(void)
   }
   /* USER CODE END Error_Handler_Debug */
 }
-
-#ifdef  USE_FULL_ASSERT
+#ifdef USE_FULL_ASSERT
 /**
   * @brief  Reports the name of the source file and the source line number
   *         where the assert_param error has occurred.
