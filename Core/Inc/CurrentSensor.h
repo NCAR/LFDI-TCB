@@ -29,7 +29,7 @@ struct sCurrentSensor
 {
   ADC_HandleTypeDef* Interface;   // ADC handle (e.g. &hadc1)
   uint8_t Channel;                // ADC channel/rank for this sensor
-  float Currents[64];             // Array of current samples
+  float Currents[80];             // Array of current samples (80 samples × 130ms = 10.4 seconds)
   float Current;                  // Averaged current value
   uint8_t SamplesInAverage;
   uint8_t State;

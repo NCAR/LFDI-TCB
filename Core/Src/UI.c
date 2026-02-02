@@ -1402,7 +1402,7 @@ void ProcessUserInput_GPIOMenu(struct sTuningControlBoard * s, char * buffer){
   if (strcmp(buffer, "d") == 0)
   {
     USBSendString("GPIO disabled.\n");
-    GPIO_SetState(&s->GPIO[UI_GPIO], true);
+    GPIO_SetState(&s->GPIO[UI_GPIO], false);
     return;
   }
 
@@ -1440,14 +1440,14 @@ void ProcessUserInput_BipolarOutputMenu(struct sTuningControlBoard * s, char * b
   if (strcmp(buffer, "m") == 0)
   {
     SUB_MENU = MAIN_MENU;
-    UI_GPIO = 9;
+    UI_BipolarOutput = 9;
 
     return;
   }
    if ((strcmp((char*) buffer, "?") == 0) || (strcmp((char*) buffer, "help") == 0))
   {
     ShowBipolarOutputHelp();
-    if (UI_GPIO == 9)
+    if (UI_BipolarOutput == 9)
       USBSendString("No Bipolar Output selected.\n");
     else
     {
@@ -1507,7 +1507,7 @@ void ProcessUserInput_BipolarOutputMenu(struct sTuningControlBoard * s, char * b
   if (strcmp((char*) buffer, "d") == 0)
   {
     USBSendString("BipolarOutput disabled.\n");
-    BipolarOutput_Enable(&s->BipolarOutput[UI_BipolarOutput], true);
+    BipolarOutput_Enable(&s->BipolarOutput[UI_BipolarOutput], false);
     return;
   }
 

@@ -17,9 +17,9 @@ void CurrentSensor_InitStruct(struct sCurrentSensor* s, ADC_HandleTypeDef* inter
     s->Interface = interface;
     s->Channel = channel;
     s->Current = 0.0f;
-    s->SamplesInAverage = 16;
+    s->SamplesInAverage = 77;  // Average over 10 seconds (77 samples × 130ms = 10.01 seconds)
     s->State = CURRENTSENSOR_STATE_UNKNOWN;
-    for (i = 0; i < 64; i++)
+    for (i = 0; i < 80; i++)
         s->Currents[i] = 0.0f;
     s->Errors = 0;
 }
@@ -30,32 +30,47 @@ void CurrentSensor_GetCurrent(struct sCurrentSensor* s)
     float current_sum = 0.0f;
     uint16_t adc_value = 0;
     
-    if (HAL_ADC_Start(s->Interface) != HAL_OK) {
-        s->State = CURRENTSENSOR_STATE_READFAIL;
-        s->Errors++;
-        return;
-    }
-
-    // Read through all ranks until we get to the one we want
-    // Channel field stores the rank (1, 2, or 3)
-    for (uint8_t rank = 1; rank <= s->Channel; rank++) {
-        if (HAL_ADC_PollForConversion(s->Interface, ADC_TIMEOUT_MS) != HAL_OK) {
-            HAL_ADC_Stop(s->Interface);
+    // Take multiple rapid samples to average out PWM effects
+    // This helps capture the average current even if sampling during PWM transitions
+    // Taking samples quickly (without delays) will capture different points in the PWM cycle
+    float sample_sum = 0.0f;
+    uint8_t valid_samples = 0;
+    const uint8_t num_samples = 16;  // Take 16 rapid samples to average PWM
+    
+    for (uint8_t sample = 0; sample < num_samples; sample++) {
+        if (HAL_ADC_Start(s->Interface) != HAL_OK) {
             s->State = CURRENTSENSOR_STATE_READFAIL;
             s->Errors++;
             return;
         }
-        if (rank == s->Channel) {
-            adc_value = (uint16_t)HAL_ADC_GetValue(s->Interface);
+
+        // Read through all ranks until we get to the one we want
+        // Channel field stores the rank (1, 2, or 3)
+        for (uint8_t rank = 1; rank <= s->Channel; rank++) {
+            if (HAL_ADC_PollForConversion(s->Interface, ADC_TIMEOUT_MS) != HAL_OK) {
+                HAL_ADC_Stop(s->Interface);
+                s->State = CURRENTSENSOR_STATE_READFAIL;
+                s->Errors++;
+                return;
+            }
+            if (rank == s->Channel) {
+                adc_value = (uint16_t)HAL_ADC_GetValue(s->Interface);
+            }
         }
+
+        HAL_ADC_Stop(s->Interface);
+
+        // Convert ADC value to current (in mA)
+        float voltage = adc_to_volts(adc_value);
+        float current_A = volts_to_amps(voltage);
+        float current_mA = current_A * 1000.0f;  // Convert to milliamps
+        
+        sample_sum += current_mA;
+        valid_samples++;
     }
-
-    HAL_ADC_Stop(s->Interface);
-
-    // Convert ADC value to current (in mA)
-    float voltage = adc_to_volts(adc_value);
-    float current_A = volts_to_amps(voltage);
-    float current_mA = current_A * 1000.0f;  // Convert to milliamps
+    
+    // Average the samples taken
+    float current_mA = sample_sum / valid_samples;
 
     s->State = CURRENTSENSOR_STATE_VALIDCURRENT;
     
