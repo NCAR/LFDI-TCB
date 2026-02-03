@@ -47,24 +47,44 @@ void GPIO_InitStruct(struct sGPIO* s, uint8_t GPIONum){
 
 	}
 
-	s->Input = false; //Whether the pin is an input (true) or an output (false)
+	s->Input = false; //GPIOs are always configured as outputs
 	s->Enabled = false; //if the Pin is currently on
-	GPIO_SetState(s, false);
-}
-
-
-//Set the GPIO as an input Input
-void GPIO_SetInput(struct sGPIO* s){
-	//TODO: Implement this
-
+	// Configure GPIO as output
+	GPIO_SetOutput(s);
 }
 
 //Set the GPIO as an Output
 void GPIO_SetOutput(struct sGPIO* s){
-	//TODO: Implement this
+	GPIO_InitTypeDef GPIO_InitStruct = {0};
+	
+	// Enable GPIO port clock
+	if(s->EnablePort == GPIOA) {
+		__HAL_RCC_GPIOA_CLK_ENABLE();
+	} else if(s->EnablePort == GPIOB) {
+		__HAL_RCC_GPIOB_CLK_ENABLE();
+	} else if(s->EnablePort == GPIOC) {
+		__HAL_RCC_GPIOC_CLK_ENABLE();
+	} else if(s->EnablePort == GPIOD) {
+		__HAL_RCC_GPIOD_CLK_ENABLE();
+	} else if(s->EnablePort == GPIOE) {
+		__HAL_RCC_GPIOE_CLK_ENABLE();
+	}
+	
+	// Configure GPIO pin as output
+	GPIO_InitStruct.Pin = s->EnablePin;
+	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	HAL_GPIO_Init(s->EnablePort, &GPIO_InitStruct);
+	
+	// Set initial state to low
+	HAL_GPIO_WritePin(s->EnablePort, s->EnablePin, GPIO_PIN_RESET);
+	s->Input = false;
+	s->Enabled = false;
 }
 
 //Set the GPIO State (High or Low)
+//GPIOs are always configured as outputs, so no input check needed
 void GPIO_SetState(struct sGPIO* s, bool high){
 	if(high){
 		HAL_GPIO_WritePin(s->EnablePort, s->EnablePin, GPIO_PIN_SET);
@@ -73,19 +93,24 @@ void GPIO_SetState(struct sGPIO* s, bool high){
 		HAL_GPIO_WritePin(s->EnablePort, s->EnablePin, GPIO_PIN_RESET);
 		s->Enabled = false;
 	}
-
 }
 
 //Set the Positive 15V Supply
+// Note: Pin is already configured as output in main.c MX_GPIO_Init()
 void Set_Pos_15V(bool high){
-	struct sGPIO s;
-	GPIO_InitStruct(&s, 1);
-	GPIO_SetState(&s, high);
+	if(high){
+		HAL_GPIO_WritePin(GPIO1_PORT, GPIO1_PIN, GPIO_PIN_SET);
+	}else{
+		HAL_GPIO_WritePin(GPIO1_PORT, GPIO1_PIN, GPIO_PIN_RESET);
+	}
 }
 
 //Set the Negative 15V Supply
+// Note: Pin is already configured as output in main.c MX_GPIO_Init()
 void Set_Neg_15V(bool high){
-	struct sGPIO s;
-	GPIO_InitStruct(&s, 2);
-	GPIO_SetState(&s, high);
+	if(high){
+		HAL_GPIO_WritePin(GPIO2_PORT, GPIO2_PIN, GPIO_PIN_SET);
+	}else{
+		HAL_GPIO_WritePin(GPIO2_PORT, GPIO2_PIN, GPIO_PIN_RESET);
+	}
 }

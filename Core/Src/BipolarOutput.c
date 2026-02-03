@@ -14,7 +14,7 @@ void BipolarOutput_InitStruct(struct sBipolarOutput* s, uint8_t BipolarOutputNum
 //This sets the frequency of the output
 //The frequency is in Hz
 //The Timer is set to the number of clock cycles between each pulse
-//TIM2 interrupt runs at 4000 Hz, so each interrupt is 0.25ms
+ //TIM2 interrupt runs at 4000 Hz, so each interrupt is 0.25ms
 //For frequency F Hz, period = 1/F seconds, half-period = 1/(2F) seconds
 //Half-period in timer ticks = (1/(2F)) / (1/4000) = 4000/(2F) = 2000/F
 //We store Frequency = 2F to make the calculation: Timer = 4000/Frequency = 4000/(2F) = 2000/F
@@ -35,7 +35,11 @@ void BipolarOutput_SetPulses(struct sBipolarOutput* s, uint16_t pulses){
 
 void BipolarOutput_Enable(struct sBipolarOutput* s, bool enable){
     s->Enabled = enable;
+    s->Channel.enabled = enable; // Also enable/disable the DAC channel
 }
+
+
+
 
 void BipolarOutput_TimerReload(struct sBipolarOutput* s){
     if (s->Frequency == 0) {
@@ -45,7 +49,7 @@ void BipolarOutput_TimerReload(struct sBipolarOutput* s){
     // Timer interrupt runs at 4000 Hz
     // Frequency stored is 2*actual_frequency (half-periods per second)
     // Timer ticks per half-period = 4000 / Frequency
-    s->Timer = 4000 / s->Frequency;
+    s->Timer = 4000 / (s->Frequency/2);
     // Ensure minimum timer value of 1 to avoid division issues
     if (s->Timer == 0) {
         s->Timer = 1;
