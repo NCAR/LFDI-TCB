@@ -809,19 +809,23 @@ void ProcessUserInput_MainMenu(struct sTuningControlBoard * s,char* input){
   if (strcmp(input, "cont") == 0)
   { 
     SUB_MENU = CONTROLLER_MENU;
+    ShowControllerMenuHeader();
     return;
   }
   //Pull up the Compensator Sub menu
   else if (strcmp(input, "comp") == 0)
   { 
     SUB_MENU = COMPENSATOR_MENU;
+    ShowCompensatorMenuHeader();
     return;
   //Pull up the GPIO Sub menu
   }else if(strcmp(input, "gpio")==0){
 	  SUB_MENU = GPIO_MENU;
+	  ShowGPIOMenuHeader();
 	  return;
   }else if(strcmp(input, "bipo")== 0){
 	  SUB_MENU = BIPOLAROUTPUT_MENU;
+	  ShowBipolarOutputMenuHeader();
 	  return;
   }
 
@@ -1316,7 +1320,7 @@ void ProcessUserInput_GPIOMenu(struct sTuningControlBoard * s, char * buffer){
 
     return;
   }
-   if ((strcmp(buffer, "?") == 0) || (strcmp(buffer, "help") == 0))
+   if ((strcmp(buffer, "?") == 0) || (strcmp(buffer, "h") == 0))
   {
     ShowGPIOHelp();
     if (UI_GPIO == 9)
@@ -1329,7 +1333,7 @@ void ProcessUserInput_GPIOMenu(struct sTuningControlBoard * s, char * buffer){
       ShowEffort(&TCB.Controller);
       USBSendString("\n");
       */
-      ShowAllGPIO(&s->GPIO[UI_GPIO], true);
+      ShowGPIOConfig(&s->GPIO[UI_GPIO], UI_GPIO);
     }
     return;
   }
@@ -1402,7 +1406,7 @@ void ProcessUserInput_GPIOMenu(struct sTuningControlBoard * s, char * buffer){
   if (strcmp(buffer, "d") == 0)
   {
     USBSendString("GPIO disabled.\n");
-    GPIO_SetState(&s->GPIO[UI_GPIO], true);
+    GPIO_SetState(&s->GPIO[UI_GPIO], false);
     return;
   }
 
@@ -1440,14 +1444,14 @@ void ProcessUserInput_BipolarOutputMenu(struct sTuningControlBoard * s, char * b
   if (strcmp(buffer, "m") == 0)
   {
     SUB_MENU = MAIN_MENU;
-    UI_GPIO = 9;
+    UI_BipolarOutput = 9;
 
     return;
   }
-   if ((strcmp((char*) buffer, "?") == 0) || (strcmp((char*) buffer, "help") == 0))
+   if ((strcmp((char*) buffer, "?") == 0) || (strcmp((char*) buffer, "h") == 0))
   {
     ShowBipolarOutputHelp();
-    if (UI_GPIO == 9)
+    if (UI_BipolarOutput == 9)
       USBSendString("No Bipolar Output selected.\n");
     else
     {
@@ -1457,7 +1461,7 @@ void ProcessUserInput_BipolarOutputMenu(struct sTuningControlBoard * s, char * b
       ShowEffort(&TCB.Controller);
       USBSendString("\n");
       */
-      ShowAllBipolarOutput(&s->BipolarOutput[UI_BipolarOutput], true, UI_BipolarOutput + 1);
+      ShowBipolarOutputConfig(&s->BipolarOutput[UI_BipolarOutput], UI_BipolarOutput);
     }
     return;
   }
@@ -1507,7 +1511,7 @@ void ProcessUserInput_BipolarOutputMenu(struct sTuningControlBoard * s, char * b
   if (strcmp((char*) buffer, "d") == 0)
   {
     USBSendString("BipolarOutput disabled.\n");
-    BipolarOutput_Enable(&s->BipolarOutput[UI_BipolarOutput], true);
+    BipolarOutput_Enable(&s->BipolarOutput[UI_BipolarOutput], false);
     return;
   }
 
@@ -1639,7 +1643,9 @@ void TranslateUserInput_MainMenu(struct sTuningControlBoard * s, char* buffer)
   replacestr(buffer, "wipe", "w");
   replacestr(buffer, "help", "h");
   replacestr(buffer, "controller", "cont");
-  replacestr(buffer, "compensator", "comp");\
+  replacestr(buffer, "compensator", "comp");
+  replacestr(buffer, "bipolaroutput", "bipo");
+  replacestr(buffer, "bipolar", "bipo");
 
   ProcessUserInput_MainMenu(s, buffer);
 
@@ -1730,6 +1736,8 @@ void ShowMainHelp(void)
     USBSendString("\n");
     USBSendString("Controller      -- Open The Controller Context Menu\n");
     USBSendString("Compensator     -- Open The Compensator Context Menu\n");
+    USBSendString("GPIO            -- Open The GPIO Context Menu\n");
+    USBSendString("BipolarOutput   -- Open The Bipolar Output Context Menu\n");
     USBSendString("Update          -- shows the status of all of the controllers and Compensators\n");
     USBSendString("Raw             -- shows an easily parsable version of Update\n");
     USBSendString("Wipe            -- wipes the existing configuration and load new defaults\n");
