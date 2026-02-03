@@ -1313,7 +1313,7 @@ void ProcessUserInput_GPIOMenu(struct sTuningControlBoard * s, char * buffer){
   float f = 0;
 
   //Send  to main menu
-  if (strcmp(buffer, "m") == 0)
+  if ((strcmp(buffer, "m") == 0) || (strcmp(buffer, "main") == 0))
   {
     SUB_MENU = MAIN_MENU;
     UI_GPIO = 9;
@@ -1489,14 +1489,14 @@ void ProcessUserInput_BipolarOutputMenu(struct sTuningControlBoard * s, char * b
   //Print the Status all the Controllers
   if ((strcmp((char*) buffer, "u") == 0) || (strcmp((char*) buffer, "/") == 0))
   {
-    ShowAllBipolarOutput(&s->BipolarOutput[UI_BipolarOutput], true, UI_BipolarOutput+1);
+    ShowAllBipolarOutput(&s->BipolarOutput[UI_BipolarOutput], true, UI_BipolarOutput);
     return;
   }
   //Print the Status all the Controllers in non readable format
   if (strcmp((char*) buffer, "r") == 0)
   {
     ShowRawHeaderBipolarOutput();
-    ShowAllBipolarOutput(&s->BipolarOutput[UI_BipolarOutput], false, UI_BipolarOutput+1);
+    ShowAllBipolarOutput(&s->BipolarOutput[UI_BipolarOutput], false, UI_BipolarOutput);
     return;
   }
 
@@ -1531,7 +1531,11 @@ void ProcessUserInput_BipolarOutputMenu(struct sTuningControlBoard * s, char * b
         break;
       case 'f':
         if (f < 0)
-          USBSendString("Invalid value.");
+          USBSendString("Invalid value.\n");
+        else if (f >= 2000)
+        {
+          USBSendString("Frequency must be below 2000 Hz.\n");
+        }
         else
         {
           snprintf(output, 200, "Frequency set to %f.\n", f);
@@ -1611,8 +1615,6 @@ void TranslateUserInput_GPIOMenu(struct sTuningControlBoard * s, char * buffer){
   replacestr(buffer, "gpio", "g");
   replacestr(buffer, "enable", "e");
   replacestr(buffer, "disable", "d");
-  replacestr(buffer, "input", "i");
-  replacestr(buffer, "output", "o");
   replacestr(buffer, "help", "h");
   replacestr(buffer, "raw", "r");
   replacestr(buffer, "main", "m");
@@ -1797,10 +1799,8 @@ void ShowGPIOHelp(void){
     USBSendString("\"gpio=1\", \"gpio 1\", \"gpio1\", \"g1\" are all treated the same.\n");
     USBSendString("\n");
     USBSendString("gpio            -- GPIO Pin to set\n");
-    USBSendString("enable          -- enable or disable the controller\n");
-    USBSendString("disable         -- disable the controller\n");
-    USBSendString("input           -- set the pin to input\n");
-    USBSendString("output          -- set the pin to output\n");
+    USBSendString("enable          -- enable or disable the GPIO output (set high)\n");
+    USBSendString("disable         -- disable the GPIO output (set low)\n");
     USBSendString("raw             -- shows an easily parsable version of the Information\n");
     USBSendString("main            -- return to the main menu\n");
     USBSendString("\n");
@@ -1814,7 +1814,7 @@ void ShowBipolarOutputHelp(void){
   USBSendString("\"bipolar=1\", \"bipolar 1\", \"bipolar1\", \"b1\" are all treated the same.\n");
   USBSendString("\n");
   USBSendString("bipolar         -- Bipolar Output to set\n");
-  USBSendString("enable          -- enable or disable the controller\n");
+  USBSendString("enable          -- enable the controller\n");
   USBSendString("disable         -- disable the controller\n");
   USBSendString("voltage         -- set the voltage of the Bipolar Output\n");
   USBSendString("frequency       -- set the frequency of the Bipolar Output\n");

@@ -15,7 +15,6 @@ struct sGPIO{
 
 
 void GPIO_InitStruct(struct sGPIO* s, uint8_t GPIONum);
-void GPIO_SetInput(struct sGPIO* s);
 void GPIO_SetOutput(struct sGPIO* s);
 void GPIO_SetState(struct sGPIO* s, bool high);
 
