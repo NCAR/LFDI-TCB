@@ -19,6 +19,7 @@ void CurrentSensor_InitStruct(struct sCurrentSensor* s, ADC_HandleTypeDef* inter
     s->Current = 0.0f;
     s->SamplesInAverage = 77;  // Average over 10 seconds (77 samples × 130ms = 10.01 seconds)
     s->State = CURRENTSENSOR_STATE_UNKNOWN;
+    // Initialize the array with 80 samples
     for (i = 0; i < 80; i++)
         s->Currents[i] = 0.0f;
     s->Errors = 0;
