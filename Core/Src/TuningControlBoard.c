@@ -44,7 +44,7 @@ void TCB_InitStruct(struct sTuningControlBoard* s, I2C_HandleTypeDef* hi2c1,I2C_
 
     //Initialize the Bipolar Output
     for(int i = 0; i < NUMOFBipolarOutputs; i++){
-        BipolarOutput_InitStruct(&s->BipolarOutput[i], i+1, &s->DAC8718.DAC_Channels[i+NUMOFCOMPENSATORS]);
+        BipolarOutput_InitStruct(&s->BipolarOutput[i], i+1, &s->DAC8718.DAC_Channels[i+NUMOFCOMPENSATORS+3]);
     }
 
     //Initialize the Current Sensors

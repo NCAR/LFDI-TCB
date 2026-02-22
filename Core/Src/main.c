@@ -140,6 +140,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 				Set_DAC_Value(&TCB.DAC8718, TCB.BipolarOutput[i].Channel.DAC_number, TCB.BipolarOutput[i].Channel.lower_bound);
 				TCB.BipolarOutput[i].Channel.state_high = false;
 				TCB.BipolarOutput[i].Pulses--;
+				if(TCB.BipolarOutput[i].Pulses == 0){
+					Set_DAC_Value(&TCB.DAC8718, TCB.BipolarOutput[i].Channel.DAC_number, 0x7FFF);
+					TCB.BipolarOutput[i].Channel.state_high = false;
+					TCB.BipolarOutput[i].Enabled = false;
+				}
 			  }else{
 				Set_DAC_Value(&TCB.DAC8718, TCB.BipolarOutput[i].Channel.DAC_number, TCB.BipolarOutput[i].Channel.upper_bound);
 				TCB.BipolarOutput[i].Channel.state_high = true;

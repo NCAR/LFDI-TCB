@@ -1542,7 +1542,7 @@ void ProcessUserInput_BipolarOutputMenu(struct sTuningControlBoard * s, char * b
           USBSendString(output);
           BipolarOutput_SetFrequency(&s->BipolarOutput[UI_BipolarOutput], f);
         }
-        break;
+        return;
       case 'p':
         if (f < 0)
           USBSendString("Invalid value.");
@@ -1552,7 +1552,7 @@ void ProcessUserInput_BipolarOutputMenu(struct sTuningControlBoard * s, char * b
           USBSendString(output);
           BipolarOutput_SetPulses(&s->BipolarOutput[UI_BipolarOutput], u);
         }
-        break;
+        return;
 
        case 'v':
         //Check the Voltage is greater than 0 and less than max peak to peak
@@ -1561,15 +1561,10 @@ void ProcessUserInput_BipolarOutputMenu(struct sTuningControlBoard * s, char * b
           //Print out the string with the Compensator number and voltage
           sprintf(output, "BipolarOutput %d Voltage Set to %f.\n", UI_BipolarOutput+1, f);    
       	  USBSendString(output);
-          break;
-          return;
         } else {
           USBSendString("Invalid Voltage.\n");
-          break;
-          return;
         }
-
-        break;
+        return;
       default:
         break;
     }
